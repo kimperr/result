@@ -1,62 +1,123 @@
-diff --git a/index.html b/index.html
-index f36b07d589b3368ce57be7d9cdd8b3ea4a7d8dee..1081b1527a19c469a66721267183112ae0f046f8 100644
---- a/index.html
-+++ b/index.html
-@@ -27,50 +27,57 @@
-           </div>
- 
-           <label class="field">날짜 <input id="gameDate" type="date" /></label>
-           <label class="field">상대팀 <select id="opponentTeam"></select></label>
-           <label class="field">상대팀명 <input id="opponentName" type="text" /></label>
-           <label class="field">구장 <input id="stadiumName" type="text" /></label>
- 
-           <h2>스코어</h2>
-           <label class="field">홈 점수 <input id="homeScore" type="number" min="0" /></label>
-           <label class="field">원정 점수 <input id="awayScore" type="number" min="0" /></label>
- 
-           <h2>선수</h2>
-           <label class="field">갸VP <input id="mvpName" type="text" /></label>
-           <label class="field">성적 <input id="mvpRecord" type="text" /></label>
-           <label class="field">승리 투수 <input id="winnerName" type="text" /></label>
-           <label class="field">패배 투수 <input id="loserName" type="text" /></label>
-           <label class="field">세이브 <input id="saveName" type="text" /></label>
-           <label class="field">전체 자간 <input id="globalLetterSpacing" type="number" step="0.1" value="-1" /></label>
- 
-           <h2>상대팀명 미세조정</h2>
-           <div class="triple-row">
-             <label>X <input id="opponentXInput" type="number" value="215" /></label>
-             <label>Y <input id="opponentYInput" type="number" value="354" /></label>
-             <label>크기 <input id="opponentSizeInput" type="number" value="28" /></label>
-           </div>
-+
-+          <h2>성적 미세조정</h2>
-+          <div class="triple-row">
-+            <label>X <input id="mvpRecordXInput" type="number" value="359" /></label>
-+            <label>Y <input id="mvpRecordYInput" type="number" value="1135" /></label>
-+            <label>크기 <input id="mvpRecordSizeInput" type="number" value="20" /></label>
-+          </div>
-         </section>
- 
-         <section id="lineupControls" class="tab-panel">
-           <h1>라인업 만들기</h1>
-           <div class="field-row compact">
-             <label><input type="radio" name="lineupKiaSide" value="home" checked /> 홈</label>
-             <label><input type="radio" name="lineupKiaSide" value="away" /> 원정</label>
-           </div>
-           <label class="field">날짜 <input id="lineupDate" type="date" /></label>
-           <label class="field">상대팀 <select id="lineupOpponentTeam"></select></label>
-           <label class="field">상대팀명 <input id="lineupOpponentName" type="text" /></label>
-           <label class="field">구장 <input id="lineupStadiumName" type="text" /></label>
- 
-           <h2>1~9번 타자/포지션</h2>
-           <div id="lineupInputGrid" class="lineup-input-grid"></div>
- 
-           <h2>선발투수</h2>
-           <label class="field">투수 이름 <input id="lineupPitcherName" type="text" /></label>
-           <label class="field">전체 자간 <input id="lineupLetterSpacing" type="number" step="0.1" value="-1" /></label>
-           <h2>상대팀명 미세조정</h2>
-           <div class="triple-row">
-             <label>X <input id="lineupOpponentXInput" type="number" value="228" /></label>
-             <label>Y <input id="lineupOpponentYInput" type="number" value="354" /></label>
-             <label>크기 <input id="lineupOpponentSizeInput" type="number" value="28" /></label>
-           </div>
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>야구 이미지 생성기</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <main class="layout">
+      <section class="controls">
+        <div class="tab-row">
+          <button id="tabResult" class="tab-btn active" type="button">탭1 경기결과</button>
+          <button id="tabLineup" class="tab-btn" type="button">탭2 라인업</button>
+        </div>
+
+        <section id="resultControls" class="tab-panel active">
+          <h1>경기결과 만들기</h1>
+          <div class="field-row compact">
+            <label><input type="radio" name="result" value="win" checked /> 승리</label>
+            <label><input type="radio" name="result" value="lose" /> 패배</label>
+            <label><input type="radio" name="result" value="draw" /> 무승부</label>
+          </div>
+          <div class="field-row compact">
+            <label><input type="radio" name="kiaSide" value="home" checked /> 홈</label>
+            <label><input type="radio" name="kiaSide" value="away" /> 원정</label>
+          </div>
+
+          <label class="field">날짜 <input id="gameDate" type="date" /></label>
+          <label class="field">상대팀 <select id="opponentTeam"></select></label>
+          <label class="field">상대팀명 <input id="opponentName" type="text" /></label>
+          <label class="field">구장 <input id="stadiumName" type="text" /></label>
+
+          <h2>스코어</h2>
+          <label class="field">홈 점수 <input id="homeScore" type="number" min="0" /></label>
+          <label class="field">원정 점수 <input id="awayScore" type="number" min="0" /></label>
+
+          <h2>선수</h2>
+          <label class="field">갸VP <input id="mvpName" type="text" /></label>
+          <label class="field">성적 <input id="mvpRecord" type="text" /></label>
+          <label class="field">승리 투수 <input id="winnerName" type="text" /></label>
+          <label class="field">패배 투수 <input id="loserName" type="text" /></label>
+          <label class="field">세이브 <input id="saveName" type="text" /></label>
+          <label class="field">전체 자간 <input id="globalLetterSpacing" type="number" step="0.1" value="-1" /></label>
+
+          <h2>상대팀명 미세조정</h2>
+          <div class="triple-row">
+            <label>X <input id="opponentXInput" type="number" value="215" /></label>
+            <label>Y <input id="opponentYInput" type="number" value="354" /></label>
+            <label>크기 <input id="opponentSizeInput" type="number" value="28" /></label>
+          </div>
+        </section>
+
+        <section id="lineupControls" class="tab-panel">
+          <h1>라인업 만들기</h1>
+          <div class="field-row compact">
+            <label><input type="radio" name="lineupKiaSide" value="home" checked /> 홈</label>
+            <label><input type="radio" name="lineupKiaSide" value="away" /> 원정</label>
+          </div>
+          <label class="field">날짜 <input id="lineupDate" type="date" /></label>
+          <label class="field">상대팀 <select id="lineupOpponentTeam"></select></label>
+          <label class="field">상대팀명 <input id="lineupOpponentName" type="text" /></label>
+          <label class="field">구장 <input id="lineupStadiumName" type="text" /></label>
+
+          <h2>1~9번 타자/포지션</h2>
+          <div id="lineupInputGrid" class="lineup-input-grid"></div>
+
+          <h2>선발투수</h2>
+          <label class="field">투수 이름 <input id="lineupPitcherName" type="text" /></label>
+          <label class="field">전체 자간 <input id="lineupLetterSpacing" type="number" step="0.1" value="-1" /></label>
+          <h2>상대팀명 미세조정</h2>
+          <div class="triple-row">
+            <label>X <input id="lineupOpponentXInput" type="number" value="228" /></label>
+            <label>Y <input id="lineupOpponentYInput" type="number" value="354" /></label>
+            <label>크기 <input id="lineupOpponentSizeInput" type="number" value="28" /></label>
+          </div>
+
+        </section>
+
+        <div class="button-row">
+          <button id="downloadBtn" type="button">PNG 저장</button>
+        </div>
+      </section>
+
+      <section class="preview-wrap">
+        <div class="preview-scale">
+          <div id="resultPoster" class="poster tab-preview active">
+            <img id="backgroundLayer" class="layer bg" src="assets/bg-win.png" alt="배경" />
+            <img id="playerPhoto" class="layer player" src="assets/player.png" alt="선수" />
+            <img id="kiaLogo" class="layer team-logo" src="assets/kia2.png" alt="KIA 로고" />
+            <img id="oppLogo" class="layer team-logo" src="assets/lg1.png" alt="상대 로고" />
+            <div id="dateText" class="layer text date"></div>
+            <div id="opponentText" class="layer text opponent"></div>
+            <div id="stadiumText" class="layer text stadium"></div>
+            <div id="homeScoreText" class="layer text score"></div>
+            <div id="awayScoreText" class="layer text score"></div>
+            <div id="badgeWin" class="layer badge win">승</div>
+            <div id="badgeLose" class="layer badge lose">패</div>
+            <div id="badgeSave" class="layer badge save">세</div>
+            <div id="winnerText" class="layer text pitcher"></div>
+            <div id="loserText" class="layer text pitcher"></div>
+            <div id="saveText" class="layer text pitcher"></div>
+            <div id="mvpNameText" class="layer text mvp-name"></div>
+            <div id="mvpRecordText" class="layer text mvp-record"></div>
+          </div>
+
+          <div id="lineupPoster" class="poster tab-preview">
+            <img id="lineupBgLayer" class="layer bg" src="assets/bg-lineup.png" alt="라인업 배경" />
+            <img id="lineupPlayerPhoto" class="layer player" src="assets/player.png" alt="선발 투수" />
+            <div id="lineupDateText" class="layer text lineup-date"></div>
+            <div id="lineupOpponentText" class="layer text lineup-opponent"></div>
+            <div id="lineupStadiumText" class="layer text lineup-stadium"></div>
+            <div id="lineupTextLayer" class="layer lineup-text-layer"></div>
+            <div id="lineupPitcherText" class="layer text lineup-pitcher"></div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+    <script src="script.js"></script>
+  </body>
+</html>
