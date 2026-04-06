@@ -280,21 +280,22 @@ textarea {
 
 .playback-editor {
   display: grid;
-  grid-template-columns: 96px 1fr 120px;
+  grid-template-columns: 64px 1fr 120px;
   gap: 12px;
   align-items: center;
 }
 
 .playback-btn {
-  min-height: 46px;
+  min-height: 40px;
   border: 0;
   border-radius: 12px;
   background: #0e5ca8;
   color: #fff;
   font-family: var(--ui-title);
-  font-size: 18px;
+  font-size: 15px;
   font-weight: 700;
   cursor: pointer;
+  padding: 0 6px;
 }
 
 .playback-bar-wrap {
@@ -413,6 +414,58 @@ textarea {
   color: #dfe7f3;
 }
 
+.caption-tools {
+  display: none;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.caption-output {
+  width: 100%;
+  min-height: 120px;
+  resize: vertical;
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+#copyCaptionBtn {
+  width: 100%;
+  font-family: var(--ui-title);
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  padding: 10px;
+}
+
+.copy-toast {
+  position: fixed;
+  left: 50%;
+  bottom: 28px;
+  transform: translate(-50%, 16px);
+  padding: 10px 16px;
+  border-radius: 999px;
+  background: rgba(18, 26, 37, 0.92);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+  z-index: 1000;
+}
+
+.copy-toast.is-visible {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+
+.checkbox-field {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .preview-wrap {
   grid-area: preview;
   display: flex;
@@ -495,6 +548,7 @@ textarea {
 .lineup-pos-text { position: absolute; color: #fff; font: 300 62px/1 'Pretendard', sans-serif; letter-spacing: var(--global-letter-spacing); }
 .lineup-pitcher { color: #000; font: 400 62px/1 'boldfont', 'Pretendard', sans-serif; white-space: pre; letter-spacing: var(--global-letter-spacing); font-family: 'boldfont', 'Pretendard', sans-serif !important; width: 360px; text-align: right; }
 #lineupPoster .text { letter-spacing: var(--global-letter-spacing); }
+#lineupPoster .lineup-pitcher { letter-spacing: 24px; }
 
 .video-bg {
   inset: 0;
@@ -696,7 +750,8 @@ textarea {
   .tab-btn,
   #videoPreviewToggleBtn,
   #downloadBtn,
-  #followDownloadBtn {
+  #followDownloadBtn,
+  #copyCaptionBtn {
     font-size: 16px;
   }
 
@@ -761,7 +816,8 @@ textarea {
   .tab-btn,
   #videoPreviewToggleBtn,
   #downloadBtn,
-  #followDownloadBtn {
+  #followDownloadBtn,
+  #copyCaptionBtn {
     min-height: 44px;
   }
 

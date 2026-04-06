@@ -1,4 +1,4 @@
-const TEAM_DB = [
+﻿const TEAM_DB = [
   { name: 'LG 트윈스', stadium: '잠실 야구장', code: 'lg' },
   { name: '두산 베어스', stadium: '잠실 야구장', code: 'doo' },
   { name: '키움 히어로즈', stadium: '고척 스카이돔', code: 'kiw' },
@@ -8,7 +8,7 @@ const TEAM_DB = [
   { name: '롯데 자이언츠', stadium: '사직 야구장', code: 'lot' },
   { name: 'NC 다이노스', stadium: '창원 NC파크', code: 'nc' },
   { name: '삼성 라이온즈', stadium: '대구 삼성 라이온즈파크', code: 'sam' }
-];
+] ;
 
 const BACKGROUND_BY_RESULT = {
   win: 'assets/bg-win.png',
@@ -91,6 +91,19 @@ const VIDEO_BG_FALLBACK = {
   bottom: '#781310'
 };
 
+const LINEUP_POSITION_MAP = {
+  '1': 'P',
+  '2': 'C',
+  '3': '1B',
+  '4': '2B',
+  '5': '3B',
+  '6': 'SS',
+  '7': 'LF',
+  '8': 'CF',
+  '9': 'RF',
+  D: 'DH'
+};
+
 const el = {
   tabResult: document.getElementById('tabResult'),
   tabLineup: document.getElementById('tabLineup'),
@@ -138,12 +151,17 @@ const el = {
   lineupOpponentXRange: document.getElementById('lineupOpponentXRange'),
   lineupOpponentYRange: document.getElementById('lineupOpponentYRange'),
   lineupInputGrid: document.getElementById('lineupInputGrid'),
+  lineupGameTime: document.getElementById('lineupGameTime'),
+  lineupGameTimeCustom: document.getElementById('lineupGameTimeCustom'),
+  lineupBroadcaster: document.getElementById('lineupBroadcaster'),
+  lineupTerrestrial: document.getElementById('lineupTerrestrial'),
 
   videoFileInput: document.getElementById('videoFileInput'),
   videoTitleInput: document.getElementById('videoTitleInput'),
   videoDate: document.getElementById('videoDate'),
   videoOpponentTeam: document.getElementById('videoOpponentTeam'),
   videoOpponentName: document.getElementById('videoOpponentName'),
+  videoMetaOverride: document.getElementById('videoMetaOverride'),
   videoStartTime: document.getElementById('videoStartTime'),
   videoEndTime: document.getElementById('videoEndTime'),
   videoTrimStartRange: document.getElementById('videoTrimStartRange'),
@@ -179,7 +197,11 @@ const el = {
   videoMetaSizeInput: document.getElementById('videoMetaSizeInput'),
   videoMetaSizeRange: document.getElementById('videoMetaSizeRange'),
 
-  downloadBtn: document.getElementById('downloadBtn')
+  downloadBtn: document.getElementById('downloadBtn'),
+  captionTools: document.getElementById('captionTools'),
+  captionOutput: document.getElementById('captionOutput'),
+  copyCaptionBtn: document.getElementById('copyCaptionBtn'),
+  copyToast: document.getElementById('copyToast')
 };
 
 const out = {
@@ -221,6 +243,7 @@ out.videoTrimSelected = document.getElementById('videoTrimSelected');
 let activeTab = 'result';
 const lineupTextRefs = { names: {}, positions: {} };
 let mobilePreviewTimer = null;
+let copyToastTimer = null;
 const videoState = {
   objectUrl: '',
   loopHandler: null,
@@ -247,6 +270,71 @@ function formatVideoMeta(dateValue, opponentName) {
   if (dateValue) lines.push(formatDate(dateValue));
   if (opponentName) lines.push(`vs ${opponentName}`);
   return lines.join('\n');
+}
+
+function getVideoMetaLines() {
+  const overrideLines = (el.videoMetaOverride?.value || '')
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter(Boolean);
+
+  if (overrideLines.length) return overrideLines;
+
+  return formatVideoMeta(el.videoDate.value, el.videoOpponentName.value || el.videoOpponentTeam.value)
+    .split('\n')
+    .filter(Boolean);
+}
+
+function formatLineupPosition(value) {
+  const raw = (value || '').trim();
+  if (!raw) return '';
+  const upper = raw.toUpperCase();
+  return LINEUP_POSITION_MAP[upper] || upper;
+}
+
+function getLineupBroadcastLabel() {
+  const broadcaster = el.lineupBroadcaster?.value || 'KBS N SPORTS';
+  if (!el.lineupTerrestrial?.checked) return broadcaster;
+  const terrestrialMap = {
+    'KBS N SPORTS': 'KBS',
+    'SBS SPORTS': 'SBS',
+    'MBC SPORTS+': 'MBC'
+  };
+  return terrestrialMap[broadcaster] || broadcaster;
+}
+
+function getLineupGameTimeLabel() {
+  const selected = el.lineupGameTime?.value || '18:30';
+  if (selected === 'custom') {
+    return (el.lineupGameTimeCustom?.value || '').trim() || '직접입력';
+  }
+  return selected;
+}
+
+function getGeneratedCaptionText() {
+  if (activeTab === 'lineup') {
+    const teamName = (el.lineupOpponentName.value || el.lineupOpponentTeam.value || '').trim();
+    const timeLabel = getLineupGameTimeLabel();
+    const broadcasterLabel = getLineupBroadcastLabel();
+    return [
+      `𝐖𝐈𝐍𝐍𝐈𝐍𝐆 𝐋𝐈𝐍𝐄𝐔𝐏 vs ${teamName}`,
+      `⏰️ ${timeLabel} / 📺 ${broadcasterLabel}`
+    ].join('\n');
+  }
+
+  if (activeTab === 'result') {
+    const teamName = (el.opponentName.value || el.opponentTeam.value || '').trim();
+    const resultMap = { win: '승리', draw: '무승부', lose: '패배' };
+    const resultLabel = resultMap[selectedValue(el.result)] || '승리';
+    const homeScore = el.homeScore.value || '0';
+    const awayScore = el.awayScore.value || '0';
+    return [
+      `𝐅𝐈𝐍𝐀𝐋 vs ${teamName}`,
+      `${homeScore} - ${awayScore} ${resultLabel}`
+    ].join('\n');
+  }
+
+  return '';
 }
 
 function getVideoTitleLines() {
@@ -292,7 +380,7 @@ function updateVideoPlaybackUi() {
   el.videoPlaybackRange.max = String(max);
   el.videoPlaybackRange.value = String(clamped);
   el.videoPlaybackTime.textContent = `${formatSecondsLabel(clamped)} / ${formatSecondsLabel(max)}`;
-  el.videoPlayToggle.textContent = video.paused ? '재생' : '멈춤';
+  el.videoPlayToggle.textContent = video.paused ? '▶️' : '⏸️';
 }
 
 function setVideoPreviewMode(enabled) {
@@ -324,6 +412,16 @@ function updateVideoPreviewToggleVisibility() {
 
 function updateSecondaryActionButtons() {
   el.followDownloadBtn.style.display = activeTab === 'video' ? 'block' : 'none';
+  const showCaptionTools = activeTab === 'lineup' || activeTab === 'result';
+  if (el.captionTools) {
+    el.captionTools.style.display = showCaptionTools ? 'grid' : 'none';
+  }
+  if (el.copyCaptionBtn) {
+    el.copyCaptionBtn.style.display = showCaptionTools ? 'block' : 'none';
+  }
+  if (el.captionOutput) {
+    el.captionOutput.value = showCaptionTools ? getGeneratedCaptionText() : '';
+  }
 }
 
 function syncVideoTrimInputs(source = 'start-range') {
@@ -502,9 +600,7 @@ function getFileExtension(name, fallback = 'mp4') {
 function getVideoOverlaySnapshot() {
   const layout = getVideoLayoutValues();
   const titleLines = getVideoTitleLines();
-  const metaLines = formatVideoMeta(el.videoDate.value, el.videoOpponentName.value || el.videoOpponentTeam.value)
-    .split('\n')
-    .filter(Boolean);
+  const metaLines = getVideoMetaLines();
   const titleTop = getCenteredTextTop(
     layout.title.y,
     VIDEO_LAYOUT.title.size,
@@ -582,7 +678,7 @@ async function buildVideoOverlayPng(layout, titleLines, metaLines, titleTop, met
   canvas.width = 1080;
   canvas.height = 1350;
   const ctx = canvas.getContext('2d');
-  if (!ctx) throw new Error('오버레이 캔버스를 만들 수 없습니다.');
+  if (!ctx) throw new Error('브라우저에서 캔버스를 만들 수 없습니다.');
 
   const bgImage = out.videoBgImage;
   if (bgImage.complete && bgImage.naturalWidth > 0) {
@@ -624,7 +720,7 @@ async function buildVideoOverlayPng(layout, titleLines, metaLines, titleTop, met
   return await new Promise((resolve, reject) => {
     canvas.toBlob((blob) => {
       if (blob) resolve(blob);
-      else reject(new Error('오버레이 이미지를 만들 수 없습니다.'));
+      else reject(new Error('브라우저에서 이미지를 만들 수 없습니다.'));
     }, 'image/png');
   });
 }
@@ -672,7 +768,7 @@ async function createOverlayBitmapFromBlob(blob) {
     };
     image.onerror = () => {
       URL.revokeObjectURL(url);
-      reject(new Error('오버레이 이미지를 읽을 수 없습니다.'));
+      reject(new Error('브라우저에서 이미지를 읽을 수 없습니다.'));
     };
     image.src = url;
   });
@@ -699,7 +795,7 @@ function drawVideoCompositeFrame(ctx, video, layout, overlayBitmap) {
 async function renderVideoPreviewFrameImage() {
   const video = out.videoPreviewElement;
   if (!video.getAttribute('src')) {
-    window.alert('먼저 영상 파일을 업로드해주세요.');
+    window.alert('먼저 영상 파일을 업로드해 주세요.');
     return;
   }
 
@@ -740,6 +836,31 @@ function getPlayerPhotoPath(name) {
 
 function selectedTeamInfo(selectEl) {
   return TEAM_DB.find((team) => team.name === selectEl.value) || TEAM_DB[0];
+}
+
+function selectedTeamInfoByName(teamName) {
+  return TEAM_DB.find((team) => team.name === teamName) || TEAM_DB[0];
+}
+
+function applySharedOpponent(teamName) {
+  const team = selectedTeamInfoByName(teamName);
+  const sharedName = team.name;
+
+  el.opponentTeam.value = sharedName;
+  el.lineupOpponentTeam.value = sharedName;
+  el.videoOpponentTeam.value = sharedName;
+
+  el.opponentName.value = sharedName;
+  el.lineupOpponentName.value = sharedName;
+  el.videoOpponentName.value = sharedName;
+
+  el.stadiumName.value = selectedValue(el.kiaSide) === 'home' ? KIA_HOME_STADIUM : team.stadium;
+  el.lineupStadiumName.value = selectedValue(el.lineupKiaSide) === 'home' ? KIA_HOME_STADIUM : team.stadium;
+
+  updateResultPoster();
+  updateLineupPoster();
+  updateVideoPoster();
+  updateSecondaryActionButtons();
 }
 
 function teamLogoFile(code, side, result) {
@@ -795,6 +916,36 @@ function downloadFollowImage() {
   link.href = 'assets/follow.png';
   link.download = 'follow.png';
   link.click();
+}
+
+function showCopyToast(message) {
+  if (!el.copyToast) return;
+  el.copyToast.textContent = message;
+  el.copyToast.classList.add('is-visible');
+  window.clearTimeout(copyToastTimer);
+  copyToastTimer = window.setTimeout(() => {
+    el.copyToast?.classList.remove('is-visible');
+  }, 1800);
+}
+
+async function copyGeneratedCaption() {
+  const text = getGeneratedCaptionText();
+  if (!text) {
+    showCopyToast('복사할 문구가 없습니다.');
+    return;
+  }
+
+  try {
+    await navigator.clipboard.writeText(text);
+    showCopyToast('문구가 복사되었습니다.');
+  } catch {
+    if (el.captionOutput) {
+      el.captionOutput.focus();
+      el.captionOutput.select();
+      const copied = document.execCommand('copy');
+      showCopyToast(copied ? '문구가 복사되었습니다.' : '문구 복사에 실패했습니다.');
+    }
+  }
 }
 
 function configureVideoLoop() {
@@ -865,7 +1016,7 @@ async function exportVideo() {
   const sourceVideo = out.videoPreviewElement;
   const sourceFile = el.videoFileInput.files?.[0];
   if (!sourceVideo.getAttribute('src') || !sourceFile) {
-    window.alert('먼저 영상 파일을 업로드해주세요.');
+    window.alert('먼저 영상 파일을 업로드해 주세요.');
     return;
   }
 
@@ -900,7 +1051,7 @@ async function exportVideoFast(sourceVideo, start, end, layout, titleLines, meta
   const stream = canvas.captureStream(30);
   const exportVideo = await prepareExportVideo(sourceVideo, start);
   const overlayBitmap = await primeVideoOverlayBitmapCache();
-  setVideoSaveProgress(0, '준비중 0%');
+  setVideoSaveProgress(0, '以鍮꾩쨷 0%');
 
   try {
     const exportStream = typeof exportVideo.captureStream === 'function' ? exportVideo.captureStream() : null;
@@ -1101,8 +1252,6 @@ function updateResultPoster() {
   const side = selectedValue(el.kiaSide);
   const team = selectedTeamInfo(el.opponentTeam);
 
-  el.stadiumName.value = side === 'home' ? KIA_HOME_STADIUM : team.stadium;
-
   out.backgroundLayer.src = BACKGROUND_BY_RESULT[result];
   el.resultPoster.style.setProperty('--global-letter-spacing', `${Number(el.globalLetterSpacing.value) || 0}px`);
 
@@ -1167,8 +1316,6 @@ function updateResultPoster() {
 
 function updateLineupPoster() {
   const team = selectedTeamInfo(el.lineupOpponentTeam);
-  const side = selectedValue(el.lineupKiaSide);
-  el.lineupStadiumName.value = side === 'home' ? KIA_HOME_STADIUM : team.stadium;
 
   out.lineupDateText.textContent = formatDate(el.lineupDate.value);
   LINEUP_LAYOUT.opponentText.x = Number(el.lineupOpponentXInput.value) || LINEUP_LAYOUT.opponentText.x;
@@ -1189,7 +1336,7 @@ function updateLineupPoster() {
 
   for (let i = 1; i <= 9; i += 1) {
     const name = document.getElementById(`lineupName${i}`)?.value || '';
-    const pos = document.getElementById(`lineupPos${i}`)?.value || '';
+    const pos = formatLineupPosition(document.getElementById(`lineupPos${i}`)?.value || '');
 
     LINEUP_LAYOUT.names[i].x = LINEUP_FIXED.nameX;
     LINEUP_LAYOUT.names[i].size = LINEUP_FIXED.nameSize;
@@ -1322,13 +1469,19 @@ function bindEvents() {
   resultInputs.forEach((input) => {
     input.addEventListener('input', updateResultPoster);
     input.addEventListener('change', updateResultPoster);
+    input.addEventListener('input', updateSecondaryActionButtons);
+    input.addEventListener('change', updateSecondaryActionButtons);
+  });
+  el.kiaSide.forEach((input) => {
+    input.addEventListener('change', () => {
+      const team = selectedTeamInfo(el.opponentTeam);
+      el.stadiumName.value = selectedValue(el.kiaSide) === 'home' ? KIA_HOME_STADIUM : team.stadium;
+      updateResultPoster();
+    });
   });
 
   el.opponentTeam.addEventListener('change', () => {
-    const team = selectedTeamInfo(el.opponentTeam);
-    el.opponentName.value = team.name;
-    el.stadiumName.value = selectedValue(el.kiaSide) === 'home' ? KIA_HOME_STADIUM : team.stadium;
-    updateResultPoster();
+    applySharedOpponent(el.opponentTeam.value);
   });
 
   const lineupInputs = [
@@ -1337,6 +1490,10 @@ function bindEvents() {
     el.lineupOpponentName,
     el.lineupStadiumName,
     el.lineupPitcherName,
+    el.lineupGameTime,
+    el.lineupGameTimeCustom,
+    el.lineupBroadcaster,
+    el.lineupTerrestrial,
     el.lineupLetterSpacing,
     el.lineupOpponentXInput,
     el.lineupOpponentYInput,
@@ -1347,13 +1504,23 @@ function bindEvents() {
   lineupInputs.forEach((input) => {
     input.addEventListener('input', updateLineupPoster);
     input.addEventListener('change', updateLineupPoster);
+    input.addEventListener('input', updateSecondaryActionButtons);
+    input.addEventListener('change', updateSecondaryActionButtons);
   });
   lineupSideInputs.forEach((input) => {
     input.addEventListener('input', updateLineupPoster);
     input.addEventListener('change', updateLineupPoster);
   });
+  el.lineupKiaSide.forEach((input) => {
+    input.addEventListener('change', () => {
+      const team = selectedTeamInfo(el.lineupOpponentTeam);
+      el.lineupStadiumName.value = selectedValue(el.lineupKiaSide) === 'home' ? KIA_HOME_STADIUM : team.stadium;
+      updateLineupPoster();
+    });
+  });
 
   el.lineupInputGrid.addEventListener('input', updateLineupPoster);
+  el.lineupInputGrid.addEventListener('input', updateSecondaryActionButtons);
   el.lineupInputGrid.addEventListener('keydown', (event) => {
     if (event.key !== 'Enter') return;
     const target = event.target;
@@ -1371,10 +1538,7 @@ function bindEvents() {
   });
 
   el.lineupOpponentTeam.addEventListener('change', () => {
-    const team = selectedTeamInfo(el.lineupOpponentTeam);
-    el.lineupOpponentName.value = team.name;
-    el.lineupStadiumName.value = selectedValue(el.lineupKiaSide) === 'home' ? KIA_HOME_STADIUM : team.stadium;
-    updateLineupPoster();
+    applySharedOpponent(el.lineupOpponentTeam.value);
   });
 
   const videoInputs = [
@@ -1382,6 +1546,7 @@ function bindEvents() {
     el.videoDate,
     el.videoOpponentTeam,
     el.videoOpponentName,
+    el.videoMetaOverride,
     el.videoStartTime,
     el.videoEndTime,
     el.videoFrameXInput,
@@ -1524,9 +1689,7 @@ function bindEvents() {
   });
 
   el.videoOpponentTeam.addEventListener('change', () => {
-    const team = selectedTeamInfo(el.videoOpponentTeam);
-    el.videoOpponentName.value = team.name;
-    updateVideoPoster();
+    applySharedOpponent(el.videoOpponentTeam.value);
   });
 
   el.tabResult.addEventListener('click', () => switchTab('result'));
@@ -1534,6 +1697,7 @@ function bindEvents() {
   el.tabVideo.addEventListener('click', () => switchTab('video'));
   el.downloadBtn.addEventListener('click', downloadImage);
   el.followDownloadBtn.addEventListener('click', downloadFollowImage);
+  el.copyCaptionBtn?.addEventListener('click', copyGeneratedCaption);
   window.addEventListener('resize', () => {
     el.previewScale.classList.toggle('video-mobile-plain', activeTab === 'video' && isMobilePreviewMode());
     updateVideoPreviewToggleVisibility();
@@ -1582,4 +1746,11 @@ function init() {
   updateSecondaryActionButtons();
 }
 
-init();
+function initializeApp() {
+  document.querySelector('.tab-row')?.prepend(el.tabLineup);
+  init();
+  applySharedOpponent('LG 트윈스');
+  switchTab('lineup');
+}
+
+initializeApp();

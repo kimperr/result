@@ -10,12 +10,42 @@
     <main class="layout">
       <section class="controls">
         <div class="tab-row">
-          <button id="tabResult" class="tab-btn active" type="button">경기결과</button>
-          <button id="tabLineup" class="tab-btn" type="button">라인업</button>
+          <button id="tabLineup" class="tab-btn active" type="button">라인업</button>
+          <button id="tabResult" class="tab-btn" type="button">경기결과</button>
           <button id="tabVideo" class="tab-btn" type="button">영상편집</button>
         </div>
 
-        <section id="resultControls" class="tab-panel active">
+        <section id="lineupControls" class="tab-panel active">
+          <h1>라인업 만들기</h1>
+          <div class="field-row compact">
+            <label><input type="radio" name="lineupKiaSide" value="home" checked /> 홈</label>
+            <label><input type="radio" name="lineupKiaSide" value="away" /> 원정</label>
+          </div>
+
+          <label class="field">날짜 <input id="lineupDate" type="date" /></label>
+          <label class="field">상대팀 <select id="lineupOpponentTeam"></select></label>
+          <label class="field">상대팀명 <input id="lineupOpponentName" type="text" /></label>
+          <label class="field">구장 <input id="lineupStadiumName" type="text" /></label>
+
+          <h2>1~9번 타자/포지션</h2>
+          <div id="lineupInputGrid" class="lineup-input-grid"></div>
+
+          <h2>선발투수</h2>
+          <label class="field">투수 이름 <input id="lineupPitcherName" type="text" /></label>
+
+          <details class="tune-details">
+            <summary>조정 열기</summary>
+            <label class="field">전체 자간 <input id="lineupLetterSpacing" type="number" step="0.1" value="-1" /></label>
+
+            <h2>상대팀명 미세조정</h2>
+            <div class="fine-tune-group">
+              <label class="fine-tune-row">X <input id="lineupOpponentXRange" type="range" min="0" max="1080" value="228" /><input id="lineupOpponentXInput" type="number" value="228" /></label>
+              <label class="fine-tune-row">Y <input id="lineupOpponentYRange" type="range" min="0" max="1350" value="354" /><input id="lineupOpponentYInput" type="number" value="354" /></label>
+            </div>
+          </details>
+        </section>
+
+        <section id="resultControls" class="tab-panel">
           <h1>경기결과 만들기</h1>
           <div class="field-row compact">
             <label><input type="radio" name="result" value="win" checked /> 승리</label>
@@ -42,9 +72,9 @@
           <label class="field">승리 투수 <input id="winnerName" type="text" /></label>
           <label class="field">패배 투수 <input id="loserName" type="text" /></label>
           <label class="field">세이브 <input id="saveName" type="text" /></label>
+
           <details class="tune-details">
             <summary>조정 열기</summary>
-
             <label class="field">전체 자간 <input id="globalLetterSpacing" type="number" step="0.1" value="-1" /></label>
 
             <h2>상대팀명 미세조정</h2>
@@ -61,42 +91,21 @@
           </details>
         </section>
 
-        <section id="lineupControls" class="tab-panel">
-          <h1>라인업 만들기</h1>
-          <div class="field-row compact">
-            <label><input type="radio" name="lineupKiaSide" value="home" checked /> 홈</label>
-            <label><input type="radio" name="lineupKiaSide" value="away" /> 원정</label>
-          </div>
-          <label class="field">날짜 <input id="lineupDate" type="date" /></label>
-          <label class="field">상대팀 <select id="lineupOpponentTeam"></select></label>
-          <label class="field">상대팀명 <input id="lineupOpponentName" type="text" /></label>
-          <label class="field">구장 <input id="lineupStadiumName" type="text" /></label>
-
-          <h2>1~9번 타자/포지션</h2>
-          <div id="lineupInputGrid" class="lineup-input-grid"></div>
-
-          <h2>선발투수</h2>
-          <label class="field">투수 이름 <input id="lineupPitcherName" type="text" /></label>
-          <details class="tune-details">
-            <summary>조정 열기</summary>
-
-            <label class="field">전체 자간 <input id="lineupLetterSpacing" type="number" step="0.1" value="-1" /></label>
-            <h2>상대팀명 미세조정</h2>
-            <div class="fine-tune-group">
-              <label class="fine-tune-row">X <input id="lineupOpponentXRange" type="range" min="0" max="1080" value="228" /><input id="lineupOpponentXInput" type="number" value="228" /></label>
-              <label class="fine-tune-row">Y <input id="lineupOpponentYRange" type="range" min="0" max="1350" value="354" /><input id="lineupOpponentYInput" type="number" value="354" /></label>
-            </div>
-          </details>
-
-        </section>
-
         <section id="videoControls" class="tab-panel">
-          <h1>영상편집 만들기</h1>
+          <h1>영상편집</h1>
           <label class="field">영상 파일 <input id="videoFileInput" type="file" accept="video/*" /></label>
-          <label class="field">제목 <textarea id="videoTitleInput" rows="3" placeholder="제목 입력 후 Enter로 줄바꿈"></textarea></label>
-          <label class="field">날짜 <input id="videoDate" type="date" /></label>
-          <label class="field">상대팀 <select id="videoOpponentTeam"></select></label>
-          <label class="field">상대팀명 <input id="videoOpponentName" type="text" /></label>
+
+          <div class="field field-stack">
+            <span>미리보기 재생</span>
+            <div class="playback-editor">
+              <button id="videoPlayToggle" class="playback-btn" type="button">▶️</button>
+              <div class="playback-bar-wrap">
+                <input id="videoPlaybackRange" class="playback-range" type="range" min="0" max="0" step="0.1" value="0" />
+              </div>
+              <div id="videoPlaybackTime" class="playback-time">0.0 / 0.0</div>
+            </div>
+          </div>
+
           <div class="field field-stack">
             <span>구간 자르기</span>
             <div class="trim-editor">
@@ -111,16 +120,15 @@
             </div>
           </div>
 
-          <div class="field field-stack">
-            <span>미리보기 재생</span>
-            <div class="playback-editor">
-              <button id="videoPlayToggle" class="playback-btn" type="button">재생</button>
-              <div class="playback-bar-wrap">
-                <input id="videoPlaybackRange" class="playback-range" type="range" min="0" max="0" step="0.1" value="0" />
-              </div>
-              <div id="videoPlaybackTime" class="playback-time">0.0 / 0.0</div>
-            </div>
-          </div>
+          <label class="field">제목 <textarea id="videoTitleInput" rows="3" placeholder="제목 입력 후 Enter로 줄바꿈"></textarea></label>
+          <label class="field">날짜 <input id="videoDate" type="date" /></label>
+          <label class="field">상대팀 <select id="videoOpponentTeam"></select></label>
+          <label class="field">상대팀명 <input id="videoOpponentName" type="text" /></label>
+
+          <details class="tune-details">
+            <summary>내용 직접 입력</summary>
+            <label class="field">내용 <textarea id="videoMetaOverride" rows="3" placeholder="내용 입력 후 Enter로 줄바꿈"></textarea></label>
+          </details>
 
           <details class="tune-details">
             <summary>조정 열기</summary>
@@ -163,11 +171,42 @@
             <div id="videoSaveProgressText" class="save-progress-text">0%</div>
           </div>
         </div>
+
+        <details class="tune-details">
+          <summary>라인업 문구 설정</summary>
+          <label class="field">
+            시각
+            <select id="lineupGameTime">
+              <option value="18:30">18:30</option>
+              <option value="17:00">17:00</option>
+              <option value="14:00">14:00</option>
+              <option value="custom">직접입력</option>
+            </select>
+          </label>
+          <label class="field">직접입력 시각 <input id="lineupGameTimeCustom" type="text" placeholder="예: 18:30" /></label>
+          <label class="field">
+            방송국
+            <select id="lineupBroadcaster">
+              <option value="KBS N SPORTS">KBS N SPORTS</option>
+              <option value="SBS SPORTS">SBS SPORTS</option>
+              <option value="MBC SPORTS+">MBC SPORTS+</option>
+              <option value="SPOTV">SPOTV</option>
+              <option value="SPOTV2">SPOTV2</option>
+            </select>
+          </label>
+          <label class="field checkbox-field"><input id="lineupTerrestrial" type="checkbox" /> 지상파 표기로 바꾸기</label>
+        </details>
+
+        <div id="captionTools" class="caption-tools">
+          <textarea id="captionOutput" class="caption-output" readonly></textarea>
+          <button id="copyCaptionBtn" type="button">문구 복사</button>
+        </div>
+        <div id="copyToast" class="copy-toast" role="status" aria-live="polite"></div>
       </section>
 
       <section class="preview-wrap">
         <div id="previewScale" class="preview-scale">
-          <div id="resultPoster" class="poster tab-preview active">
+          <div id="resultPoster" class="poster tab-preview">
             <div class="poster-canvas">
               <img id="backgroundLayer" class="layer bg" src="assets/bg-win.png" alt="배경" />
               <img id="playerPhoto" class="layer player is-hidden" src="" alt="선수" />
@@ -188,9 +227,9 @@
               <div id="mvpRecordText" class="layer text mvp-record"></div>
             </div>
           </div>
-          <img id="resultMobilePreview" class="mobile-preview active" alt="결과 미리보기" />
+          <img id="resultMobilePreview" class="mobile-preview" alt="결과 미리보기" />
 
-          <div id="lineupPoster" class="poster tab-preview">
+          <div id="lineupPoster" class="poster tab-preview active">
             <div class="poster-canvas">
               <img id="lineupBgLayer" class="layer bg" src="assets/bg-lineup.png" alt="라인업 배경" />
               <img id="lineupPlayerPhoto" class="layer player is-hidden" src="" alt="선발 투수" />
@@ -201,7 +240,7 @@
               <div id="lineupPitcherText" class="layer text lineup-pitcher"></div>
             </div>
           </div>
-          <img id="lineupMobilePreview" class="mobile-preview" alt="라인업 미리보기" />
+          <img id="lineupMobilePreview" class="mobile-preview active" alt="라인업 미리보기" />
 
           <div id="videoPoster" class="poster tab-preview">
             <div class="poster-canvas video-canvas">
@@ -218,6 +257,6 @@
     </main>
 
     <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
-    <script src="script.js"></script>
+    <script src="script.js?v=20260407b"></script>
   </body>
 </html>
