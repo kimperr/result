@@ -155,6 +155,7 @@ const el = {
   videoSaveProgress: document.getElementById('videoSaveProgress'),
   videoSaveProgressFill: document.getElementById('videoSaveProgressFill'),
   videoSaveProgressText: document.getElementById('videoSaveProgressText'),
+  followDownloadBtn: document.getElementById('followDownloadBtn'),
   videoFrameXInput: document.getElementById('videoFrameXInput'),
   videoFrameYInput: document.getElementById('videoFrameYInput'),
   videoFrameXRange: document.getElementById('videoFrameXRange'),
@@ -244,7 +245,7 @@ function formatDate(value) {
 function formatVideoMeta(dateValue, opponentName) {
   const lines = [];
   if (dateValue) lines.push(formatDate(dateValue));
-  if (opponentName) lines.push(`VS ${opponentName}`);
+  if (opponentName) lines.push(`vs ${opponentName}`);
   return lines.join('\n');
 }
 
@@ -321,6 +322,10 @@ function updateVideoPreviewToggleVisibility() {
   }
 }
 
+function updateSecondaryActionButtons() {
+  el.followDownloadBtn.style.display = activeTab === 'video' ? 'block' : 'none';
+}
+
 function syncVideoTrimInputs(source = 'start-range') {
   const duration = Number.isFinite(out.videoPreviewElement.duration) ? out.videoPreviewElement.duration : 0;
   let start = Number(el.videoStartTime.value) || 0;
@@ -344,6 +349,31 @@ function syncVideoTrimInputs(source = 'start-range') {
 
   el.videoStartTime.value = start.toFixed(1).replace(/\.0$/, '');
   el.videoEndTime.value = end.toFixed(1).replace(/\.0$/, '');
+  el.videoTrimStartRange.value = String(start);
+  el.videoTrimEndRange.value = String(end);
+  updateTrimSelectedBar();
+}
+
+function syncVideoTrimDraftInput(source = 'start-input') {
+  const duration = Number.isFinite(out.videoPreviewElement.duration) ? out.videoPreviewElement.duration : 0;
+  const rawStart = el.videoStartTime.value.trim();
+  const rawEnd = el.videoEndTime.value.trim();
+  const parsedStart = Number(rawStart);
+  const parsedEnd = Number(rawEnd);
+
+  let start = Number(el.videoTrimStartRange.value) || 0;
+  let end = Number(el.videoTrimEndRange.value) || duration;
+
+  if (source === 'start-input' && rawStart !== '' && Number.isFinite(parsedStart)) {
+    start = Math.max(0, Math.min(parsedStart, duration));
+    if (start > end) end = start;
+  }
+
+  if (source === 'end-input' && rawEnd !== '' && Number.isFinite(parsedEnd)) {
+    end = Math.max(0, Math.min(parsedEnd, duration || parsedEnd));
+    if (end < start) start = end;
+  }
+
   el.videoTrimStartRange.value = String(start);
   el.videoTrimEndRange.value = String(end);
   updateTrimSelectedBar();
@@ -758,6 +788,13 @@ function syncFineTunePair(numberInput, rangeInput) {
 
 function updateDownloadButtonLabel() {
   el.downloadBtn.textContent = activeTab === 'video' ? '영상 저장' : 'PNG 저장';
+}
+
+function downloadFollowImage() {
+  const link = document.createElement('a');
+  link.href = 'assets/follow.png';
+  link.download = 'follow.png';
+  link.click();
 }
 
 function configureVideoLoop() {
@@ -1187,6 +1224,7 @@ function switchTab(target) {
   if (!isVideo) setVideoPreviewMode(false);
   updateVideoPreviewToggleVisibility();
   updateDownloadButtonLabel();
+  updateSecondaryActionButtons();
 }
 
 function waitForImageElement(img) {
@@ -1383,10 +1421,18 @@ function bindEvents() {
     updateVideoPoster();
   });
   el.videoStartTime.addEventListener('input', () => {
-    syncVideoTrimInputs('start-input');
+    syncVideoTrimDraftInput('start-input');
     updateVideoPoster();
   });
   el.videoEndTime.addEventListener('input', () => {
+    syncVideoTrimDraftInput('end-input');
+    updateVideoPoster();
+  });
+  el.videoStartTime.addEventListener('change', () => {
+    syncVideoTrimInputs('start-input');
+    updateVideoPoster();
+  });
+  el.videoEndTime.addEventListener('change', () => {
     syncVideoTrimInputs('end-input');
     updateVideoPoster();
   });
@@ -1487,9 +1533,11 @@ function bindEvents() {
   el.tabLineup.addEventListener('click', () => switchTab('lineup'));
   el.tabVideo.addEventListener('click', () => switchTab('video'));
   el.downloadBtn.addEventListener('click', downloadImage);
+  el.followDownloadBtn.addEventListener('click', downloadFollowImage);
   window.addEventListener('resize', () => {
     el.previewScale.classList.toggle('video-mobile-plain', activeTab === 'video' && isMobilePreviewMode());
     updateVideoPreviewToggleVisibility();
+    updateSecondaryActionButtons();
     scheduleMobilePreviewRender();
   });
 }
@@ -1531,6 +1579,7 @@ function init() {
   updateVideoPoster();
   updateVideoPreviewToggleVisibility();
   updateDownloadButtonLabel();
+  updateSecondaryActionButtons();
 }
 
 init();

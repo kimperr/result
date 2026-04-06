@@ -361,7 +361,8 @@ textarea {
 
 .button-row { margin-top: 16px; }
 #videoPreviewToggleBtn,
-#downloadBtn {
+#downloadBtn,
+#followDownloadBtn {
   width: 100%;
   font-family: var(--ui-title);
   font-size: 20px;
@@ -373,6 +374,11 @@ textarea {
 #videoPreviewToggleBtn {
   margin-bottom: 10px;
   display: none;
+}
+
+#followDownloadBtn {
+  display: none;
+  margin-top: 10px;
 }
 
 .save-progress {
@@ -689,7 +695,8 @@ textarea {
 
   .tab-btn,
   #videoPreviewToggleBtn,
-  #downloadBtn {
+  #downloadBtn,
+  #followDownloadBtn {
     font-size: 16px;
   }
 
@@ -753,7 +760,8 @@ textarea {
 
   .tab-btn,
   #videoPreviewToggleBtn,
-  #downloadBtn {
+  #downloadBtn,
+  #followDownloadBtn {
     min-height: 44px;
   }
 
