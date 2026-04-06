@@ -187,17 +187,21 @@ select {
   }
 
   .preview-scale {
-    width: min(100%, 360px);
-    display: flex;
-    justify-content: center;
-    padding: 12px;
-    border-radius: 24px;
+    --poster-mobile-width: min(calc(100vw - 56px), 336px);
+    position: relative;
+    width: var(--poster-mobile-width);
+    height: calc(var(--poster-mobile-width) * 1.25);
+    padding: 0;
+    border-radius: 20px;
     background: rgba(255, 255, 255, 0.92);
     box-shadow: 0 18px 40px rgba(0, 0, 0, 0.16);
+    overflow: hidden;
   }
 
   .poster {
-    transform: scale(calc(min(100vw - 56px, 336px) / 1080));
+    position: absolute;
+    inset: 0 auto auto 0;
+    transform: scale(calc(var(--poster-mobile-width) / 1080));
   }
 
   .controls {
