@@ -44,10 +44,15 @@
           <label class="field">전체 자간 <input id="globalLetterSpacing" type="number" step="0.1" value="-1" /></label>
 
           <h2>상대팀명 미세조정</h2>
-          <div class="triple-row">
-            <label>X <input id="opponentXInput" type="number" value="215" /></label>
-            <label>Y <input id="opponentYInput" type="number" value="354" /></label>
-            <label>크기 <input id="opponentSizeInput" type="number" value="28" /></label>
+          <div class="fine-tune-group">
+            <label class="fine-tune-row">X <input id="opponentXRange" type="range" min="0" max="1080" value="215" /><input id="opponentXInput" type="number" value="215" /></label>
+            <label class="fine-tune-row">Y <input id="opponentYRange" type="range" min="0" max="1350" value="354" /><input id="opponentYInput" type="number" value="354" /></label>
+          </div>
+
+          <h2>성적 미세조정</h2>
+          <div class="fine-tune-group">
+            <label class="fine-tune-row">X <input id="mvpRecordXRange" type="range" min="0" max="1080" value="359" /><input id="mvpRecordXInput" type="number" value="359" /></label>
+            <label class="fine-tune-row">Y <input id="mvpRecordYRange" type="range" min="0" max="1350" value="1135" /><input id="mvpRecordYInput" type="number" value="1135" /></label>
           </div>
         </section>
 
@@ -69,10 +74,9 @@
           <label class="field">투수 이름 <input id="lineupPitcherName" type="text" /></label>
           <label class="field">전체 자간 <input id="lineupLetterSpacing" type="number" step="0.1" value="-1" /></label>
           <h2>상대팀명 미세조정</h2>
-          <div class="triple-row">
-            <label>X <input id="lineupOpponentXInput" type="number" value="228" /></label>
-            <label>Y <input id="lineupOpponentYInput" type="number" value="354" /></label>
-            <label>크기 <input id="lineupOpponentSizeInput" type="number" value="28" /></label>
+          <div class="fine-tune-group">
+            <label class="fine-tune-row">X <input id="lineupOpponentXRange" type="range" min="0" max="1080" value="228" /><input id="lineupOpponentXInput" type="number" value="228" /></label>
+            <label class="fine-tune-row">Y <input id="lineupOpponentYRange" type="range" min="0" max="1350" value="354" /><input id="lineupOpponentYInput" type="number" value="354" /></label>
           </div>
 
         </section>
@@ -85,34 +89,40 @@
       <section class="preview-wrap">
         <div class="preview-scale">
           <div id="resultPoster" class="poster tab-preview active">
-            <img id="backgroundLayer" class="layer bg" src="assets/bg-win.png" alt="배경" />
-            <img id="playerPhoto" class="layer player" src="assets/player.png" alt="선수" />
-            <img id="kiaLogo" class="layer team-logo" src="assets/kia2.png" alt="KIA 로고" />
-            <img id="oppLogo" class="layer team-logo" src="assets/lg1.png" alt="상대 로고" />
-            <div id="dateText" class="layer text date"></div>
-            <div id="opponentText" class="layer text opponent"></div>
-            <div id="stadiumText" class="layer text stadium"></div>
-            <div id="homeScoreText" class="layer text score"></div>
-            <div id="awayScoreText" class="layer text score"></div>
-            <div id="badgeWin" class="layer badge win">승</div>
-            <div id="badgeLose" class="layer badge lose">패</div>
-            <div id="badgeSave" class="layer badge save">세</div>
-            <div id="winnerText" class="layer text pitcher"></div>
-            <div id="loserText" class="layer text pitcher"></div>
-            <div id="saveText" class="layer text pitcher"></div>
-            <div id="mvpNameText" class="layer text mvp-name"></div>
-            <div id="mvpRecordText" class="layer text mvp-record"></div>
+            <div class="poster-canvas">
+              <img id="backgroundLayer" class="layer bg" src="assets/bg-win.png" alt="배경" />
+              <img id="playerPhoto" class="layer player is-hidden" src="" alt="선수" />
+              <img id="kiaLogo" class="layer team-logo" src="assets/kia2.png" alt="KIA 로고" />
+              <img id="oppLogo" class="layer team-logo" src="assets/lg1.png" alt="상대 로고" />
+              <div id="dateText" class="layer text date"></div>
+              <div id="opponentText" class="layer text opponent"></div>
+              <div id="stadiumText" class="layer text stadium"></div>
+              <div id="homeScoreText" class="layer text score"></div>
+              <div id="awayScoreText" class="layer text score"></div>
+              <div id="badgeWin" class="layer badge win">승</div>
+              <div id="badgeLose" class="layer badge lose">패</div>
+              <div id="badgeSave" class="layer badge save">세</div>
+              <div id="winnerText" class="layer text pitcher"></div>
+              <div id="loserText" class="layer text pitcher"></div>
+              <div id="saveText" class="layer text pitcher"></div>
+              <div id="mvpNameText" class="layer text mvp-name"></div>
+              <div id="mvpRecordText" class="layer text mvp-record"></div>
+            </div>
           </div>
+          <img id="resultMobilePreview" class="mobile-preview active" alt="결과 미리보기" />
 
           <div id="lineupPoster" class="poster tab-preview">
-            <img id="lineupBgLayer" class="layer bg" src="assets/bg-lineup.png" alt="라인업 배경" />
-            <img id="lineupPlayerPhoto" class="layer player" src="assets/player.png" alt="선발 투수" />
-            <div id="lineupDateText" class="layer text lineup-date"></div>
-            <div id="lineupOpponentText" class="layer text lineup-opponent"></div>
-            <div id="lineupStadiumText" class="layer text lineup-stadium"></div>
-            <div id="lineupTextLayer" class="layer lineup-text-layer"></div>
-            <div id="lineupPitcherText" class="layer text lineup-pitcher"></div>
+            <div class="poster-canvas">
+              <img id="lineupBgLayer" class="layer bg" src="assets/bg-lineup.png" alt="라인업 배경" />
+              <img id="lineupPlayerPhoto" class="layer player is-hidden" src="" alt="선발 투수" />
+              <div id="lineupDateText" class="layer text lineup-date"></div>
+              <div id="lineupOpponentText" class="layer text lineup-opponent"></div>
+              <div id="lineupStadiumText" class="layer text lineup-stadium"></div>
+              <div id="lineupTextLayer" class="layer lineup-text-layer"></div>
+              <div id="lineupPitcherText" class="layer text lineup-pitcher"></div>
+            </div>
           </div>
+          <img id="lineupMobilePreview" class="mobile-preview" alt="라인업 미리보기" />
         </div>
       </section>
     </main>

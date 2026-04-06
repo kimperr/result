@@ -103,7 +103,12 @@ const el = {
   globalLetterSpacing: document.getElementById('globalLetterSpacing'),
   opponentXInput: document.getElementById('opponentXInput'),
   opponentYInput: document.getElementById('opponentYInput'),
-  opponentSizeInput: document.getElementById('opponentSizeInput'),
+  opponentXRange: document.getElementById('opponentXRange'),
+  opponentYRange: document.getElementById('opponentYRange'),
+  mvpRecordXInput: document.getElementById('mvpRecordXInput'),
+  mvpRecordYInput: document.getElementById('mvpRecordYInput'),
+  mvpRecordXRange: document.getElementById('mvpRecordXRange'),
+  mvpRecordYRange: document.getElementById('mvpRecordYRange'),
 
   lineupDate: document.getElementById('lineupDate'),
   lineupKiaSide: document.querySelectorAll('input[name="lineupKiaSide"]'),
@@ -114,7 +119,8 @@ const el = {
   lineupLetterSpacing: document.getElementById('lineupLetterSpacing'),
   lineupOpponentXInput: document.getElementById('lineupOpponentXInput'),
   lineupOpponentYInput: document.getElementById('lineupOpponentYInput'),
-  lineupOpponentSizeInput: document.getElementById('lineupOpponentSizeInput'),
+  lineupOpponentXRange: document.getElementById('lineupOpponentXRange'),
+  lineupOpponentYRange: document.getElementById('lineupOpponentYRange'),
   lineupInputGrid: document.getElementById('lineupInputGrid'),
 
   downloadBtn: document.getElementById('downloadBtn')
@@ -145,11 +151,14 @@ const out = {
   lineupOpponentText: document.getElementById('lineupOpponentText'),
   lineupStadiumText: document.getElementById('lineupStadiumText'),
   lineupTextLayer: document.getElementById('lineupTextLayer'),
-  lineupPitcherText: document.getElementById('lineupPitcherText')
+  lineupPitcherText: document.getElementById('lineupPitcherText'),
+  resultMobilePreview: document.getElementById('resultMobilePreview'),
+  lineupMobilePreview: document.getElementById('lineupMobilePreview')
 };
 
 let activeTab = 'result';
 const lineupTextRefs = { names: {}, positions: {} };
+let mobilePreviewTimer = null;
 
 function selectedValue(radios) {
   return Array.from(radios).find((radio) => radio.checked)?.value;
@@ -166,9 +175,10 @@ function normalizeName(name) {
 }
 
 function getPlayerPhotoPath(name) {
+  if (!normalizeName(name)) return '';
   const normalized = normalizeName(name);
   const matched = Object.keys(PLAYER_NUMBER_BY_NAME).find((key) => normalizeName(key) === normalized);
-  return matched ? `assets/player/${PLAYER_NUMBER_BY_NAME[matched]}.png` : 'assets/player.png';
+  return matched ? `assets/player/${PLAYER_NUMBER_BY_NAME[matched]}.png` : '';
 }
 
 function selectedTeamInfo(selectEl) {
@@ -194,6 +204,91 @@ function applyBadge(node, cfg) {
   node.style.height = `${cfg.size}px`;
   node.style.lineHeight = `${cfg.size}px`;
   node.style.fontSize = `${cfg.font}px`;
+}
+
+function syncFineTunePair(numberInput, rangeInput) {
+  if (!numberInput || !rangeInput) return;
+  const syncFromNumber = () => {
+    rangeInput.value = numberInput.value || rangeInput.min || '0';
+  };
+  const syncFromRange = () => {
+    numberInput.value = rangeInput.value;
+  };
+  numberInput.addEventListener('input', syncFromNumber);
+  rangeInput.addEventListener('input', syncFromRange);
+  syncFromNumber();
+}
+
+function isMobilePreviewMode() {
+  return window.matchMedia('(max-width: 768px)').matches;
+}
+
+async function renderMobilePreview(tabName) {
+  if (!window.html2canvas || !isMobilePreviewMode()) return;
+
+  const poster = tabName === 'result' ? el.resultPoster : el.lineupPoster;
+  const preview = tabName === 'result' ? out.resultMobilePreview : out.lineupMobilePreview;
+  const posterCanvas = poster.querySelector('.poster-canvas');
+  const images = tabName === 'result'
+    ? [out.backgroundLayer, out.playerPhoto, out.kiaLogo, out.oppLogo]
+    : [out.lineupBgLayer, out.lineupPlayerPhoto];
+
+  const wasActive = poster.classList.contains('active');
+  if (!wasActive) poster.classList.add('active');
+
+  const prevPosterWidth = poster.style.width;
+  const prevPosterHeight = poster.style.height;
+  const prevPosterTransform = poster.style.transform;
+  const prevCanvasPosition = posterCanvas?.style.position || '';
+  const prevCanvasInset = posterCanvas?.style.inset || '';
+  const prevCanvasWidth = posterCanvas?.style.width || '';
+  const prevCanvasHeight = posterCanvas?.style.height || '';
+  const prevCanvasTransform = posterCanvas?.style.transform || '';
+
+  try {
+    await document.fonts.ready;
+    await Promise.all(images.map(waitForImageElement));
+
+    // Capture from the full-size poster, not the mobile-scaled preview layout.
+    poster.style.width = '1080px';
+    poster.style.height = '1350px';
+    poster.style.transform = 'none';
+    if (posterCanvas) {
+      posterCanvas.style.position = 'relative';
+      posterCanvas.style.inset = 'auto';
+      posterCanvas.style.width = '1080px';
+      posterCanvas.style.height = '1350px';
+      posterCanvas.style.transform = 'none';
+    }
+
+    const canvas = await html2canvas(poster, {
+      useCORS: true,
+      scale: 1,
+      backgroundColor: null
+    });
+    preview.src = canvas.toDataURL('image/png', 1);
+  } finally {
+    poster.style.width = prevPosterWidth;
+    poster.style.height = prevPosterHeight;
+    poster.style.transform = prevPosterTransform;
+    if (posterCanvas) {
+      posterCanvas.style.position = prevCanvasPosition;
+      posterCanvas.style.inset = prevCanvasInset;
+      posterCanvas.style.width = prevCanvasWidth;
+      posterCanvas.style.height = prevCanvasHeight;
+      posterCanvas.style.transform = prevCanvasTransform;
+    }
+    if (!wasActive) poster.classList.remove('active');
+  }
+}
+
+function scheduleMobilePreviewRender() {
+  if (mobilePreviewTimer) clearTimeout(mobilePreviewTimer);
+  mobilePreviewTimer = setTimeout(async () => {
+    if (!isMobilePreviewMode()) return;
+    await renderMobilePreview('result');
+    await renderMobilePreview('lineup');
+  }, 80);
 }
 
 function buildLineupInputs() {
@@ -255,8 +350,10 @@ function updateResultPoster() {
   out.loserText.textContent = el.loserName.value;
   out.saveText.textContent = el.saveName.value;
   out.mvpNameText.textContent = el.mvpName.value || '';
-  out.mvpRecordText.textContent = el.mvpRecord.value || '';
-  out.playerPhoto.src = getPlayerPhotoPath(el.mvpName.value);
+  out.mvpRecordText.textContent = el.mvpRecord.value ? `(${el.mvpRecord.value})` : '';
+  const playerPhotoPath = getPlayerPhotoPath(el.mvpName.value);
+  out.playerPhoto.classList.toggle('is-hidden', !playerPhotoPath);
+  if (playerPhotoPath) out.playerPhoto.src = playerPhotoPath;
 
   const hasWinner = Boolean(el.winnerName.value.trim());
   const hasLoser = Boolean(el.loserName.value.trim());
@@ -273,7 +370,8 @@ function updateResultPoster() {
 
   RESULT_LAYOUT.opponentText.x = Number(el.opponentXInput.value) || RESULT_LAYOUT.opponentText.x;
   RESULT_LAYOUT.opponentText.y = Number(el.opponentYInput.value) || RESULT_LAYOUT.opponentText.y;
-  RESULT_LAYOUT.opponentText.size = Number(el.opponentSizeInput.value) || RESULT_LAYOUT.opponentText.size;
+  RESULT_LAYOUT.mvpRecordText.x = Number(el.mvpRecordXInput.value) || RESULT_LAYOUT.mvpRecordText.x;
+  RESULT_LAYOUT.mvpRecordText.y = Number(el.mvpRecordYInput.value) || RESULT_LAYOUT.mvpRecordText.y;
 
   applyText(out.dateText, RESULT_LAYOUT.dateText);
   applyText(out.opponentText, RESULT_LAYOUT.opponentText);
@@ -288,6 +386,7 @@ function updateResultPoster() {
   applyBadge(out.badgeWin, RESULT_LAYOUT.badgeWin);
   applyBadge(out.badgeLose, RESULT_LAYOUT.badgeLose);
   applyBadge(out.badgeSave, RESULT_LAYOUT.badgeSave);
+  scheduleMobilePreviewRender();
 }
 
 function updateLineupPoster() {
@@ -298,11 +397,12 @@ function updateLineupPoster() {
   out.lineupDateText.textContent = formatDate(el.lineupDate.value);
   LINEUP_LAYOUT.opponentText.x = Number(el.lineupOpponentXInput.value) || LINEUP_LAYOUT.opponentText.x;
   LINEUP_LAYOUT.opponentText.y = Number(el.lineupOpponentYInput.value) || LINEUP_LAYOUT.opponentText.y;
-  LINEUP_LAYOUT.opponentText.size = Number(el.lineupOpponentSizeInput.value) || LINEUP_LAYOUT.opponentText.size;
   out.lineupOpponentText.textContent = `vs ${el.lineupOpponentName.value || team.name}`;
   out.lineupStadiumText.textContent = el.lineupStadiumName.value;
   out.lineupPitcherText.textContent = el.lineupPitcherName.value;
-  out.lineupPlayerPhoto.src = getPlayerPhotoPath(el.lineupPitcherName.value);
+  const lineupPhotoPath = getPlayerPhotoPath(el.lineupPitcherName.value);
+  out.lineupPlayerPhoto.classList.toggle('is-hidden', !lineupPhotoPath);
+  if (lineupPhotoPath) out.lineupPlayerPhoto.src = lineupPhotoPath;
   const spacing = Number(el.lineupLetterSpacing.value);
   el.lineupPoster.style.setProperty('--global-letter-spacing', `${Number.isFinite(spacing) ? spacing : -1}px`);
 
@@ -325,6 +425,7 @@ function updateLineupPoster() {
     applyText(lineupTextRefs.names[i], LINEUP_LAYOUT.names[i]);
     applyText(lineupTextRefs.positions[i], LINEUP_LAYOUT.positions[i]);
   }
+  scheduleMobilePreviewRender();
 }
 
 function switchTab(target) {
@@ -336,10 +437,15 @@ function switchTab(target) {
   el.lineupControls.classList.toggle('active', !isResult);
   el.resultPoster.classList.toggle('active', isResult);
   el.lineupPoster.classList.toggle('active', !isResult);
+  out.resultMobilePreview.classList.toggle('active', isResult);
+  out.lineupMobilePreview.classList.toggle('active', !isResult);
 }
 
 function waitForImageElement(img) {
-  if (!img || (img.complete && img.naturalWidth > 0)) return Promise.resolve();
+  if (!img) return Promise.resolve();
+  if (img.classList?.contains('is-hidden')) return Promise.resolve();
+  if (!img.getAttribute('src')) return Promise.resolve();
+  if (img.complete) return Promise.resolve();
   return new Promise((resolve) => {
     const done = () => {
       img.removeEventListener('load', done);
@@ -386,11 +492,19 @@ function populateTeamSelect(selectEl) {
 }
 
 function bindEvents() {
+  syncFineTunePair(el.opponentXInput, el.opponentXRange);
+  syncFineTunePair(el.opponentYInput, el.opponentYRange);
+  syncFineTunePair(el.mvpRecordXInput, el.mvpRecordXRange);
+  syncFineTunePair(el.mvpRecordYInput, el.mvpRecordYRange);
+  syncFineTunePair(el.lineupOpponentXInput, el.lineupOpponentXRange);
+  syncFineTunePair(el.lineupOpponentYInput, el.lineupOpponentYRange);
+
   const resultInputs = [
     ...el.result, ...el.kiaSide, el.gameDate, el.opponentTeam, el.opponentName,
     el.stadiumName, el.homeScore, el.awayScore, el.mvpName, el.mvpRecord,
     el.winnerName, el.loserName, el.saveName, el.globalLetterSpacing,
-    el.opponentXInput, el.opponentYInput, el.opponentSizeInput
+    el.opponentXInput, el.opponentYInput, el.opponentXRange, el.opponentYRange,
+    el.mvpRecordXInput, el.mvpRecordYInput, el.mvpRecordXRange, el.mvpRecordYRange
   ];
   resultInputs.forEach((input) => {
     input.addEventListener('input', updateResultPoster);
@@ -413,7 +527,8 @@ function bindEvents() {
     el.lineupLetterSpacing,
     el.lineupOpponentXInput,
     el.lineupOpponentYInput,
-    el.lineupOpponentSizeInput
+    el.lineupOpponentXRange,
+    el.lineupOpponentYRange
   ];
   const lineupSideInputs = [...el.lineupKiaSide];
   lineupInputs.forEach((input) => {
@@ -452,6 +567,7 @@ function bindEvents() {
   el.tabResult.addEventListener('click', () => switchTab('result'));
   el.tabLineup.addEventListener('click', () => switchTab('lineup'));
   el.downloadBtn.addEventListener('click', downloadImage);
+  window.addEventListener('resize', scheduleMobilePreviewRender);
 }
 
 function setToday(target) {
