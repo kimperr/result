@@ -198,6 +198,7 @@ const el = {
   videoMetaSizeRange: document.getElementById('videoMetaSizeRange'),
 
   downloadBtn: document.getElementById('downloadBtn'),
+  lineupCaptionSettings: document.getElementById('lineupCaptionSettings'),
   captionTools: document.getElementById('captionTools'),
   captionOutput: document.getElementById('captionOutput'),
   copyCaptionBtn: document.getElementById('copyCaptionBtn'),
@@ -412,6 +413,9 @@ function updateVideoPreviewToggleVisibility() {
 
 function updateSecondaryActionButtons() {
   el.followDownloadBtn.style.display = activeTab === 'video' ? 'block' : 'none';
+  if (el.lineupCaptionSettings) {
+    el.lineupCaptionSettings.style.display = activeTab === 'lineup' ? 'block' : 'none';
+  }
   const showCaptionTools = activeTab === 'lineup' || activeTab === 'result';
   if (el.captionTools) {
     el.captionTools.style.display = showCaptionTools ? 'grid' : 'none';
@@ -825,6 +829,10 @@ async function renderVideoPreviewFrameImage() {
 
 function normalizeName(name) {
   return (name || '').replace(/\s+/g, '');
+}
+
+function formatDisplayName(name) {
+  return (name || '').replace(/\s*\(\d+\)\s*$/, '').trim();
 }
 
 function getPlayerPhotoPath(name) {
@@ -1274,7 +1282,7 @@ function updateResultPoster() {
   out.winnerText.textContent = el.winnerName.value;
   out.loserText.textContent = el.loserName.value;
   out.saveText.textContent = el.saveName.value;
-  out.mvpNameText.textContent = el.mvpName.value || '';
+  out.mvpNameText.textContent = formatDisplayName(el.mvpName.value);
   out.mvpRecordText.textContent = el.mvpRecord.value ? `(${el.mvpRecord.value})` : '';
   const playerPhotoPath = getPlayerPhotoPath(el.mvpName.value);
   out.playerPhoto.classList.toggle('is-hidden', !playerPhotoPath);
@@ -1322,7 +1330,7 @@ function updateLineupPoster() {
   LINEUP_LAYOUT.opponentText.y = Number(el.lineupOpponentYInput.value) || LINEUP_LAYOUT.opponentText.y;
   out.lineupOpponentText.textContent = `vs ${el.lineupOpponentName.value || team.name}`;
   out.lineupStadiumText.textContent = el.lineupStadiumName.value;
-  out.lineupPitcherText.textContent = el.lineupPitcherName.value;
+  out.lineupPitcherText.textContent = formatDisplayName(el.lineupPitcherName.value);
   const lineupPhotoPath = getPlayerPhotoPath(el.lineupPitcherName.value);
   out.lineupPlayerPhoto.classList.toggle('is-hidden', !lineupPhotoPath);
   if (lineupPhotoPath) out.lineupPlayerPhoto.src = lineupPhotoPath;
