@@ -120,7 +120,6 @@ const el = {
   kiaSide: document.querySelectorAll('input[name="kiaSide"]'),
   gameDate: document.getElementById('gameDate'),
   opponentTeam: document.getElementById('opponentTeam'),
-  opponentName: document.getElementById('opponentName'),
   stadiumName: document.getElementById('stadiumName'),
   homeScore: document.getElementById('homeScore'),
   awayScore: document.getElementById('awayScore'),
@@ -142,7 +141,6 @@ const el = {
   lineupDate: document.getElementById('lineupDate'),
   lineupKiaSide: document.querySelectorAll('input[name="lineupKiaSide"]'),
   lineupOpponentTeam: document.getElementById('lineupOpponentTeam'),
-  lineupOpponentName: document.getElementById('lineupOpponentName'),
   lineupStadiumName: document.getElementById('lineupStadiumName'),
   lineupPitcherName: document.getElementById('lineupPitcherName'),
   lineupLetterSpacing: document.getElementById('lineupLetterSpacing'),
@@ -160,7 +158,6 @@ const el = {
   videoTitleInput: document.getElementById('videoTitleInput'),
   videoDate: document.getElementById('videoDate'),
   videoOpponentTeam: document.getElementById('videoOpponentTeam'),
-  videoOpponentName: document.getElementById('videoOpponentName'),
   videoMetaOverride: document.getElementById('videoMetaOverride'),
   videoStartTime: document.getElementById('videoStartTime'),
   videoEndTime: document.getElementById('videoEndTime'),
@@ -255,9 +252,45 @@ const videoState = {
   overlayBitmapPromise: null,
   previewMode: false
 };
+let resultManualOverride = false;
 
 function selectedValue(radios) {
   return Array.from(radios).find((radio) => radio.checked)?.value;
+}
+
+function setSelectedRadioValue(radios, value) {
+  Array.from(radios).forEach((radio) => {
+    radio.checked = radio.value === value;
+  });
+}
+
+function syncNumberRangeValues(numberInput, rangeInput, value) {
+  if (numberInput) numberInput.value = String(value);
+  if (rangeInput) rangeInput.value = String(value);
+}
+
+function parseScoreInput(value) {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : 0;
+}
+
+function getAutoResultValue() {
+  const side = selectedValue(el.kiaSide);
+  const homeScore = parseScoreInput(el.homeScore.value);
+  const awayScore = parseScoreInput(el.awayScore.value);
+  const kiaScore = side === 'home' ? homeScore : awayScore;
+  const opponentScore = side === 'home' ? awayScore : homeScore;
+
+  if (kiaScore > opponentScore) return 'win';
+  if (kiaScore < opponentScore) return 'lose';
+  return 'draw';
+}
+
+function syncAutoResultSelection() {
+  if (resultManualOverride) return selectedValue(el.result) || 'win';
+  const autoResult = getAutoResultValue();
+  setSelectedRadioValue(el.result, autoResult);
+  return autoResult;
 }
 
 function formatDate(value) {
@@ -281,7 +314,7 @@ function getVideoMetaLines() {
 
   if (overrideLines.length) return overrideLines;
 
-  return formatVideoMeta(el.videoDate.value, el.videoOpponentName.value || el.videoOpponentTeam.value)
+  return formatVideoMeta(el.videoDate.value, el.videoOpponentTeam.value)
     .split('\n')
     .filter(Boolean);
 }
@@ -312,9 +345,15 @@ function getLineupGameTimeLabel() {
   return selected;
 }
 
+function updateLineupGameTimeCustomVisibility() {
+  const customField = el.lineupGameTimeCustom?.closest('label');
+  if (!customField) return;
+  customField.style.display = el.lineupGameTime?.value === 'custom' ? '' : 'none';
+}
+
 function getGeneratedCaptionText() {
   if (activeTab === 'lineup') {
-    const teamName = (el.lineupOpponentName.value || el.lineupOpponentTeam.value || '').trim();
+    const teamName = (el.lineupOpponentTeam.value || '').trim();
     const timeLabel = getLineupGameTimeLabel();
     const broadcasterLabel = getLineupBroadcastLabel();
     return [
@@ -324,14 +363,14 @@ function getGeneratedCaptionText() {
   }
 
   if (activeTab === 'result') {
-    const teamName = (el.opponentName.value || el.opponentTeam.value || '').trim();
+    const teamName = (el.opponentTeam.value || '').trim();
     const resultMap = { win: '승리', draw: '무승부', lose: '패배' };
-    const resultLabel = resultMap[selectedValue(el.result)] || '승리';
+    const resultLabel = resultMap[syncAutoResultSelection()] || '승리';
     const homeScore = el.homeScore.value || '0';
     const awayScore = el.awayScore.value || '0';
     return [
       `𝐅𝐈𝐍𝐀𝐋 vs ${teamName}`,
-      `${homeScore} - ${awayScore} ${resultLabel}`
+      `${awayScore} - ${homeScore} ${resultLabel}`
     ].join('\n');
   }
 
@@ -858,10 +897,6 @@ function applySharedOpponent(teamName) {
   el.lineupOpponentTeam.value = sharedName;
   el.videoOpponentTeam.value = sharedName;
 
-  el.opponentName.value = sharedName;
-  el.lineupOpponentName.value = sharedName;
-  el.videoOpponentName.value = sharedName;
-
   el.stadiumName.value = selectedValue(el.kiaSide) === 'home' ? KIA_HOME_STADIUM : team.stadium;
   el.lineupStadiumName.value = selectedValue(el.lineupKiaSide) === 'home' ? KIA_HOME_STADIUM : team.stadium;
 
@@ -869,6 +904,26 @@ function applySharedOpponent(teamName) {
   updateLineupPoster();
   updateVideoPoster();
   updateSecondaryActionButtons();
+}
+
+function applySharedKiaSide(side) {
+  setSelectedRadioValue(el.kiaSide, side);
+  setSelectedRadioValue(el.lineupKiaSide, side);
+  const team = selectedTeamInfo(el.opponentTeam);
+  const stadium = side === 'home' ? KIA_HOME_STADIUM : team.stadium;
+  el.stadiumName.value = stadium;
+  el.lineupStadiumName.value = stadium;
+  updateResultPoster();
+  updateLineupPoster();
+}
+
+function applySharedOpponentFineTune(x, y) {
+  syncNumberRangeValues(el.opponentXInput, el.opponentXRange, x);
+  syncNumberRangeValues(el.lineupOpponentXInput, el.lineupOpponentXRange, x);
+  syncNumberRangeValues(el.opponentYInput, el.opponentYRange, y);
+  syncNumberRangeValues(el.lineupOpponentYInput, el.lineupOpponentYRange, y);
+  updateResultPoster();
+  updateLineupPoster();
 }
 
 function teamLogoFile(code, side, result) {
@@ -972,16 +1027,16 @@ function configureVideoLoop() {
       return;
     }
     if (video.currentTime >= end) {
-      video.currentTime = start;
-      const playPromise = video.play();
-      if (playPromise?.catch) playPromise.catch(() => {});
+      video.currentTime = end;
+      video.pause();
+      updateVideoPlaybackUi();
     }
   };
 
   video.addEventListener('timeupdate', videoState.loopHandler);
 }
 
-function updateVideoPoster() {
+function updateVideoPoster(previewTarget = 'keep') {
   const video = out.videoPreviewElement;
   const wasPlaying = !video.paused;
   const { layout, titleLines, metaLines, titleTop, metaTop } = getVideoOverlaySnapshot();
@@ -1004,9 +1059,13 @@ function updateVideoPoster() {
   configureVideoLoop();
 
   if (!video.getAttribute('src')) return;
-  const { start } = getVideoTrimTimes();
-  if (Math.abs(video.currentTime - start) > 0.15) {
-    video.currentTime = start;
+  const { start, end } = getVideoTrimTimes();
+  let nextTime = Number.isFinite(video.currentTime) ? video.currentTime : start;
+  if (previewTarget === 'start') nextTime = start;
+  if (previewTarget === 'end') nextTime = end;
+  nextTime = Math.max(start, Math.min(nextTime, end));
+  if (Math.abs(video.currentTime - nextTime) > 0.15) {
+    video.currentTime = nextTime;
   }
   video.muted = false;
   video.volume = 1;
@@ -1256,7 +1315,7 @@ function buildLineupTextLayer() {
 }
 
 function updateResultPoster() {
-  const result = selectedValue(el.result);
+  const result = syncAutoResultSelection();
   const side = selectedValue(el.kiaSide);
   const team = selectedTeamInfo(el.opponentTeam);
 
@@ -1264,10 +1323,10 @@ function updateResultPoster() {
   el.resultPoster.style.setProperty('--global-letter-spacing', `${Number(el.globalLetterSpacing.value) || 0}px`);
 
   out.dateText.textContent = formatDate(el.gameDate.value);
-  out.opponentText.textContent = `vs ${el.opponentName.value || team.name}`;
+  out.opponentText.textContent = `vs ${team.name}`;
   out.stadiumText.textContent = el.stadiumName.value;
-  out.homeScoreText.textContent = el.homeScore.value || '0';
-  out.awayScoreText.textContent = el.awayScore.value || '0';
+  out.homeScoreText.textContent = el.awayScore.value || '0';
+  out.awayScoreText.textContent = el.homeScore.value || '0';
 
   out.homeScoreText.classList.remove('kia', 'opp');
   out.awayScoreText.classList.remove('kia', 'opp');
@@ -1328,7 +1387,7 @@ function updateLineupPoster() {
   out.lineupDateText.textContent = formatDate(el.lineupDate.value);
   LINEUP_LAYOUT.opponentText.x = Number(el.lineupOpponentXInput.value) || LINEUP_LAYOUT.opponentText.x;
   LINEUP_LAYOUT.opponentText.y = Number(el.lineupOpponentYInput.value) || LINEUP_LAYOUT.opponentText.y;
-  out.lineupOpponentText.textContent = `vs ${el.lineupOpponentName.value || team.name}`;
+  out.lineupOpponentText.textContent = `vs ${team.name}`;
   out.lineupStadiumText.textContent = el.lineupStadiumName.value;
   out.lineupPitcherText.textContent = formatDisplayName(el.lineupPitcherName.value);
   const lineupPhotoPath = getPlayerPhotoPath(el.lineupPitcherName.value);
@@ -1468,7 +1527,7 @@ function bindEvents() {
   syncFineTunePair(el.videoMetaSizeInput, el.videoMetaSizeRange);
 
   const resultInputs = [
-    ...el.result, ...el.kiaSide, el.gameDate, el.opponentTeam, el.opponentName,
+    ...el.result, ...el.kiaSide, el.gameDate, el.opponentTeam,
     el.stadiumName, el.homeScore, el.awayScore, el.mvpName, el.mvpRecord,
     el.winnerName, el.loserName, el.saveName, el.globalLetterSpacing,
     el.opponentXInput, el.opponentYInput, el.opponentXRange, el.opponentYRange,
@@ -1480,11 +1539,16 @@ function bindEvents() {
     input.addEventListener('input', updateSecondaryActionButtons);
     input.addEventListener('change', updateSecondaryActionButtons);
   });
+  el.result.forEach((input) => {
+    input.addEventListener('change', () => {
+      resultManualOverride = true;
+      updateResultPoster();
+      updateSecondaryActionButtons();
+    });
+  });
   el.kiaSide.forEach((input) => {
     input.addEventListener('change', () => {
-      const team = selectedTeamInfo(el.opponentTeam);
-      el.stadiumName.value = selectedValue(el.kiaSide) === 'home' ? KIA_HOME_STADIUM : team.stadium;
-      updateResultPoster();
+      applySharedKiaSide(selectedValue(el.kiaSide));
     });
   });
 
@@ -1495,7 +1559,6 @@ function bindEvents() {
   const lineupInputs = [
     el.lineupDate,
     el.lineupOpponentTeam,
-    el.lineupOpponentName,
     el.lineupStadiumName,
     el.lineupPitcherName,
     el.lineupGameTime,
@@ -1515,15 +1578,33 @@ function bindEvents() {
     input.addEventListener('input', updateSecondaryActionButtons);
     input.addEventListener('change', updateSecondaryActionButtons);
   });
+  el.lineupGameTime?.addEventListener('input', updateLineupGameTimeCustomVisibility);
+  el.lineupGameTime?.addEventListener('change', updateLineupGameTimeCustomVisibility);
   lineupSideInputs.forEach((input) => {
     input.addEventListener('input', updateLineupPoster);
     input.addEventListener('change', updateLineupPoster);
   });
   el.lineupKiaSide.forEach((input) => {
     input.addEventListener('change', () => {
-      const team = selectedTeamInfo(el.lineupOpponentTeam);
-      el.lineupStadiumName.value = selectedValue(el.lineupKiaSide) === 'home' ? KIA_HOME_STADIUM : team.stadium;
-      updateLineupPoster();
+      applySharedKiaSide(selectedValue(el.lineupKiaSide));
+    });
+  });
+
+  [el.opponentXInput, el.opponentXRange, el.opponentYInput, el.opponentYRange].forEach((input) => {
+    input.addEventListener('input', () => {
+      applySharedOpponentFineTune(el.opponentXInput.value || 0, el.opponentYInput.value || 0);
+    });
+    input.addEventListener('change', () => {
+      applySharedOpponentFineTune(el.opponentXInput.value || 0, el.opponentYInput.value || 0);
+    });
+  });
+
+  [el.lineupOpponentXInput, el.lineupOpponentXRange, el.lineupOpponentYInput, el.lineupOpponentYRange].forEach((input) => {
+    input.addEventListener('input', () => {
+      applySharedOpponentFineTune(el.lineupOpponentXInput.value || 0, el.lineupOpponentYInput.value || 0);
+    });
+    input.addEventListener('change', () => {
+      applySharedOpponentFineTune(el.lineupOpponentXInput.value || 0, el.lineupOpponentYInput.value || 0);
     });
   });
 
@@ -1553,7 +1634,6 @@ function bindEvents() {
     el.videoTitleInput,
     el.videoDate,
     el.videoOpponentTeam,
-    el.videoOpponentName,
     el.videoMetaOverride,
     el.videoStartTime,
     el.videoEndTime,
@@ -1587,27 +1667,27 @@ function bindEvents() {
 
   el.videoTrimStartRange.addEventListener('input', () => {
     syncVideoTrimInputs('start-range');
-    updateVideoPoster();
+    updateVideoPoster('start');
   });
   el.videoTrimEndRange.addEventListener('input', () => {
     syncVideoTrimInputs('end-range');
-    updateVideoPoster();
+    updateVideoPoster('end');
   });
   el.videoStartTime.addEventListener('input', () => {
     syncVideoTrimDraftInput('start-input');
-    updateVideoPoster();
+    updateVideoPoster('start');
   });
   el.videoEndTime.addEventListener('input', () => {
     syncVideoTrimDraftInput('end-input');
-    updateVideoPoster();
+    updateVideoPoster('end');
   });
   el.videoStartTime.addEventListener('change', () => {
     syncVideoTrimInputs('start-input');
-    updateVideoPoster();
+    updateVideoPoster('start');
   });
   el.videoEndTime.addEventListener('change', () => {
     syncVideoTrimInputs('end-input');
-    updateVideoPoster();
+    updateVideoPoster('end');
   });
 
   el.videoPlayToggle.addEventListener('click', async () => {
@@ -1729,9 +1809,6 @@ function init() {
   el.opponentTeam.value = 'LG 트윈스';
   el.lineupOpponentTeam.value = 'LG 트윈스';
   el.videoOpponentTeam.value = 'LG 트윈스';
-  el.opponentName.value = 'LG 트윈스';
-  el.lineupOpponentName.value = 'LG 트윈스';
-  el.videoOpponentName.value = 'LG 트윈스';
   el.stadiumName.value = KIA_HOME_STADIUM;
   el.lineupStadiumName.value = KIA_HOME_STADIUM;
 
@@ -1746,6 +1823,10 @@ function init() {
 
   bindEvents();
   configureVideoTrimRange(0);
+  updateLineupGameTimeCustomVisibility();
+  applySharedKiaSide('home');
+  applySharedOpponentFineTune(el.lineupOpponentXInput.value || 228, el.lineupOpponentYInput.value || 354);
+  syncAutoResultSelection();
   updateResultPoster();
   updateLineupPoster();
   updateVideoPoster();
