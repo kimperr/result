@@ -214,6 +214,16 @@ function syncFineTunePair(numberInput, rangeInput) {
   const syncFromRange = () => {
     numberInput.value = rangeInput.value;
   };
+  const clearTextFocus = () => {
+    const active = document.activeElement;
+    if (!(active instanceof HTMLElement)) return;
+    if (active === rangeInput || active === numberInput) return;
+    if (active instanceof HTMLInputElement || active instanceof HTMLTextAreaElement) {
+      active.blur();
+    }
+  };
+  rangeInput.addEventListener('pointerdown', clearTextFocus);
+  rangeInput.addEventListener('touchstart', clearTextFocus, { passive: true });
   numberInput.addEventListener('input', syncFromNumber);
   rangeInput.addEventListener('input', syncFromRange);
   syncFromNumber();
