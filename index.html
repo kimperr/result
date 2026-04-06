@@ -12,6 +12,7 @@
         <div class="tab-row">
           <button id="tabResult" class="tab-btn active" type="button">탭1 경기결과</button>
           <button id="tabLineup" class="tab-btn" type="button">탭2 라인업</button>
+          <button id="tabVideo" class="tab-btn" type="button">탭3 영상편집</button>
         </div>
 
         <section id="resultControls" class="tab-panel active">
@@ -81,6 +82,41 @@
 
         </section>
 
+        <section id="videoControls" class="tab-panel">
+          <h1>영상편집 만들기</h1>
+          <label class="field">영상 파일 <input id="videoFileInput" type="file" accept="video/*" /></label>
+          <label class="field">1줄 제목 <input id="videoTitleLine1" type="text" placeholder="영상 제목 1줄" /></label>
+          <label class="field">2줄 제목 <input id="videoTitleLine2" type="text" placeholder="영상 제목 2줄" /></label>
+          <label class="field">날짜 <input id="videoDate" type="date" /></label>
+          <label class="field">상대팀 <select id="videoOpponentTeam"></select></label>
+          <label class="field">상대팀명 <input id="videoOpponentName" type="text" /></label>
+          <label class="field">시작 시간 <input id="videoStartTime" type="number" min="0" step="0.1" value="0" /></label>
+          <label class="field">종료 시간 <input id="videoEndTime" type="number" min="0" step="0.1" placeholder="전체 길이" /></label>
+
+          <h2>영상 위치 조정</h2>
+          <div class="fine-tune-group">
+            <label class="fine-tune-row">X <input id="videoFrameXRange" type="range" min="0" max="260" value="90" /><input id="videoFrameXInput" type="number" value="90" /></label>
+            <label class="fine-tune-row">Y <input id="videoFrameYRange" type="range" min="200" max="700" value="360" /><input id="videoFrameYInput" type="number" value="360" /></label>
+            <label class="fine-tune-row">크기 <input id="videoFrameScaleRange" type="range" min="60" max="130" value="100" /><input id="videoFrameScaleInput" type="number" value="100" /></label>
+          </div>
+
+          <h2>제목 위치 조정</h2>
+          <div class="fine-tune-group">
+            <label class="fine-tune-row">X <input id="videoTitleXRange" type="range" min="0" max="240" value="120" /><input id="videoTitleXInput" type="number" value="120" /></label>
+            <label class="fine-tune-row">Y <input id="videoTitleYRange" type="range" min="100" max="320" value="182" /><input id="videoTitleYInput" type="number" value="182" /></label>
+            <label class="fine-tune-row">크기 <input id="videoTitleSizeRange" type="range" min="36" max="88" value="56" /><input id="videoTitleSizeInput" type="number" value="56" /></label>
+          </div>
+
+          <h2>날짜/상대팀 위치 조정</h2>
+          <div class="fine-tune-group">
+            <label class="fine-tune-row">X <input id="videoMetaXRange" type="range" min="0" max="240" value="120" /><input id="videoMetaXInput" type="number" value="120" /></label>
+            <label class="fine-tune-row">Y <input id="videoMetaYRange" type="range" min="760" max="1180" value="938" /><input id="videoMetaYInput" type="number" value="938" /></label>
+            <label class="fine-tune-row">크기 <input id="videoMetaSizeRange" type="range" min="20" max="44" value="28" /><input id="videoMetaSizeInput" type="number" value="28" /></label>
+          </div>
+
+          <p class="fixed-note">MP4 저장을 먼저 시도하고, 브라우저가 막으면 WebM으로 자동 저장합니다.</p>
+        </section>
+
         <div class="button-row">
           <button id="downloadBtn" type="button">PNG 저장</button>
         </div>
@@ -123,6 +159,20 @@
             </div>
           </div>
           <img id="lineupMobilePreview" class="mobile-preview" alt="라인업 미리보기" />
+
+          <div id="videoPoster" class="poster tab-preview">
+            <div class="poster-canvas video-canvas">
+              <img id="videoBgImage" class="layer video-bg-image" src="assets/bg-video.png" alt="영상 배경" />
+              <div class="layer video-bg"></div>
+              <div class="layer video-ribbon top"></div>
+              <div class="layer video-ribbon bottom"></div>
+              <div class="layer video-ribbon-text top">오늘의 타이거즈</div>
+              <div class="layer video-ribbon-text bottom">오늘의 타이거즈</div>
+              <div id="videoTitleText" class="layer video-title-text"></div>
+              <video id="videoPreviewElement" class="layer video-preview-element" playsinline muted preload="metadata"></video>
+              <div id="videoMetaText" class="layer video-meta-text"></div>
+            </div>
+          </div>
         </div>
       </section>
     </main>

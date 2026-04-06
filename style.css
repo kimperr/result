@@ -109,7 +109,7 @@ body { margin: 0; font-family: 'Pretendard', sans-serif; background: #e6e6e6; }
   font-family: var(--ui-body);
 }
 
-.tab-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px; }
+.tab-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 12px; }
 .tab-btn {
   border: 0;
   background: #3b3e45;
@@ -235,6 +235,11 @@ select {
   width: 100%;
   height: 100%;
 }
+.video-canvas {
+  background:
+    radial-gradient(circle at 50% 48%, rgba(255, 255, 255, 0.1), transparent 38%),
+    linear-gradient(180deg, #7f0b0d 0%, #8d1b19 48%, #781310 100%);
+}
 .mobile-preview { display: none; }
 .tab-preview { display: none; }
 .tab-preview.active { display: block; }
@@ -284,6 +289,82 @@ select {
 .lineup-pos-text { position: absolute; color: #fff; font: 300 62px/1 'Pretendard', sans-serif; letter-spacing: var(--global-letter-spacing); }
 .lineup-pitcher { color: #000; font: 400 62px/1 'boldfont', 'Pretendard', sans-serif; white-space: pre; letter-spacing: var(--global-letter-spacing); font-family: 'boldfont', 'Pretendard', sans-serif !important; width: 360px; text-align: right; }
 #lineupPoster .text { letter-spacing: var(--global-letter-spacing); }
+
+.video-bg {
+  inset: 0;
+  background:
+    radial-gradient(circle at 50% 48%, rgba(255, 255, 255, 0.1), transparent 38%),
+    linear-gradient(180deg, #7f0b0d 0%, #8d1b19 48%, #781310 100%);
+}
+
+.video-bg-image {
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: none;
+}
+
+.video-ribbon {
+  left: 95px;
+  width: 890px;
+  height: 32px;
+  background: linear-gradient(90deg, #b10e10, #8f0808);
+}
+
+.video-ribbon.top {
+  top: 92px;
+}
+
+.video-ribbon.bottom {
+  bottom: 92px;
+}
+
+.video-ribbon-text {
+  width: 890px;
+  left: 95px;
+  color: #fff;
+  text-align: center;
+  font: 700 18px/32px 'Pretendard', sans-serif;
+}
+
+.video-ribbon-text.top {
+  top: 92px;
+}
+
+.video-ribbon-text.bottom {
+  bottom: 92px;
+}
+
+.video-title-text {
+  left: 120px;
+  top: 182px;
+  width: 840px;
+  color: #111;
+  text-align: center;
+  font: 800 56px/1.15 'Pretendard', sans-serif;
+  letter-spacing: -0.05em;
+  white-space: pre-line;
+}
+
+.video-preview-element {
+  left: 90px;
+  top: 360px;
+  width: 900px;
+  height: 506px;
+  object-fit: cover;
+  background: rgba(0, 0, 0, 0.22);
+}
+
+.video-meta-text {
+  left: 120px;
+  top: 938px;
+  width: 840px;
+  color: #111;
+  text-align: center;
+  font: 700 28px/1.3 'Pretendard', sans-serif;
+  white-space: pre-line;
+}
 
 @media (max-width: 1200px) {
   .layout { grid-template-columns: 1fr; }
