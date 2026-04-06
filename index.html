@@ -10,9 +10,9 @@
     <main class="layout">
       <section class="controls">
         <div class="tab-row">
-          <button id="tabResult" class="tab-btn active" type="button">탭1 경기결과</button>
-          <button id="tabLineup" class="tab-btn" type="button">탭2 라인업</button>
-          <button id="tabVideo" class="tab-btn" type="button">탭3 영상편집</button>
+          <button id="tabResult" class="tab-btn active" type="button">경기결과</button>
+          <button id="tabLineup" class="tab-btn" type="button">라인업</button>
+          <button id="tabVideo" class="tab-btn" type="button">영상편집</button>
         </div>
 
         <section id="resultControls" class="tab-panel active">
@@ -85,8 +85,7 @@
         <section id="videoControls" class="tab-panel">
           <h1>영상편집 만들기</h1>
           <label class="field">영상 파일 <input id="videoFileInput" type="file" accept="video/*" /></label>
-          <label class="field">1줄 제목 <input id="videoTitleLine1" type="text" placeholder="영상 제목 1줄" /></label>
-          <label class="field">2줄 제목 <input id="videoTitleLine2" type="text" placeholder="영상 제목 2줄" /></label>
+          <label class="field">제목 <textarea id="videoTitleInput" rows="3" placeholder="제목 입력 후 Enter로 줄바꿈"></textarea></label>
           <label class="field">날짜 <input id="videoDate" type="date" /></label>
           <label class="field">상대팀 <select id="videoOpponentTeam"></select></label>
           <label class="field">상대팀명 <input id="videoOpponentName" type="text" /></label>
@@ -105,6 +104,8 @@
             <label class="fine-tune-row">X <input id="videoTitleXRange" type="range" min="0" max="240" value="120" /><input id="videoTitleXInput" type="number" value="120" /></label>
             <label class="fine-tune-row">Y <input id="videoTitleYRange" type="range" min="100" max="320" value="182" /><input id="videoTitleYInput" type="number" value="182" /></label>
             <label class="fine-tune-row">크기 <input id="videoTitleSizeRange" type="range" min="36" max="88" value="56" /><input id="videoTitleSizeInput" type="number" value="56" /></label>
+            <label class="fine-tune-row">자간 <input id="videoTitleSpacingRange" type="range" min="-8" max="8" value="-3" /><input id="videoTitleSpacingInput" type="number" value="-3" /></label>
+            <label class="fine-tune-row">줄간격 <input id="videoTitleLineHeightRange" type="range" min="40" max="110" value="66" /><input id="videoTitleLineHeightInput" type="number" value="66" /></label>
           </div>
 
           <h2>날짜/상대팀 위치 조정</h2>
@@ -164,10 +165,6 @@
             <div class="poster-canvas video-canvas">
               <img id="videoBgImage" class="layer video-bg-image" src="assets/bg-video.png" alt="영상 배경" />
               <div class="layer video-bg"></div>
-              <div class="layer video-ribbon top"></div>
-              <div class="layer video-ribbon bottom"></div>
-              <div class="layer video-ribbon-text top">오늘의 타이거즈</div>
-              <div class="layer video-ribbon-text bottom">오늘의 타이거즈</div>
               <div id="videoTitleText" class="layer video-title-text"></div>
               <video id="videoPreviewElement" class="layer video-preview-element" playsinline muted preload="metadata"></video>
               <div id="videoMetaText" class="layer video-meta-text"></div>
@@ -178,6 +175,7 @@
     </main>
 
     <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+    <script src="vendor/ffmpeg/ffmpeg.js"></script>
     <script src="script.js"></script>
   </body>
 </html>

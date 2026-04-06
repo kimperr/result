@@ -80,7 +80,7 @@ for (let i = 1; i <= 9; i += 1) {
 }
 
 const VIDEO_LAYOUT = {
-  title: { x: 120, y: 182, width: 840, size: 56, lineHeight: 66 },
+  title: { x: 120, y: 182, width: 840, size: 56, lineHeight: 66, letterSpacing: -3 },
   frame: { x: 90, y: 360, width: 900, height: 506, scale: 100 },
   meta: { x: 120, y: 938, width: 840, size: 28, lineHeight: 38 }
 };
@@ -139,8 +139,7 @@ const el = {
   lineupInputGrid: document.getElementById('lineupInputGrid'),
 
   videoFileInput: document.getElementById('videoFileInput'),
-  videoTitleLine1: document.getElementById('videoTitleLine1'),
-  videoTitleLine2: document.getElementById('videoTitleLine2'),
+  videoTitleInput: document.getElementById('videoTitleInput'),
   videoDate: document.getElementById('videoDate'),
   videoOpponentTeam: document.getElementById('videoOpponentTeam'),
   videoOpponentName: document.getElementById('videoOpponentName'),
@@ -158,6 +157,10 @@ const el = {
   videoTitleYRange: document.getElementById('videoTitleYRange'),
   videoTitleSizeInput: document.getElementById('videoTitleSizeInput'),
   videoTitleSizeRange: document.getElementById('videoTitleSizeRange'),
+  videoTitleSpacingInput: document.getElementById('videoTitleSpacingInput'),
+  videoTitleSpacingRange: document.getElementById('videoTitleSpacingRange'),
+  videoTitleLineHeightInput: document.getElementById('videoTitleLineHeightInput'),
+  videoTitleLineHeightRange: document.getElementById('videoTitleLineHeightRange'),
   videoMetaXInput: document.getElementById('videoMetaXInput'),
   videoMetaYInput: document.getElementById('videoMetaYInput'),
   videoMetaXRange: document.getElementById('videoMetaXRange'),
@@ -207,7 +210,17 @@ const lineupTextRefs = { names: {}, positions: {} };
 let mobilePreviewTimer = null;
 const videoState = {
   objectUrl: '',
-  loopHandler: null
+  loopHandler: null,
+  sourceBytes: null,
+  sourceExt: 'mp4',
+  overlayPromise: null,
+  overlayKey: '',
+  overlayBitmapPromise: null
+};
+const ffmpegState = {
+  instance: null,
+  loading: null,
+  progress: 0
 };
 
 function selectedValue(radios) {
@@ -227,6 +240,13 @@ function formatVideoMeta(dateValue, opponentName) {
   return lines.join('\n');
 }
 
+function getVideoTitleLines() {
+  return (el.videoTitleInput.value || '')
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter(Boolean);
+}
+
 function getVideoTrimTimes() {
   const video = out.videoPreviewElement;
   const start = Math.max(0, Number(el.videoStartTime.value) || 0);
@@ -243,9 +263,10 @@ function getVideoLayoutValues() {
   const frameScale = (Number(el.videoFrameScaleInput.value) || VIDEO_LAYOUT.frame.scale) / 100;
   const titleSize = Number(el.videoTitleSizeInput.value) || VIDEO_LAYOUT.title.size;
   const metaSize = Number(el.videoMetaSizeInput.value) || VIDEO_LAYOUT.meta.size;
+  const titleLetterSpacing = Number(el.videoTitleSpacingInput.value);
+  const titleLineHeight = Number(el.videoTitleLineHeightInput.value) || VIDEO_LAYOUT.title.lineHeight;
   const frameWidth = Math.round(VIDEO_LAYOUT.frame.width * frameScale);
   const frameHeight = Math.round(VIDEO_LAYOUT.frame.height * frameScale);
-  const titleLineHeight = Math.round(titleSize * 1.18);
   const metaLineHeight = Math.round(metaSize * 1.36);
   return {
     frame: {
@@ -263,7 +284,8 @@ function getVideoLayoutValues() {
       x: Number(el.videoTitleXInput.value) || VIDEO_LAYOUT.title.x,
       y: Number(el.videoTitleYInput.value) || VIDEO_LAYOUT.title.y,
       size: titleSize,
-      lineHeight: titleLineHeight
+      lineHeight: titleLineHeight,
+      letterSpacing: Number.isFinite(titleLetterSpacing) ? titleLetterSpacing : VIDEO_LAYOUT.title.letterSpacing
     },
     meta: {
       ...VIDEO_LAYOUT.meta,
@@ -280,6 +302,309 @@ function getCenteredTextTop(baseTop, baseSize, baseLineHeight, nextSize, nextLin
   const baseHeight = baseSize + (safeCount - 1) * baseLineHeight;
   const nextHeight = nextSize + (safeCount - 1) * nextLineHeight;
   return Math.round(baseTop - (nextHeight - baseHeight) / 2);
+}
+
+function drawCenteredSpacedText(ctx, text, centerX, baselineY, letterSpacing) {
+  const chars = Array.from(text || '');
+  if (chars.length === 0) return;
+  if (!letterSpacing) {
+    const prevAlign = ctx.textAlign;
+    ctx.textAlign = 'center';
+    ctx.fillText(text, centerX, baselineY);
+    ctx.textAlign = prevAlign;
+    return;
+  }
+
+  const prevAlign = ctx.textAlign;
+  ctx.textAlign = 'left';
+  const widths = chars.map((char) => ctx.measureText(char).width);
+  const totalWidth = widths.reduce((sum, width) => sum + width, 0) + Math.max(0, chars.length - 1) * letterSpacing;
+  let cursorX = centerX - totalWidth / 2;
+
+  chars.forEach((char, index) => {
+    ctx.fillText(char, cursorX, baselineY);
+    cursorX += widths[index] + letterSpacing;
+  });
+  ctx.textAlign = prevAlign;
+}
+
+function drawCoverImage(ctx, source, dx, dy, dWidth, dHeight) {
+  const sourceWidth = source instanceof HTMLVideoElement ? source.videoWidth : source.naturalWidth;
+  const sourceHeight = source instanceof HTMLVideoElement ? source.videoHeight : source.naturalHeight;
+  if (!sourceWidth || !sourceHeight) return;
+
+  const sourceRatio = sourceWidth / sourceHeight;
+  const destRatio = dWidth / dHeight;
+  let sx = 0;
+  let sy = 0;
+  let sWidth = sourceWidth;
+  let sHeight = sourceHeight;
+
+  if (sourceRatio > destRatio) {
+    sWidth = sourceHeight * destRatio;
+    sx = (sourceWidth - sWidth) / 2;
+  } else {
+    sHeight = sourceWidth / destRatio;
+    sy = (sourceHeight - sHeight) / 2;
+  }
+
+  ctx.drawImage(source, sx, sy, sWidth, sHeight, dx, dy, dWidth, dHeight);
+}
+
+function escapeDrawtext(text) {
+  return String(text || '')
+    .replace(/\\/g, '\\\\')
+    .replace(/:/g, '\\:')
+    .replace(/'/g, "\\'")
+    .replace(/\[/g, '\\[')
+    .replace(/\]/g, '\\]')
+    .replace(/,/g, '\\,')
+    .replace(/%/g, '\\%');
+}
+
+function getFileExtension(name, fallback = 'mp4') {
+  const ext = String(name || '').split('.').pop()?.toLowerCase();
+  return ext && ext !== name ? ext : fallback;
+}
+
+function getVideoOverlaySnapshot() {
+  const layout = getVideoLayoutValues();
+  const titleLines = getVideoTitleLines();
+  const metaLines = formatVideoMeta(el.videoDate.value, el.videoOpponentName.value || el.videoOpponentTeam.value)
+    .split('\n')
+    .filter(Boolean);
+  const titleTop = getCenteredTextTop(
+    layout.title.y,
+    VIDEO_LAYOUT.title.size,
+    VIDEO_LAYOUT.title.lineHeight,
+    layout.title.size,
+    layout.title.lineHeight,
+    titleLines.length
+  );
+  const metaTop = getCenteredTextTop(
+    layout.meta.y,
+    VIDEO_LAYOUT.meta.size,
+    VIDEO_LAYOUT.meta.lineHeight,
+    layout.meta.size,
+    layout.meta.lineHeight,
+    metaLines.length
+  );
+
+  return { layout, titleLines, metaLines, titleTop, metaTop };
+}
+
+function getVideoOverlayKey(snapshot) {
+  return JSON.stringify({
+    layout: snapshot.layout,
+    titleLines: snapshot.titleLines,
+    metaLines: snapshot.metaLines,
+    titleTop: snapshot.titleTop,
+    metaTop: snapshot.metaTop,
+    bgVisible: Boolean(out.videoBgImage.complete && out.videoBgImage.naturalWidth > 0)
+  });
+}
+
+function waitForVideoEvent(video, eventName) {
+  return new Promise((resolve) => {
+    const done = () => {
+      video.removeEventListener(eventName, done);
+      video.removeEventListener('error', done);
+      resolve();
+    };
+    video.addEventListener(eventName, done, { once: true });
+    video.addEventListener('error', done, { once: true });
+  });
+}
+
+async function prepareExportVideo(sourceVideo, startTime) {
+  const exportVideo = document.createElement('video');
+  exportVideo.src = sourceVideo.currentSrc || sourceVideo.src;
+  exportVideo.preload = 'auto';
+  exportVideo.muted = false;
+  exportVideo.volume = 1;
+  exportVideo.playsInline = true;
+  exportVideo.crossOrigin = 'anonymous';
+  exportVideo.style.position = 'fixed';
+  exportVideo.style.left = '-99999px';
+  exportVideo.style.top = '0';
+  exportVideo.style.width = '1px';
+  exportVideo.style.height = '1px';
+  document.body.appendChild(exportVideo);
+
+  try {
+    if (exportVideo.readyState < 2) {
+      exportVideo.load();
+      await waitForVideoEvent(exportVideo, 'loadeddata');
+    }
+    exportVideo.currentTime = startTime;
+    await waitForVideoEvent(exportVideo, 'seeked');
+    return exportVideo;
+  } catch (error) {
+    exportVideo.remove();
+    throw error;
+  }
+}
+
+async function loadFFmpeg() {
+  if (ffmpegState.instance?.loaded) return ffmpegState.instance;
+  if (ffmpegState.loading) return ffmpegState.loading;
+
+  ffmpegState.loading = (async () => {
+    const api = window.FFmpegWASM;
+    if (!api?.FFmpeg) {
+      throw new Error('FFmpeg WASM 로더를 찾을 수 없습니다.');
+    }
+
+    const ffmpeg = new api.FFmpeg();
+    ffmpeg.on('progress', ({ progress }) => {
+      ffmpegState.progress = progress;
+      if (activeTab === 'video') {
+        el.downloadBtn.textContent = progress > 0
+          ? `영상 인코딩 ${Math.round(progress * 100)}%`
+          : '영상 인코딩 준비중';
+      }
+    });
+
+    await ffmpeg.load({
+      coreURL: new URL('vendor/ffmpeg/ffmpeg-core.js', window.location.href).href,
+      wasmURL: new URL('vendor/ffmpeg/ffmpeg-core.wasm', window.location.href).href
+    });
+
+    ffmpegState.instance = ffmpeg;
+    return ffmpeg;
+  })();
+
+  try {
+    return await ffmpegState.loading;
+  } finally {
+    ffmpegState.loading = null;
+  }
+}
+
+function preloadFFmpeg() {
+  if (ffmpegState.instance?.loaded || ffmpegState.loading) return;
+  loadFFmpeg().catch(() => {
+    updateDownloadButtonLabel();
+  });
+}
+
+async function buildVideoOverlayPng(layout, titleLines, metaLines, titleTop, metaTop) {
+  const canvas = document.createElement('canvas');
+  canvas.width = 1080;
+  canvas.height = 1350;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) throw new Error('오버레이 캔버스를 만들 수 없습니다.');
+
+  const bgImage = out.videoBgImage;
+  if (bgImage.complete && bgImage.naturalWidth > 0) {
+    ctx.drawImage(bgImage, 0, 0, canvas.width, canvas.height);
+  } else {
+    const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+    gradient.addColorStop(0, VIDEO_BG_FALLBACK.top);
+    gradient.addColorStop(0.48, VIDEO_BG_FALLBACK.mid);
+    gradient.addColorStop(1, VIDEO_BG_FALLBACK.bottom);
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+  }
+
+  ctx.fillStyle = '#111';
+  ctx.font = `400 ${layout.title.size}px 'boldfont'`;
+  const titleBaseY = titleTop + Math.round(layout.title.size * 0.95);
+  titleLines.forEach((line, index) => {
+    drawCenteredSpacedText(
+      ctx,
+      line,
+      layout.title.x + layout.title.width / 2,
+      titleBaseY + index * layout.title.lineHeight,
+      layout.title.letterSpacing
+    );
+  });
+
+  ctx.fillStyle = '#111';
+  ctx.font = `700 ${layout.meta.size}px 'Pretendard'`;
+  metaLines.forEach((line, index) => {
+    drawCenteredSpacedText(
+      ctx,
+      line,
+      layout.meta.x + layout.meta.width / 2,
+      metaTop + Math.round(layout.meta.size * 0.96) + index * layout.meta.lineHeight,
+      0
+    );
+  });
+
+  return await new Promise((resolve, reject) => {
+    canvas.toBlob((blob) => {
+      if (blob) resolve(blob);
+      else reject(new Error('오버레이 이미지를 만들 수 없습니다.'));
+    }, 'image/png');
+  });
+}
+
+function invalidateVideoOverlayCache() {
+  videoState.overlayPromise = null;
+  videoState.overlayKey = '';
+  videoState.overlayBitmapPromise = null;
+}
+
+function primeVideoOverlayCache() {
+  const snapshot = getVideoOverlaySnapshot();
+  const key = getVideoOverlayKey(snapshot);
+  if (videoState.overlayPromise && videoState.overlayKey === key) {
+    return videoState.overlayPromise;
+  }
+
+  videoState.overlayKey = key;
+  videoState.overlayPromise = buildVideoOverlayPng(
+    snapshot.layout,
+    snapshot.titleLines,
+    snapshot.metaLines,
+    snapshot.titleTop,
+    snapshot.metaTop
+  ).catch((error) => {
+    videoState.overlayPromise = null;
+    videoState.overlayKey = '';
+    throw error;
+  });
+
+  return videoState.overlayPromise;
+}
+
+async function createOverlayBitmapFromBlob(blob) {
+  if ('createImageBitmap' in window) {
+    return await createImageBitmap(blob);
+  }
+
+  return await new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(blob);
+    const image = new Image();
+    image.onload = () => {
+      URL.revokeObjectURL(url);
+      resolve(image);
+    };
+    image.onerror = () => {
+      URL.revokeObjectURL(url);
+      reject(new Error('오버레이 이미지를 읽을 수 없습니다.'));
+    };
+    image.src = url;
+  });
+}
+
+function primeVideoOverlayBitmapCache() {
+  if (videoState.overlayBitmapPromise) return videoState.overlayBitmapPromise;
+  videoState.overlayBitmapPromise = primeVideoOverlayCache()
+    .then((blob) => createOverlayBitmapFromBlob(blob))
+    .catch((error) => {
+      videoState.overlayBitmapPromise = null;
+      throw error;
+    });
+  return videoState.overlayBitmapPromise;
+}
+
+function drawVideoCompositeFrame(ctx, video, layout, overlayBitmap) {
+  ctx.clearRect(0, 0, 1080, 1350);
+  ctx.drawImage(overlayBitmap, 0, 0, 1080, 1350);
+
+  drawCoverImage(ctx, video, layout.frame.renderX, layout.frame.renderY, layout.frame.width, layout.frame.height);
 }
 
 function normalizeName(name) {
@@ -371,36 +696,14 @@ function configureVideoLoop() {
 }
 
 function updateVideoPoster() {
-  const line1 = el.videoTitleLine1.value.trim();
-  const line2 = el.videoTitleLine2.value.trim();
-  const layout = getVideoLayoutValues();
-  const titleLines = [line1, line2].filter(Boolean);
-  const metaLines = formatVideoMeta(
-    el.videoDate.value,
-    el.videoOpponentName.value || el.videoOpponentTeam.value
-  ).split('\n').filter(Boolean);
-  const titleTop = getCenteredTextTop(
-    layout.title.y,
-    VIDEO_LAYOUT.title.size,
-    VIDEO_LAYOUT.title.lineHeight,
-    layout.title.size,
-    layout.title.lineHeight,
-    titleLines.length
-  );
-  const metaTop = getCenteredTextTop(
-    layout.meta.y,
-    VIDEO_LAYOUT.meta.size,
-    VIDEO_LAYOUT.meta.lineHeight,
-    layout.meta.size,
-    layout.meta.lineHeight,
-    metaLines.length
-  );
-  out.videoTitleText.textContent = [line1, line2].filter(Boolean).join('\n');
+  const { layout, titleLines, metaLines, titleTop, metaTop } = getVideoOverlaySnapshot();
+  out.videoTitleText.textContent = titleLines.join('\n');
   out.videoMetaText.textContent = metaLines.join('\n');
   out.videoTitleText.style.left = `${layout.title.x}px`;
   out.videoTitleText.style.top = `${titleTop}px`;
   out.videoTitleText.style.fontSize = `${layout.title.size}px`;
   out.videoTitleText.style.lineHeight = `${layout.title.lineHeight}px`;
+  out.videoTitleText.style.letterSpacing = `${layout.title.letterSpacing}px`;
   out.videoMetaText.style.left = `${layout.meta.x}px`;
   out.videoMetaText.style.top = `${metaTop}px`;
   out.videoMetaText.style.fontSize = `${layout.meta.size}px`;
@@ -420,20 +723,93 @@ function updateVideoPoster() {
   }
   const playPromise = video.play();
   if (playPromise?.catch) playPromise.catch(() => {});
+
+  invalidateVideoOverlayCache();
+  primeVideoOverlayCache().catch(() => {});
 }
 
 async function exportVideo() {
-  const video = out.videoPreviewElement;
-  if (!video.getAttribute('src')) {
+  const sourceVideo = out.videoPreviewElement;
+  const sourceFile = el.videoFileInput.files?.[0];
+  if (!sourceVideo.getAttribute('src') || !sourceFile) {
     window.alert('먼저 영상 파일을 업로드해주세요.');
     return;
   }
 
   await document.fonts.ready;
-  await waitForImageElement(video);
+  await waitForImageElement(sourceVideo);
   await waitForImageElement(out.videoBgImage);
 
   const { start, end } = getVideoTrimTimes();
+  const { layout, titleLines, metaLines, titleTop, metaTop } = getVideoOverlaySnapshot();
+
+  const duration = Math.max(0.1, end - start);
+  if (duration <= 20) {
+    await exportVideoFast(sourceVideo, start, end, layout, titleLines, metaLines, titleTop, metaTop);
+    return;
+  }
+
+  const overlayBlob = await primeVideoOverlayCache();
+  const ffmpeg = await loadFFmpeg();
+  const inputExt = videoState.sourceExt || getFileExtension(sourceFile.name, 'mp4');
+  const inputName = `input.${inputExt}`;
+  const overlayName = 'overlay.png';
+  const outputName = 'output.mp4';
+
+  try {
+    el.downloadBtn.textContent = 'FFmpeg 로딩중';
+    const sourceBytes = videoState.sourceBytes || new Uint8Array(await sourceFile.arrayBuffer());
+    await ffmpeg.writeFile(inputName, sourceBytes);
+    await ffmpeg.writeFile(overlayName, new Uint8Array(await overlayBlob.arrayBuffer()));
+
+    el.downloadBtn.textContent = '영상 인코딩 준비중';
+    await ffmpeg.exec([
+      '-ss', String(start),
+      '-t', String(duration),
+      '-i', inputName,
+      '-loop', '1',
+      '-i', overlayName,
+      '-filter_complex',
+      [
+        `[0:v]scale=${layout.frame.width}:${layout.frame.height}:force_original_aspect_ratio=increase,crop=${layout.frame.width}:${layout.frame.height}[clip]`,
+        `[1:v][clip]overlay=${layout.frame.renderX}:${layout.frame.renderY}:format=auto[comp]`,
+        `[comp]format=yuv420p,setsar=1[outv]`
+      ].join(';'),
+      '-map', '[outv]',
+      '-map', '0:a?',
+      '-c:v', 'libx264',
+      '-preset', 'veryfast',
+      '-pix_fmt', 'yuv420p',
+      '-c:a', 'aac',
+      '-b:a', '192k',
+      '-movflags', '+faststart',
+      '-shortest',
+      '-r', '30',
+      '-y',
+      outputName
+    ]);
+
+    const data = await ffmpeg.readFile(outputName);
+    const blob = new Blob([data.buffer], { type: 'video/mp4' });
+    const downloadUrl = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = downloadUrl;
+    link.download = `video-${Date.now()}.mp4`;
+    link.click();
+    URL.revokeObjectURL(downloadUrl);
+  } finally {
+    const cleanup = [inputName, overlayName, outputName];
+    await Promise.all(cleanup.map(async (file) => {
+      try {
+        await ffmpeg.deleteFile(file);
+      } catch {}
+    }));
+    ffmpegState.progress = 0;
+    updateVideoPoster();
+  }
+}
+
+async function exportVideoFast(sourceVideo, start, end, layout, titleLines, metaLines, titleTop, metaTop) {
   const duration = Math.max(0.1, end - start);
   const canvas = document.createElement('canvas');
   canvas.width = 1080;
@@ -453,133 +829,95 @@ async function exportVideo() {
   ];
   const selectedFormat = formats.find((format) => MediaRecorder.isTypeSupported(format.mimeType)) || formats[formats.length - 1];
   const stream = canvas.captureStream(30);
-  const videoStream = typeof video.captureStream === 'function' ? video.captureStream() : null;
-  if (videoStream) {
-    videoStream.getAudioTracks().forEach((track) => stream.addTrack(track));
-  }
-  const recorder = new MediaRecorder(stream, { mimeType: selectedFormat.mimeType });
-  const chunks = [];
-  recorder.addEventListener('dataavailable', (event) => {
-    if (event.data.size > 0) chunks.push(event.data);
-  });
+  const exportVideo = await prepareExportVideo(sourceVideo, start);
+  const overlayBitmap = await primeVideoOverlayBitmapCache();
 
-  const layout = getVideoLayoutValues();
-  const titleLines = [el.videoTitleLine1.value.trim(), el.videoTitleLine2.value.trim()].filter(Boolean);
-  const metaText = formatVideoMeta(el.videoDate.value, el.videoOpponentName.value || el.videoOpponentTeam.value);
-  const bgImage = out.videoBgImage;
-  const metaLines = metaText.split('\n').filter(Boolean);
-  const titleTop = getCenteredTextTop(
-    layout.title.y,
-    VIDEO_LAYOUT.title.size,
-    VIDEO_LAYOUT.title.lineHeight,
-    layout.title.size,
-    layout.title.lineHeight,
-    titleLines.length
-  );
-  const metaTop = getCenteredTextTop(
-    layout.meta.y,
-    VIDEO_LAYOUT.meta.size,
-    VIDEO_LAYOUT.meta.lineHeight,
-    layout.meta.size,
-    layout.meta.lineHeight,
-    metaLines.length
-  );
-
-  const drawFrame = () => {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-    if (bgImage.complete && bgImage.naturalWidth > 0) {
-      ctx.drawImage(bgImage, 0, 0, canvas.width, canvas.height);
-    } else {
-      const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
-      gradient.addColorStop(0, VIDEO_BG_FALLBACK.top);
-      gradient.addColorStop(0.48, VIDEO_BG_FALLBACK.mid);
-      gradient.addColorStop(1, VIDEO_BG_FALLBACK.bottom);
-      ctx.fillStyle = gradient;
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
+  try {
+    const exportStream = typeof exportVideo.captureStream === 'function' ? exportVideo.captureStream() : null;
+    if (exportStream) {
+      exportStream.getAudioTracks().forEach((track) => stream.addTrack(track));
     }
 
-    ctx.fillStyle = '#a90f0f';
-    ctx.fillRect(95, 92, 890, 32);
-    ctx.fillRect(95, 1226, 890, 32);
-
-    ctx.fillStyle = '#fff';
-    ctx.font = "700 18px 'Pretendard'";
-    ctx.textAlign = 'center';
-    ctx.fillText('오늘의 타이거즈', 540, 115);
-    ctx.fillText('오늘의 타이거즈', 540, 1249);
-
-    ctx.fillStyle = '#111';
-    ctx.font = `800 ${layout.title.size}px 'Pretendard'`;
-    const titleBaseY = titleTop + Math.round(layout.title.size * 0.95);
-    titleLines.forEach((line, index) => {
-      ctx.fillText(line, layout.title.x + layout.title.width / 2, titleBaseY + index * layout.title.lineHeight);
+    const recorder = new MediaRecorder(stream, { mimeType: selectedFormat.mimeType });
+    const chunks = [];
+    recorder.addEventListener('dataavailable', (event) => {
+      if (event.data.size > 0) chunks.push(event.data);
     });
 
-    ctx.drawImage(video, layout.frame.renderX, layout.frame.renderY, layout.frame.width, layout.frame.height);
-
-    ctx.fillStyle = '#111';
-    ctx.font = `700 ${layout.meta.size}px 'Pretendard'`;
-    metaLines.forEach((line, index) => {
-      ctx.fillText(line, layout.meta.x + layout.meta.width / 2, metaTop + Math.round(layout.meta.size * 0.96) + index * layout.meta.lineHeight);
+    const stopped = new Promise((resolve) => {
+      recorder.addEventListener('stop', resolve, { once: true });
     });
-  };
 
-  const stopped = new Promise((resolve) => {
-    recorder.addEventListener('stop', resolve, { once: true });
-  });
+    let stopRequested = false;
+    let frameRequestId = null;
+    let rafId = null;
 
-  video.pause();
-  video.currentTime = start;
-  await new Promise((resolve) => {
-    const handleSeeked = () => {
-      video.removeEventListener('seeked', handleSeeked);
-      resolve();
-    };
-    video.addEventListener('seeked', handleSeeked);
-  });
-
-  recorder.start(200);
-  const exportStart = performance.now();
-
-  const prevMuted = video.muted;
-  const prevVolume = video.volume;
-  video.muted = false;
-  video.volume = 1;
-  const playPromise = video.play();
-  if (playPromise?.catch) playPromise.catch(() => {});
-
-  await new Promise((resolve) => {
-    const step = () => {
-      const elapsed = (performance.now() - exportStart) / 1000;
-      const current = Math.min(start + elapsed, end);
-      if (Math.abs(video.currentTime - current) > 0.05) {
-        video.currentTime = current;
+    const stopRecording = () => {
+      if (stopRequested) return;
+      stopRequested = true;
+      if (frameRequestId !== null && typeof exportVideo.cancelVideoFrameCallback === 'function') {
+        exportVideo.cancelVideoFrameCallback(frameRequestId);
       }
-      drawFrame();
-      if (elapsed >= duration) {
-        resolve();
+      if (rafId !== null) cancelAnimationFrame(rafId);
+      exportVideo.pause();
+      if (recorder.state !== 'inactive') recorder.stop();
+    };
+
+    const renderLoop = () => {
+      drawVideoCompositeFrame(ctx, exportVideo, layout, overlayBitmap);
+      if (exportVideo.currentTime >= end || exportVideo.ended) {
+        stopRecording();
         return;
       }
-      requestAnimationFrame(step);
+      if (typeof exportVideo.requestVideoFrameCallback === 'function') {
+        frameRequestId = exportVideo.requestVideoFrameCallback(() => {
+          frameRequestId = null;
+          renderLoop();
+        });
+      } else {
+        rafId = requestAnimationFrame(() => {
+          rafId = null;
+          renderLoop();
+        });
+      }
     };
-    step();
-  });
 
-  recorder.stop();
-  await stopped;
+    exportVideo.addEventListener('ended', stopRecording, { once: true });
 
-  const blob = new Blob(chunks, { type: selectedFormat.mimeType });
-  const downloadUrl = URL.createObjectURL(blob);
-  const link = document.createElement('a');
-  link.href = downloadUrl;
-  link.download = `video-${Date.now()}.${selectedFormat.ext}`;
-  link.click();
-  URL.revokeObjectURL(downloadUrl);
+    recorder.start(250);
+    drawVideoCompositeFrame(ctx, exportVideo, layout, overlayBitmap);
+    const playPromise = exportVideo.play();
+    if (playPromise?.catch) playPromise.catch(() => {});
+    renderLoop();
 
-  video.muted = prevMuted;
-  video.volume = prevVolume;
-  updateVideoPoster();
+    await new Promise((resolve) => {
+      const safetyTimer = window.setTimeout(() => {
+        stopRecording();
+        resolve();
+      }, Math.ceil(duration * 1000) + 3000);
+
+      recorder.addEventListener('stop', () => {
+        window.clearTimeout(safetyTimer);
+        resolve();
+      }, { once: true });
+    });
+
+    await stopped;
+
+    const blob = new Blob(chunks, { type: selectedFormat.mimeType });
+    const downloadUrl = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = downloadUrl;
+    link.download = `video-${Date.now()}.${selectedFormat.ext}`;
+    link.click();
+    URL.revokeObjectURL(downloadUrl);
+  } finally {
+    exportVideo.pause();
+    exportVideo.removeAttribute('src');
+    exportVideo.load();
+    exportVideo.remove();
+    updateVideoPoster();
+  }
 }
 
 function isMobilePreviewMode() {
@@ -808,6 +1146,10 @@ function switchTab(target) {
   out.resultMobilePreview.classList.toggle('active', isResult);
   out.lineupMobilePreview.classList.toggle('active', isLineup);
   updateDownloadButtonLabel();
+  if (isVideo && !ffmpegState.instance?.loaded && !ffmpegState.loading) {
+    el.downloadBtn.textContent = 'FFmpeg 로딩중';
+    preloadFFmpeg();
+  }
 }
 
 function waitForImageElement(img) {
@@ -889,6 +1231,8 @@ function bindEvents() {
   syncFineTunePair(el.videoTitleXInput, el.videoTitleXRange);
   syncFineTunePair(el.videoTitleYInput, el.videoTitleYRange);
   syncFineTunePair(el.videoTitleSizeInput, el.videoTitleSizeRange);
+  syncFineTunePair(el.videoTitleSpacingInput, el.videoTitleSpacingRange);
+  syncFineTunePair(el.videoTitleLineHeightInput, el.videoTitleLineHeightRange);
   syncFineTunePair(el.videoMetaXInput, el.videoMetaXRange);
   syncFineTunePair(el.videoMetaYInput, el.videoMetaYRange);
   syncFineTunePair(el.videoMetaSizeInput, el.videoMetaSizeRange);
@@ -959,8 +1303,7 @@ function bindEvents() {
   });
 
   const videoInputs = [
-    el.videoTitleLine1,
-    el.videoTitleLine2,
+    el.videoTitleInput,
     el.videoDate,
     el.videoOpponentTeam,
     el.videoOpponentName,
@@ -978,6 +1321,10 @@ function bindEvents() {
     el.videoTitleYRange,
     el.videoTitleSizeInput,
     el.videoTitleSizeRange,
+    el.videoTitleSpacingInput,
+    el.videoTitleSpacingRange,
+    el.videoTitleLineHeightInput,
+    el.videoTitleLineHeightRange,
     el.videoMetaXInput,
     el.videoMetaYInput,
     el.videoMetaXRange,
@@ -997,14 +1344,23 @@ function bindEvents() {
       videoState.objectUrl = '';
     }
     if (!file) {
+      videoState.sourceBytes = null;
+      videoState.sourceExt = 'mp4';
       out.videoPreviewElement.removeAttribute('src');
       out.videoPreviewElement.load();
       updateVideoPoster();
       return;
     }
+    videoState.sourceExt = getFileExtension(file.name, 'mp4');
     videoState.objectUrl = URL.createObjectURL(file);
     out.videoPreviewElement.src = videoState.objectUrl;
     out.videoPreviewElement.load();
+    file.arrayBuffer().then((buffer) => {
+      videoState.sourceBytes = new Uint8Array(buffer);
+    }).catch(() => {
+      videoState.sourceBytes = null;
+    });
+    preloadFFmpeg();
   });
 
   out.videoPreviewElement.addEventListener('loadedmetadata', () => {
@@ -1016,10 +1372,15 @@ function bindEvents() {
 
   out.videoBgImage.addEventListener('error', () => {
     out.videoBgImage.style.display = 'none';
+    el.videoPoster.querySelector('.video-canvas')?.classList.remove('has-bg-image');
+    invalidateVideoOverlayCache();
   });
 
   out.videoBgImage.addEventListener('load', () => {
     out.videoBgImage.style.display = 'block';
+    el.videoPoster.querySelector('.video-canvas')?.classList.add('has-bg-image');
+    invalidateVideoOverlayCache();
+    primeVideoOverlayCache().catch(() => {});
   });
 
   el.videoOpponentTeam.addEventListener('change', () => {
@@ -1062,6 +1423,7 @@ function init() {
 
   if (out.videoBgImage.complete) {
     out.videoBgImage.style.display = out.videoBgImage.naturalWidth > 0 ? 'block' : 'none';
+    el.videoPoster.querySelector('.video-canvas')?.classList.toggle('has-bg-image', out.videoBgImage.naturalWidth > 0);
   }
 
   bindEvents();
@@ -1069,6 +1431,11 @@ function init() {
   updateLineupPoster();
   updateVideoPoster();
   updateDownloadButtonLabel();
+  if ('requestIdleCallback' in window) {
+    window.requestIdleCallback(() => preloadFFmpeg());
+  } else {
+    window.setTimeout(() => preloadFFmpeg(), 1200);
+  }
 }
 
 init();
