@@ -68,8 +68,19 @@
 
 * { box-sizing: border-box; }
 body { margin: 0; font-family: 'Pretendard', sans-serif; background: #e6e6e6; }
-.layout { display: grid; grid-template-columns: 430px 1fr; min-height: 100vh; }
-.controls { background: var(--bg); color: var(--text); padding: 20px; overflow: auto; }
+.layout {
+  display: grid;
+  grid-template-columns: 430px 1fr;
+  grid-template-areas: 'controls preview';
+  min-height: 100vh;
+}
+.controls {
+  grid-area: controls;
+  background: var(--bg);
+  color: var(--text);
+  padding: 20px;
+  overflow: auto;
+}
 
 .tab-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px; }
 .tab-btn { border: 0; background: #3b3e45; color: #fff; font-size: 18px; font-weight: 700; padding: 10px; cursor: pointer; }
@@ -108,7 +119,7 @@ select {
 .button-row { margin-top: 16px; }
 #downloadBtn { width: 100%; font-size: 20px; font-weight: 700; padding: 10px; }
 
-.preview-wrap { display: grid; place-items: center; padding: 24px; }
+.preview-wrap { grid-area: preview; display: grid; place-items: center; padding: 24px; }
 .preview-scale { width: min(56vw, 540px); }
 .poster {
   position: relative;
@@ -152,4 +163,68 @@ select {
 @media (max-width: 1200px) {
   .layout { grid-template-columns: 1fr; }
   .preview-scale { width: min(96vw, 540px); }
+}
+
+@media (max-width: 768px) {
+  .layout {
+    grid-template-columns: 1fr;
+    grid-template-areas:
+      'preview'
+      'controls';
+    min-height: auto;
+  }
+
+  .preview-wrap {
+    padding: 16px 12px;
+    align-items: start;
+    background: #dcdcdc;
+  }
+
+  .preview-scale {
+    width: min(100%, 540px);
+  }
+
+  .poster {
+    transform: scale(calc(min(100vw - 24px, 540px) / 1080));
+  }
+
+  .controls {
+    padding: 16px 14px 24px;
+    overflow: visible;
+  }
+
+  .tab-btn,
+  #downloadBtn {
+    font-size: 16px;
+  }
+
+  h1 {
+    font-size: 28px;
+  }
+
+  h2 {
+    font-size: 20px;
+  }
+
+  .field-row {
+    gap: 12px;
+    font-size: 18px;
+    flex-wrap: wrap;
+  }
+
+  .field {
+    grid-template-columns: 1fr;
+    gap: 6px;
+  }
+
+  input[type='text'],
+  input[type='number'],
+  input[type='date'],
+  select {
+    font-size: 16px;
+  }
+
+  .lineup-input-row {
+    grid-template-columns: 26px 1fr 72px;
+  }
 }
