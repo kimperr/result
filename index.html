@@ -42,19 +42,23 @@
           <label class="field">승리 투수 <input id="winnerName" type="text" /></label>
           <label class="field">패배 투수 <input id="loserName" type="text" /></label>
           <label class="field">세이브 <input id="saveName" type="text" /></label>
-          <label class="field">전체 자간 <input id="globalLetterSpacing" type="number" step="0.1" value="-1" /></label>
+          <details class="tune-details">
+            <summary>조정 열기</summary>
 
-          <h2>상대팀명 미세조정</h2>
-          <div class="fine-tune-group">
-            <label class="fine-tune-row">X <input id="opponentXRange" type="range" min="0" max="1080" value="215" /><input id="opponentXInput" type="number" value="215" /></label>
-            <label class="fine-tune-row">Y <input id="opponentYRange" type="range" min="0" max="1350" value="354" /><input id="opponentYInput" type="number" value="354" /></label>
-          </div>
+            <label class="field">전체 자간 <input id="globalLetterSpacing" type="number" step="0.1" value="-1" /></label>
 
-          <h2>성적 미세조정</h2>
-          <div class="fine-tune-group">
-            <label class="fine-tune-row">X <input id="mvpRecordXRange" type="range" min="0" max="1080" value="359" /><input id="mvpRecordXInput" type="number" value="359" /></label>
-            <label class="fine-tune-row">Y <input id="mvpRecordYRange" type="range" min="0" max="1350" value="1135" /><input id="mvpRecordYInput" type="number" value="1135" /></label>
-          </div>
+            <h2>상대팀명 미세조정</h2>
+            <div class="fine-tune-group">
+              <label class="fine-tune-row">X <input id="opponentXRange" type="range" min="0" max="1080" value="215" /><input id="opponentXInput" type="number" value="215" /></label>
+              <label class="fine-tune-row">Y <input id="opponentYRange" type="range" min="0" max="1350" value="354" /><input id="opponentYInput" type="number" value="354" /></label>
+            </div>
+
+            <h2>성적 미세조정</h2>
+            <div class="fine-tune-group">
+              <label class="fine-tune-row">X <input id="mvpRecordXRange" type="range" min="0" max="1080" value="359" /><input id="mvpRecordXInput" type="number" value="359" /></label>
+              <label class="fine-tune-row">Y <input id="mvpRecordYRange" type="range" min="0" max="1350" value="1135" /><input id="mvpRecordYInput" type="number" value="1135" /></label>
+            </div>
+          </details>
         </section>
 
         <section id="lineupControls" class="tab-panel">
@@ -73,12 +77,16 @@
 
           <h2>선발투수</h2>
           <label class="field">투수 이름 <input id="lineupPitcherName" type="text" /></label>
-          <label class="field">전체 자간 <input id="lineupLetterSpacing" type="number" step="0.1" value="-1" /></label>
-          <h2>상대팀명 미세조정</h2>
-          <div class="fine-tune-group">
-            <label class="fine-tune-row">X <input id="lineupOpponentXRange" type="range" min="0" max="1080" value="228" /><input id="lineupOpponentXInput" type="number" value="228" /></label>
-            <label class="fine-tune-row">Y <input id="lineupOpponentYRange" type="range" min="0" max="1350" value="354" /><input id="lineupOpponentYInput" type="number" value="354" /></label>
-          </div>
+          <details class="tune-details">
+            <summary>조정 열기</summary>
+
+            <label class="field">전체 자간 <input id="lineupLetterSpacing" type="number" step="0.1" value="-1" /></label>
+            <h2>상대팀명 미세조정</h2>
+            <div class="fine-tune-group">
+              <label class="fine-tune-row">X <input id="lineupOpponentXRange" type="range" min="0" max="1080" value="228" /><input id="lineupOpponentXInput" type="number" value="228" /></label>
+              <label class="fine-tune-row">Y <input id="lineupOpponentYRange" type="range" min="0" max="1350" value="354" /><input id="lineupOpponentYInput" type="number" value="354" /></label>
+            </div>
+          </details>
 
         </section>
 
@@ -89,42 +97,75 @@
           <label class="field">날짜 <input id="videoDate" type="date" /></label>
           <label class="field">상대팀 <select id="videoOpponentTeam"></select></label>
           <label class="field">상대팀명 <input id="videoOpponentName" type="text" /></label>
-          <label class="field">시작 시간 <input id="videoStartTime" type="number" min="0" step="0.1" value="0" /></label>
-          <label class="field">종료 시간 <input id="videoEndTime" type="number" min="0" step="0.1" placeholder="전체 길이" /></label>
-
-          <h2>영상 위치 조정</h2>
-          <div class="fine-tune-group">
-            <label class="fine-tune-row">X <input id="videoFrameXRange" type="range" min="0" max="260" value="90" /><input id="videoFrameXInput" type="number" value="90" /></label>
-            <label class="fine-tune-row">Y <input id="videoFrameYRange" type="range" min="200" max="700" value="360" /><input id="videoFrameYInput" type="number" value="360" /></label>
-            <label class="fine-tune-row">크기 <input id="videoFrameScaleRange" type="range" min="60" max="130" value="100" /><input id="videoFrameScaleInput" type="number" value="100" /></label>
+          <div class="field field-stack">
+            <span>구간 자르기</span>
+            <div class="trim-editor">
+              <input id="videoStartTime" class="trim-value" type="number" min="0" step="0.1" value="0" />
+              <div class="trim-slider-wrap">
+                <div class="trim-track"></div>
+                <div id="videoTrimSelected" class="trim-selected"></div>
+                <input id="videoTrimStartRange" class="trim-range trim-range-start" type="range" min="0" max="0" step="0.1" value="0" />
+                <input id="videoTrimEndRange" class="trim-range trim-range-end" type="range" min="0" max="0" step="0.1" value="0" />
+              </div>
+              <input id="videoEndTime" class="trim-value" type="number" min="0" step="0.1" value="0" />
+            </div>
           </div>
 
-          <h2>제목 위치 조정</h2>
-          <div class="fine-tune-group">
-            <label class="fine-tune-row">X <input id="videoTitleXRange" type="range" min="0" max="240" value="120" /><input id="videoTitleXInput" type="number" value="120" /></label>
-            <label class="fine-tune-row">Y <input id="videoTitleYRange" type="range" min="100" max="320" value="182" /><input id="videoTitleYInput" type="number" value="182" /></label>
-            <label class="fine-tune-row">크기 <input id="videoTitleSizeRange" type="range" min="36" max="88" value="56" /><input id="videoTitleSizeInput" type="number" value="56" /></label>
-            <label class="fine-tune-row">자간 <input id="videoTitleSpacingRange" type="range" min="-8" max="8" value="-3" /><input id="videoTitleSpacingInput" type="number" value="-3" /></label>
-            <label class="fine-tune-row">줄간격 <input id="videoTitleLineHeightRange" type="range" min="40" max="110" value="66" /><input id="videoTitleLineHeightInput" type="number" value="66" /></label>
+          <div class="field field-stack">
+            <span>미리보기 재생</span>
+            <div class="playback-editor">
+              <button id="videoPlayToggle" class="playback-btn" type="button">재생</button>
+              <div class="playback-bar-wrap">
+                <input id="videoPlaybackRange" class="playback-range" type="range" min="0" max="0" step="0.1" value="0" />
+              </div>
+              <div id="videoPlaybackTime" class="playback-time">0.0 / 0.0</div>
+            </div>
           </div>
 
-          <h2>날짜/상대팀 위치 조정</h2>
-          <div class="fine-tune-group">
-            <label class="fine-tune-row">X <input id="videoMetaXRange" type="range" min="0" max="240" value="120" /><input id="videoMetaXInput" type="number" value="120" /></label>
-            <label class="fine-tune-row">Y <input id="videoMetaYRange" type="range" min="760" max="1180" value="938" /><input id="videoMetaYInput" type="number" value="938" /></label>
-            <label class="fine-tune-row">크기 <input id="videoMetaSizeRange" type="range" min="20" max="44" value="28" /><input id="videoMetaSizeInput" type="number" value="28" /></label>
-          </div>
+          <details class="tune-details">
+            <summary>조정 열기</summary>
 
-          <p class="fixed-note">MP4 저장을 먼저 시도하고, 브라우저가 막으면 WebM으로 자동 저장합니다.</p>
+            <h2>영상 위치 조정</h2>
+            <div class="fine-tune-group">
+              <label class="fine-tune-row">X <input id="videoFrameXRange" type="range" min="0" max="260" value="90" /><input id="videoFrameXInput" type="number" value="90" /></label>
+              <label class="fine-tune-row">Y <input id="videoFrameYRange" type="range" min="200" max="700" value="516" /><input id="videoFrameYInput" type="number" value="516" /></label>
+              <label class="fine-tune-row">크기 <input id="videoFrameScaleRange" type="range" min="60" max="130" value="120" /><input id="videoFrameScaleInput" type="number" value="120" /></label>
+            </div>
+
+            <h2>제목 위치 조정</h2>
+            <div class="fine-tune-group">
+              <label class="fine-tune-row">X <input id="videoTitleXRange" type="range" min="0" max="240" value="120" /><input id="videoTitleXInput" type="number" value="120" /></label>
+              <label class="fine-tune-row">Y <input id="videoTitleYRange" type="range" min="100" max="320" value="246" /><input id="videoTitleYInput" type="number" value="246" /></label>
+              <label class="fine-tune-row">크기 <input id="videoTitleSizeRange" type="range" min="36" max="88" value="77" /><input id="videoTitleSizeInput" type="number" value="77" /></label>
+              <label class="fine-tune-row">자간 <input id="videoTitleSpacingRange" type="range" min="-8" max="8" value="-3" /><input id="videoTitleSpacingInput" type="number" value="-3" /></label>
+              <label class="fine-tune-row">줄간격 <input id="videoTitleLineHeightRange" type="range" min="40" max="110" value="93" /><input id="videoTitleLineHeightInput" type="number" value="93" /></label>
+            </div>
+
+            <h2>날짜/상대팀 위치 조정</h2>
+            <div class="fine-tune-group">
+              <label class="fine-tune-row">X <input id="videoMetaXRange" type="range" min="0" max="240" value="120" /><input id="videoMetaXInput" type="number" value="120" /></label>
+              <label class="fine-tune-row">Y <input id="videoMetaYRange" type="range" min="760" max="1180" value="1107" /><input id="videoMetaYInput" type="number" value="1107" /></label>
+              <label class="fine-tune-row">크기 <input id="videoMetaSizeRange" type="range" min="20" max="44" value="40" /><input id="videoMetaSizeInput" type="number" value="40" /></label>
+            </div>
+          </details>
+
+          <p class="fixed-note">모든 영상은 빠른 저장 방식으로 저장됩니다.</p>
         </section>
 
         <div class="button-row">
+          <button id="videoPreviewToggleBtn" type="button">미리보기</button>
           <button id="downloadBtn" type="button">PNG 저장</button>
+          <div id="videoSaveProgress" class="save-progress">
+            <div class="save-progress-bar">
+              <div id="videoSaveProgressFill" class="save-progress-fill"></div>
+            </div>
+            <div id="videoSaveProgressText" class="save-progress-text">0%</div>
+          </div>
         </div>
       </section>
 
       <section class="preview-wrap">
-        <div class="preview-scale">
+        <div id="previewScale" class="preview-scale">
           <div id="resultPoster" class="poster tab-preview active">
             <div class="poster-canvas">
               <img id="backgroundLayer" class="layer bg" src="assets/bg-win.png" alt="배경" />
@@ -166,8 +207,9 @@
               <img id="videoBgImage" class="layer video-bg-image" src="assets/bg-video.png" alt="영상 배경" />
               <div class="layer video-bg"></div>
               <div id="videoTitleText" class="layer video-title-text"></div>
-              <video id="videoPreviewElement" class="layer video-preview-element" playsinline muted preload="metadata"></video>
+              <video id="videoPreviewElement" class="layer video-preview-element" playsinline preload="metadata"></video>
               <div id="videoMetaText" class="layer video-meta-text"></div>
+              <img id="videoFramePreviewImage" class="layer video-frame-preview-image" alt="영상 미리보기" />
             </div>
           </div>
         </div>
@@ -175,7 +217,6 @@
     </main>
 
     <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
-    <script src="vendor/ffmpeg/ffmpeg.js"></script>
     <script src="script.js"></script>
   </body>
 </html>

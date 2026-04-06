@@ -80,9 +80,9 @@ for (let i = 1; i <= 9; i += 1) {
 }
 
 const VIDEO_LAYOUT = {
-  title: { x: 120, y: 182, width: 840, size: 56, lineHeight: 66, letterSpacing: -3 },
-  frame: { x: 90, y: 360, width: 900, height: 506, scale: 100 },
-  meta: { x: 120, y: 938, width: 840, size: 28, lineHeight: 38 }
+  title: { x: 120, y: 246, width: 840, size: 77, lineHeight: 93, letterSpacing: -3 },
+  frame: { x: 90, y: 516, width: 900, height: 506, scale: 120 },
+  meta: { x: 120, y: 1107, width: 840, size: 40, lineHeight: 54 }
 };
 
 const VIDEO_BG_FALLBACK = {
@@ -101,6 +101,7 @@ const el = {
   resultPoster: document.getElementById('resultPoster'),
   lineupPoster: document.getElementById('lineupPoster'),
   videoPoster: document.getElementById('videoPoster'),
+  previewScale: document.getElementById('previewScale'),
 
   result: document.querySelectorAll('input[name="result"]'),
   kiaSide: document.querySelectorAll('input[name="kiaSide"]'),
@@ -145,6 +146,15 @@ const el = {
   videoOpponentName: document.getElementById('videoOpponentName'),
   videoStartTime: document.getElementById('videoStartTime'),
   videoEndTime: document.getElementById('videoEndTime'),
+  videoTrimStartRange: document.getElementById('videoTrimStartRange'),
+  videoTrimEndRange: document.getElementById('videoTrimEndRange'),
+  videoPlayToggle: document.getElementById('videoPlayToggle'),
+  videoPreviewToggleBtn: document.getElementById('videoPreviewToggleBtn'),
+  videoPlaybackRange: document.getElementById('videoPlaybackRange'),
+  videoPlaybackTime: document.getElementById('videoPlaybackTime'),
+  videoSaveProgress: document.getElementById('videoSaveProgress'),
+  videoSaveProgressFill: document.getElementById('videoSaveProgressFill'),
+  videoSaveProgressText: document.getElementById('videoSaveProgressText'),
   videoFrameXInput: document.getElementById('videoFrameXInput'),
   videoFrameYInput: document.getElementById('videoFrameYInput'),
   videoFrameXRange: document.getElementById('videoFrameXRange'),
@@ -202,8 +212,10 @@ const out = {
   videoBgImage: document.getElementById('videoBgImage'),
   videoTitleText: document.getElementById('videoTitleText'),
   videoPreviewElement: document.getElementById('videoPreviewElement'),
-  videoMetaText: document.getElementById('videoMetaText')
+  videoMetaText: document.getElementById('videoMetaText'),
+  videoFramePreviewImage: document.getElementById('videoFramePreviewImage')
 };
+out.videoTrimSelected = document.getElementById('videoTrimSelected');
 
 let activeTab = 'result';
 const lineupTextRefs = { names: {}, positions: {} };
@@ -215,12 +227,8 @@ const videoState = {
   sourceExt: 'mp4',
   overlayPromise: null,
   overlayKey: '',
-  overlayBitmapPromise: null
-};
-const ffmpegState = {
-  instance: null,
-  loading: null,
-  progress: 0
+  overlayBitmapPromise: null,
+  previewMode: false
 };
 
 function selectedValue(radios) {
@@ -257,6 +265,100 @@ function getVideoTrimTimes() {
     start,
     end: end > start ? end : start
   };
+}
+
+function updateTrimSelectedBar() {
+  const max = Number(el.videoTrimStartRange.max) || 0;
+  const start = Number(el.videoTrimStartRange.value) || 0;
+  const end = Number(el.videoTrimEndRange.value) || 0;
+  const startPercent = max > 0 ? (start / max) * 100 : 0;
+  const endPercent = max > 0 ? (end / max) * 100 : 0;
+  out.videoTrimSelected.style.left = `${startPercent}%`;
+  out.videoTrimSelected.style.width = `${Math.max(0, endPercent - startPercent)}%`;
+}
+
+function formatSecondsLabel(value) {
+  return (Number(value) || 0).toFixed(1);
+}
+
+function updateVideoPlaybackUi() {
+  const video = out.videoPreviewElement;
+  const { start, end } = getVideoTrimTimes();
+  const current = Number.isFinite(video.currentTime) ? video.currentTime : 0;
+  const max = Math.max(0, end);
+  const clamped = Math.max(0, Math.min(current, max));
+
+  el.videoPlaybackRange.max = String(max);
+  el.videoPlaybackRange.value = String(clamped);
+  el.videoPlaybackTime.textContent = `${formatSecondsLabel(clamped)} / ${formatSecondsLabel(max)}`;
+  el.videoPlayToggle.textContent = video.paused ? '재생' : '멈춤';
+}
+
+function setVideoPreviewMode(enabled) {
+  videoState.previewMode = enabled;
+  el.videoPoster.classList.toggle('preview-frame-mode', enabled);
+  el.videoPreviewToggleBtn.textContent = enabled ? '영상으로 돌아가기' : '미리보기';
+}
+
+function setVideoSaveProgress(progress, label) {
+  const percent = Math.max(0, Math.min(100, Math.round(progress)));
+  el.videoSaveProgress.classList.add('active');
+  el.videoSaveProgressFill.style.width = `${percent}%`;
+  el.videoSaveProgressText.textContent = label || `${percent}%`;
+}
+
+function hideVideoSaveProgress() {
+  el.videoSaveProgress.classList.remove('active');
+  el.videoSaveProgressFill.style.width = '0%';
+  el.videoSaveProgressText.textContent = '0%';
+}
+
+function updateVideoPreviewToggleVisibility() {
+  const visible = activeTab === 'video' && isMobilePreviewMode();
+  el.videoPreviewToggleBtn.classList.toggle('mobile-video-only', visible);
+  if (!visible) {
+    setVideoPreviewMode(false);
+  }
+}
+
+function syncVideoTrimInputs(source = 'start-range') {
+  const duration = Number.isFinite(out.videoPreviewElement.duration) ? out.videoPreviewElement.duration : 0;
+  let start = Number(el.videoStartTime.value) || 0;
+  let end = Number(el.videoEndTime.value) || duration;
+
+  if (source === 'start-range') start = Number(el.videoTrimStartRange.value) || 0;
+  if (source === 'end-range') end = Number(el.videoTrimEndRange.value) || duration;
+  if (source === 'start-input') start = Number(el.videoStartTime.value) || 0;
+  if (source === 'end-input') end = Number(el.videoEndTime.value) || duration;
+
+  start = Math.max(0, Math.min(start, duration));
+  end = Math.max(0, Math.min(end, duration || end));
+
+  if (start > end) {
+    if (source === 'start-range' || source === 'start-input') {
+      end = start;
+    } else {
+      start = end;
+    }
+  }
+
+  el.videoStartTime.value = start.toFixed(1).replace(/\.0$/, '');
+  el.videoEndTime.value = end.toFixed(1).replace(/\.0$/, '');
+  el.videoTrimStartRange.value = String(start);
+  el.videoTrimEndRange.value = String(end);
+  updateTrimSelectedBar();
+}
+
+function configureVideoTrimRange(duration) {
+  const safeDuration = Math.max(0, duration || 0);
+  const maxValue = safeDuration.toFixed(1);
+  el.videoTrimStartRange.max = maxValue;
+  el.videoTrimEndRange.max = maxValue;
+  if (!el.videoEndTime.value || Number(el.videoEndTime.value) === 0) {
+    el.videoEndTime.value = safeDuration.toFixed(1).replace(/\.0$/, '');
+  }
+  syncVideoTrimInputs();
+  updateVideoPlaybackUi();
 }
 
 function getVideoLayoutValues() {
@@ -445,49 +547,6 @@ async function prepareExportVideo(sourceVideo, startTime) {
   }
 }
 
-async function loadFFmpeg() {
-  if (ffmpegState.instance?.loaded) return ffmpegState.instance;
-  if (ffmpegState.loading) return ffmpegState.loading;
-
-  ffmpegState.loading = (async () => {
-    const api = window.FFmpegWASM;
-    if (!api?.FFmpeg) {
-      throw new Error('FFmpeg WASM 로더를 찾을 수 없습니다.');
-    }
-
-    const ffmpeg = new api.FFmpeg();
-    ffmpeg.on('progress', ({ progress }) => {
-      ffmpegState.progress = progress;
-      if (activeTab === 'video') {
-        el.downloadBtn.textContent = progress > 0
-          ? `영상 인코딩 ${Math.round(progress * 100)}%`
-          : '영상 인코딩 준비중';
-      }
-    });
-
-    await ffmpeg.load({
-      coreURL: new URL('vendor/ffmpeg/ffmpeg-core.js', window.location.href).href,
-      wasmURL: new URL('vendor/ffmpeg/ffmpeg-core.wasm', window.location.href).href
-    });
-
-    ffmpegState.instance = ffmpeg;
-    return ffmpeg;
-  })();
-
-  try {
-    return await ffmpegState.loading;
-  } finally {
-    ffmpegState.loading = null;
-  }
-}
-
-function preloadFFmpeg() {
-  if (ffmpegState.instance?.loaded || ffmpegState.loading) return;
-  loadFFmpeg().catch(() => {
-    updateDownloadButtonLabel();
-  });
-}
-
 async function buildVideoOverlayPng(layout, titleLines, metaLines, titleTop, metaTop) {
   const canvas = document.createElement('canvas');
   canvas.width = 1080;
@@ -521,7 +580,7 @@ async function buildVideoOverlayPng(layout, titleLines, metaLines, titleTop, met
   });
 
   ctx.fillStyle = '#111';
-  ctx.font = `700 ${layout.meta.size}px 'Pretendard'`;
+  ctx.font = `400 ${layout.meta.size}px 'mediumfont'`;
   metaLines.forEach((line, index) => {
     drawCenteredSpacedText(
       ctx,
@@ -605,6 +664,37 @@ function drawVideoCompositeFrame(ctx, video, layout, overlayBitmap) {
   ctx.drawImage(overlayBitmap, 0, 0, 1080, 1350);
 
   drawCoverImage(ctx, video, layout.frame.renderX, layout.frame.renderY, layout.frame.width, layout.frame.height);
+}
+
+async function renderVideoPreviewFrameImage() {
+  const video = out.videoPreviewElement;
+  if (!video.getAttribute('src')) {
+    window.alert('먼저 영상 파일을 업로드해주세요.');
+    return;
+  }
+
+  const { start } = getVideoTrimTimes();
+  const { layout } = getVideoOverlaySnapshot();
+  const canvas = document.createElement('canvas');
+  canvas.width = 1080;
+  canvas.height = 1350;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return;
+
+  const previewVideo = await prepareExportVideo(video, start);
+  const overlayBitmap = await primeVideoOverlayBitmapCache();
+
+  try {
+    drawVideoCompositeFrame(ctx, previewVideo, layout, overlayBitmap);
+    const dataUrl = canvas.toDataURL('image/png', 1);
+    out.videoFramePreviewImage.src = dataUrl;
+    setVideoPreviewMode(true);
+  } finally {
+    previewVideo.pause();
+    previewVideo.removeAttribute('src');
+    previewVideo.load();
+    previewVideo.remove();
+  }
 }
 
 function normalizeName(name) {
@@ -696,6 +786,8 @@ function configureVideoLoop() {
 }
 
 function updateVideoPoster() {
+  const video = out.videoPreviewElement;
+  const wasPlaying = !video.paused;
   const { layout, titleLines, metaLines, titleTop, metaTop } = getVideoOverlaySnapshot();
   out.videoTitleText.textContent = titleLines.join('\n');
   out.videoMetaText.textContent = metaLines.join('\n');
@@ -715,14 +807,18 @@ function updateVideoPoster() {
 
   configureVideoLoop();
 
-  const video = out.videoPreviewElement;
   if (!video.getAttribute('src')) return;
   const { start } = getVideoTrimTimes();
   if (Math.abs(video.currentTime - start) > 0.15) {
     video.currentTime = start;
   }
-  const playPromise = video.play();
-  if (playPromise?.catch) playPromise.catch(() => {});
+  video.muted = false;
+  video.volume = 1;
+  if (wasPlaying) {
+    const playPromise = video.play();
+    if (playPromise?.catch) playPromise.catch(() => {});
+  }
+  updateVideoPlaybackUi();
 
   invalidateVideoOverlayCache();
   primeVideoOverlayCache().catch(() => {});
@@ -742,71 +838,7 @@ async function exportVideo() {
 
   const { start, end } = getVideoTrimTimes();
   const { layout, titleLines, metaLines, titleTop, metaTop } = getVideoOverlaySnapshot();
-
-  const duration = Math.max(0.1, end - start);
-  if (duration <= 20) {
-    await exportVideoFast(sourceVideo, start, end, layout, titleLines, metaLines, titleTop, metaTop);
-    return;
-  }
-
-  const overlayBlob = await primeVideoOverlayCache();
-  const ffmpeg = await loadFFmpeg();
-  const inputExt = videoState.sourceExt || getFileExtension(sourceFile.name, 'mp4');
-  const inputName = `input.${inputExt}`;
-  const overlayName = 'overlay.png';
-  const outputName = 'output.mp4';
-
-  try {
-    el.downloadBtn.textContent = 'FFmpeg 로딩중';
-    const sourceBytes = videoState.sourceBytes || new Uint8Array(await sourceFile.arrayBuffer());
-    await ffmpeg.writeFile(inputName, sourceBytes);
-    await ffmpeg.writeFile(overlayName, new Uint8Array(await overlayBlob.arrayBuffer()));
-
-    el.downloadBtn.textContent = '영상 인코딩 준비중';
-    await ffmpeg.exec([
-      '-ss', String(start),
-      '-t', String(duration),
-      '-i', inputName,
-      '-loop', '1',
-      '-i', overlayName,
-      '-filter_complex',
-      [
-        `[0:v]scale=${layout.frame.width}:${layout.frame.height}:force_original_aspect_ratio=increase,crop=${layout.frame.width}:${layout.frame.height}[clip]`,
-        `[1:v][clip]overlay=${layout.frame.renderX}:${layout.frame.renderY}:format=auto[comp]`,
-        `[comp]format=yuv420p,setsar=1[outv]`
-      ].join(';'),
-      '-map', '[outv]',
-      '-map', '0:a?',
-      '-c:v', 'libx264',
-      '-preset', 'veryfast',
-      '-pix_fmt', 'yuv420p',
-      '-c:a', 'aac',
-      '-b:a', '192k',
-      '-movflags', '+faststart',
-      '-shortest',
-      '-r', '30',
-      '-y',
-      outputName
-    ]);
-
-    const data = await ffmpeg.readFile(outputName);
-    const blob = new Blob([data.buffer], { type: 'video/mp4' });
-    const downloadUrl = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = downloadUrl;
-    link.download = `video-${Date.now()}.mp4`;
-    link.click();
-    URL.revokeObjectURL(downloadUrl);
-  } finally {
-    const cleanup = [inputName, overlayName, outputName];
-    await Promise.all(cleanup.map(async (file) => {
-      try {
-        await ffmpeg.deleteFile(file);
-      } catch {}
-    }));
-    ffmpegState.progress = 0;
-    updateVideoPoster();
-  }
+  await exportVideoFast(sourceVideo, start, end, layout, titleLines, metaLines, titleTop, metaTop);
 }
 
 async function exportVideoFast(sourceVideo, start, end, layout, titleLines, metaLines, titleTop, metaTop) {
@@ -831,6 +863,7 @@ async function exportVideoFast(sourceVideo, start, end, layout, titleLines, meta
   const stream = canvas.captureStream(30);
   const exportVideo = await prepareExportVideo(sourceVideo, start);
   const overlayBitmap = await primeVideoOverlayBitmapCache();
+  setVideoSaveProgress(0, '준비중 0%');
 
   try {
     const exportStream = typeof exportVideo.captureStream === 'function' ? exportVideo.captureStream() : null;
@@ -865,6 +898,8 @@ async function exportVideoFast(sourceVideo, start, end, layout, titleLines, meta
 
     const renderLoop = () => {
       drawVideoCompositeFrame(ctx, exportVideo, layout, overlayBitmap);
+      const progress = ((exportVideo.currentTime - start) / duration) * 100;
+      setVideoSaveProgress(progress, `저장중 ${Math.max(0, Math.min(100, Math.round(progress)))}%`);
       if (exportVideo.currentTime >= end || exportVideo.ended) {
         stopRecording();
         return;
@@ -886,6 +921,7 @@ async function exportVideoFast(sourceVideo, start, end, layout, titleLines, meta
 
     recorder.start(250);
     drawVideoCompositeFrame(ctx, exportVideo, layout, overlayBitmap);
+    setVideoSaveProgress(1, '저장중 1%');
     const playPromise = exportVideo.play();
     if (playPromise?.catch) playPromise.catch(() => {});
     renderLoop();
@@ -905,6 +941,7 @@ async function exportVideoFast(sourceVideo, start, end, layout, titleLines, meta
     await stopped;
 
     const blob = new Blob(chunks, { type: selectedFormat.mimeType });
+    setVideoSaveProgress(100, '저장 완료');
     const downloadUrl = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = downloadUrl;
@@ -916,6 +953,7 @@ async function exportVideoFast(sourceVideo, start, end, layout, titleLines, meta
     exportVideo.removeAttribute('src');
     exportVideo.load();
     exportVideo.remove();
+    window.setTimeout(() => hideVideoSaveProgress(), 600);
     updateVideoPoster();
   }
 }
@@ -1145,11 +1183,10 @@ function switchTab(target) {
   el.videoPoster.classList.toggle('active', isVideo);
   out.resultMobilePreview.classList.toggle('active', isResult);
   out.lineupMobilePreview.classList.toggle('active', isLineup);
+  el.previewScale.classList.toggle('video-mobile-plain', isVideo && isMobilePreviewMode());
+  if (!isVideo) setVideoPreviewMode(false);
+  updateVideoPreviewToggleVisibility();
   updateDownloadButtonLabel();
-  if (isVideo && !ffmpegState.instance?.loaded && !ffmpegState.loading) {
-    el.downloadBtn.textContent = 'FFmpeg 로딩중';
-    preloadFFmpeg();
-  }
 }
 
 function waitForImageElement(img) {
@@ -1337,6 +1374,54 @@ function bindEvents() {
     input.addEventListener('change', updateVideoPoster);
   });
 
+  el.videoTrimStartRange.addEventListener('input', () => {
+    syncVideoTrimInputs('start-range');
+    updateVideoPoster();
+  });
+  el.videoTrimEndRange.addEventListener('input', () => {
+    syncVideoTrimInputs('end-range');
+    updateVideoPoster();
+  });
+  el.videoStartTime.addEventListener('input', () => {
+    syncVideoTrimInputs('start-input');
+    updateVideoPoster();
+  });
+  el.videoEndTime.addEventListener('input', () => {
+    syncVideoTrimInputs('end-input');
+    updateVideoPoster();
+  });
+
+  el.videoPlayToggle.addEventListener('click', async () => {
+    const video = out.videoPreviewElement;
+    if (!video.getAttribute('src')) return;
+    if (video.paused) {
+      const { start, end } = getVideoTrimTimes();
+      if (video.currentTime < start || video.currentTime > end) {
+        video.currentTime = start;
+      }
+      const playPromise = video.play();
+      if (playPromise?.catch) playPromise.catch(() => {});
+    } else {
+      video.pause();
+    }
+    updateVideoPlaybackUi();
+  });
+
+  el.videoPreviewToggleBtn.addEventListener('click', async () => {
+    if (videoState.previewMode) {
+      setVideoPreviewMode(false);
+      return;
+    }
+    await renderVideoPreviewFrameImage();
+  });
+
+  el.videoPlaybackRange.addEventListener('input', () => {
+    const video = out.videoPreviewElement;
+    const nextTime = Number(el.videoPlaybackRange.value) || 0;
+    video.currentTime = nextTime;
+    updateVideoPlaybackUi();
+  });
+
   el.videoFileInput.addEventListener('change', () => {
     const file = el.videoFileInput.files?.[0];
     if (videoState.objectUrl) {
@@ -1346,8 +1431,12 @@ function bindEvents() {
     if (!file) {
       videoState.sourceBytes = null;
       videoState.sourceExt = 'mp4';
+      setVideoPreviewMode(false);
       out.videoPreviewElement.removeAttribute('src');
       out.videoPreviewElement.load();
+      el.videoStartTime.value = '0';
+      el.videoEndTime.value = '0';
+      configureVideoTrimRange(0);
       updateVideoPoster();
       return;
     }
@@ -1355,20 +1444,25 @@ function bindEvents() {
     videoState.objectUrl = URL.createObjectURL(file);
     out.videoPreviewElement.src = videoState.objectUrl;
     out.videoPreviewElement.load();
+    setVideoPreviewMode(false);
     file.arrayBuffer().then((buffer) => {
       videoState.sourceBytes = new Uint8Array(buffer);
     }).catch(() => {
       videoState.sourceBytes = null;
     });
-    preloadFFmpeg();
   });
 
   out.videoPreviewElement.addEventListener('loadedmetadata', () => {
-    el.videoEndTime.placeholder = out.videoPreviewElement.duration
-      ? `최대 ${out.videoPreviewElement.duration.toFixed(1)}초`
-      : '전체 길이';
+    out.videoPreviewElement.muted = false;
+    out.videoPreviewElement.volume = 1;
+    configureVideoTrimRange(out.videoPreviewElement.duration);
     updateVideoPoster();
   });
+
+  out.videoPreviewElement.addEventListener('timeupdate', updateVideoPlaybackUi);
+  out.videoPreviewElement.addEventListener('play', updateVideoPlaybackUi);
+  out.videoPreviewElement.addEventListener('pause', updateVideoPlaybackUi);
+  out.videoPreviewElement.addEventListener('seeked', updateVideoPlaybackUi);
 
   out.videoBgImage.addEventListener('error', () => {
     out.videoBgImage.style.display = 'none';
@@ -1393,7 +1487,11 @@ function bindEvents() {
   el.tabLineup.addEventListener('click', () => switchTab('lineup'));
   el.tabVideo.addEventListener('click', () => switchTab('video'));
   el.downloadBtn.addEventListener('click', downloadImage);
-  window.addEventListener('resize', scheduleMobilePreviewRender);
+  window.addEventListener('resize', () => {
+    el.previewScale.classList.toggle('video-mobile-plain', activeTab === 'video' && isMobilePreviewMode());
+    updateVideoPreviewToggleVisibility();
+    scheduleMobilePreviewRender();
+  });
 }
 
 function setToday(target) {
@@ -1427,15 +1525,12 @@ function init() {
   }
 
   bindEvents();
+  configureVideoTrimRange(0);
   updateResultPoster();
   updateLineupPoster();
   updateVideoPoster();
+  updateVideoPreviewToggleVisibility();
   updateDownloadButtonLabel();
-  if ('requestIdleCallback' in window) {
-    window.requestIdleCallback(() => preloadFFmpeg());
-  } else {
-    window.setTimeout(() => preloadFFmpeg(), 1200);
-  }
 }
 
 init();
