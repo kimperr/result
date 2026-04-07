@@ -1278,12 +1278,129 @@ function refreshRosterGroupEditors(section) {
   });
 }
 
+function formatOutsToInningsValue(outs) {
+  const safeOuts = Math.max(0, Math.round(Number(outs) || 0));
+  const innings = Math.floor(safeOuts / 3);
+  const remainder = safeOuts % 3;
+  return remainder ? `${innings}.${remainder}` : String(innings);
+}
+
+function normalizePitcherInningsInput(input) {
+  if (!(input instanceof HTMLInputElement)) return;
+  const rawValue = input.value.trim();
+  if (!rawValue) {
+    input.dataset.lastValidInnings = '0';
+    return;
+  }
+
+  const numericValue = Number(rawValue);
+  const lastValidDisplay = input.dataset.lastValidInnings || '0';
+  const lastValidValue = Number(lastValidDisplay);
+  if (!Number.isFinite(numericValue) || numericValue < 0) {
+    input.value = lastValidDisplay;
+    return;
+  }
+
+  const whole = Math.trunc(numericValue);
+  const decimalDigit = Math.round((numericValue - whole) * 10);
+  const isIncreasing = numericValue >= lastValidValue;
+
+  let outs = whole * 3;
+  if (decimalDigit <= 0) {
+    outs += 0;
+  } else if (decimalDigit === 1) {
+    outs += 1;
+  } else if (decimalDigit === 2) {
+    outs += 2;
+  } else {
+    outs = isIncreasing ? (whole + 1) * 3 : (whole * 3) + 2;
+  }
+
+  const normalizedValue = formatOutsToInningsValue(outs);
+  input.value = normalizedValue;
+  input.dataset.lastValidInnings = normalizedValue;
+}
+
+function normalizeIntegerInput(input) {
+  if (!(input instanceof HTMLInputElement)) return;
+  const rawValue = input.value.trim();
+  if (!rawValue) return;
+  const numericValue = Math.max(0, Math.trunc(Number(rawValue) || 0));
+  input.value = String(numericValue);
+}
+
+function normalizeDecimalInput(input) {
+  if (!(input instanceof HTMLInputElement)) return;
+  const rawValue = input.value.trim();
+  if (!rawValue) return;
+  if (rawValue.endsWith('.')) return;
+  const numericValue = Number(rawValue);
+  if (!Number.isFinite(numericValue) || numericValue < 0) return;
+  input.value = String(numericValue);
+}
+
+function getMatchingPlayerNames(query) {
+  const normalizedQuery = normalizeName(query);
+  const names = PLAYER_INFO_LIST.map((player) => player.name);
+  if (!normalizedQuery) return names.slice(0, 12);
+  return names
+    .filter((name) => normalizeName(name).includes(normalizedQuery))
+    .sort((a, b) => {
+      const aNormalized = normalizeName(a);
+      const bNormalized = normalizeName(b);
+      const aStarts = aNormalized.startsWith(normalizedQuery);
+      const bStarts = bNormalized.startsWith(normalizedQuery);
+      if (aStarts !== bStarts) return aStarts ? -1 : 1;
+      return a.localeCompare(b, 'ko');
+    })
+    .slice(0, 12);
+}
+
+function hidePlayerSuggestions(groupRefs) {
+  if (!groupRefs?.nameSuggestions) return;
+  groupRefs.nameSuggestions.innerHTML = '';
+  groupRefs.nameSuggestions.classList.add('is-hidden');
+}
+
+function showPlayerSuggestions(groupRefs) {
+  if (!groupRefs?.nameInput || !groupRefs?.nameSuggestions) return;
+  const matches = getMatchingPlayerNames(groupRefs.nameInput.value);
+  if (!matches.length) {
+    hidePlayerSuggestions(groupRefs);
+    return;
+  }
+
+  groupRefs.nameSuggestions.innerHTML = '';
+  matches.forEach((name) => {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'roster-name-suggestion';
+    button.textContent = name;
+    button.addEventListener('mousedown', (event) => {
+      event.preventDefault();
+      groupRefs.nameInput.value = name;
+      hidePlayerSuggestions(groupRefs);
+      groupRefs.nameInput.dispatchEvent(new Event('input', { bubbles: true }));
+      groupRefs.nameInput.dispatchEvent(new Event('change', { bubbles: true }));
+      groupRefs.nameInput.focus();
+      groupRefs.nameInput.setSelectionRange(name.length, name.length);
+    });
+    groupRefs.nameSuggestions.appendChild(button);
+  });
+  groupRefs.nameSuggestions.classList.remove('is-hidden');
+}
+
 function createRosterGroupEditor(section, index) {
   const root = document.createElement('div');
   root.className = 'roster-group-editor';
   root.innerHTML = `
     <h3>${index + 1}번 선수</h3>
-    <label class="field">선수 이름 <input class="roster-name-input" type="text" list="playerNameOptions" /></label>
+    <label class="field">선수 이름
+      <div class="roster-name-autocomplete">
+        <input class="roster-name-input" type="text" autocomplete="off" />
+        <div class="roster-name-suggestions is-hidden"></div>
+      </div>
+    </label>
     <label class="field">유형 <input class="roster-meta-input" type="text" readonly /></label>
     <div class="roster-stats-grid roster-pitcher-stats">
       <div class="roster-stats-row roster-stats-row-five">
@@ -1294,7 +1411,7 @@ function createRosterGroupEditor(section, index) {
         <label class="field">홀 <input class="roster-pitcher-holds" type="number" min="0" value="0" /></label>
       </div>
       <div class="roster-stats-row roster-stats-row-single">
-        <label class="field">이닝 <input class="roster-pitcher-innings" type="number" min="0" step="0.1" value="0" /></label>
+        <label class="field">이닝 <input class="roster-pitcher-innings" type="text" inputmode="decimal" value="0" /></label>
       </div>
       <div class="roster-stats-row roster-stats-row-two">
         <label class="field">ERA <input class="roster-pitcher-era" type="number" min="0" step="0.01" value="0" /></label>
@@ -1320,6 +1437,7 @@ function createRosterGroupEditor(section, index) {
   const refs = {
     root,
     nameInput: root.querySelector('.roster-name-input'),
+    nameSuggestions: root.querySelector('.roster-name-suggestions'),
     metaInput: root.querySelector('.roster-meta-input'),
     pitcherStats: root.querySelector('.roster-pitcher-stats'),
     pitcherGames: root.querySelector('.roster-pitcher-games'),
@@ -1339,8 +1457,53 @@ function createRosterGroupEditor(section, index) {
     hitterOps: root.querySelector('.roster-hitter-ops')
   };
 
-  refs.nameInput.addEventListener('input', () => updateRosterMovesFormVisibility(section, index));
-  refs.nameInput.addEventListener('change', () => updateRosterMovesFormVisibility(section, index));
+  refs.nameInput.addEventListener('focus', () => showPlayerSuggestions(refs));
+  refs.nameInput.addEventListener('input', () => {
+    showPlayerSuggestions(refs);
+    updateRosterMovesFormVisibility(section, index);
+  });
+  refs.nameInput.addEventListener('change', () => {
+    updateRosterMovesFormVisibility(section, index);
+  });
+  refs.nameInput.addEventListener('blur', () => {
+    window.setTimeout(() => hidePlayerSuggestions(refs), 120);
+  });
+  refs.nameInput.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape') {
+      hidePlayerSuggestions(refs);
+      return;
+    }
+    if (event.key === 'Enter' && refs.nameSuggestions && !refs.nameSuggestions.classList.contains('is-hidden')) {
+      const firstMatch = refs.nameSuggestions.querySelector('.roster-name-suggestion');
+      if (firstMatch instanceof HTMLButtonElement) {
+        event.preventDefault();
+        firstMatch.click();
+      }
+    }
+  });
+  refs.pitcherInnings.dataset.lastValidInnings = refs.pitcherInnings.value;
+  refs.pitcherInnings.addEventListener('change', () => normalizePitcherInningsInput(refs.pitcherInnings));
+  refs.pitcherInnings.addEventListener('blur', () => normalizePitcherInningsInput(refs.pitcherInnings));
+  [
+    refs.pitcherGames,
+    refs.pitcherWins,
+    refs.pitcherLosses,
+    refs.pitcherSaves,
+    refs.pitcherHolds,
+    refs.hitterGames,
+    refs.hitterHomeRuns,
+    refs.hitterRbi,
+    refs.hitterSteals
+  ].forEach((input) => {
+    input.addEventListener('input', () => normalizeIntegerInput(input));
+    input.addEventListener('change', () => normalizeIntegerInput(input));
+    input.addEventListener('blur', () => normalizeIntegerInput(input));
+  });
+  [refs.pitcherEra, refs.pitcherWhip].forEach((input) => {
+    input.addEventListener('input', () => normalizeDecimalInput(input));
+    input.addEventListener('change', () => normalizeDecimalInput(input));
+    input.addEventListener('blur', () => normalizeDecimalInput(input));
+  });
   return refs;
 }
 
