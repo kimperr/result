@@ -38,6 +38,8 @@ export async function exportVideoFast({
   drawVideoCompositeFrame,
   updateVideoPoster
 }) {
+  const TARGET_EXPORT_FPS = 60;
+  const TARGET_VIDEO_BITS_PER_SECOND = 12_000_000;
   const duration = Math.max(0.1, end - start);
   const canvas = document.createElement('canvas');
   canvas.width = 1080;
@@ -56,7 +58,7 @@ export async function exportVideoFast({
     { mimeType: 'video/webm', ext: 'webm' }
   ];
   const selectedFormat = formats.find((format) => MediaRecorder.isTypeSupported(format.mimeType)) || formats[formats.length - 1];
-  const stream = canvas.captureStream(30);
+  const stream = canvas.captureStream(TARGET_EXPORT_FPS);
   const exportVideo = await prepareVideoExport(sourceVideo, start);
   const overlayBitmap = await primeVideoOverlayBitmapCache();
   setVideoSaveProgress(0, '以鍮꾩쨷 0%');
@@ -67,7 +69,10 @@ export async function exportVideoFast({
       exportStream.getAudioTracks().forEach((track) => stream.addTrack(track));
     }
 
-    const recorder = new MediaRecorder(stream, { mimeType: selectedFormat.mimeType });
+    const recorder = new MediaRecorder(stream, {
+      mimeType: selectedFormat.mimeType,
+      videoBitsPerSecond: TARGET_VIDEO_BITS_PER_SECOND
+    });
     const chunks = [];
     recorder.addEventListener('dataavailable', (event) => {
       if (event.data.size > 0) chunks.push(event.data);
