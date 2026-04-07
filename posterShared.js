@@ -12,6 +12,13 @@ export function applyText(node, cfg) {
   node.style.fontSize = `${cfg.size}px`;
 }
 
+export function applyTextAfterAnchor(node, cfg, anchorNode, anchorCfg, gap = 0) {
+  const anchorWidth = anchorNode?.getBoundingClientRect?.().width || anchorNode?.offsetWidth || 0;
+  node.style.left = `${anchorCfg.x + anchorWidth + gap}px`;
+  node.style.top = `${cfg.y}px`;
+  node.style.fontSize = `${cfg.size}px`;
+}
+
 export function applyBadge(node, cfg) {
   node.style.left = `${cfg.x}px`;
   node.style.top = `${cfg.y}px`;

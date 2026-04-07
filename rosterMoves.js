@@ -328,6 +328,7 @@ export function updateRosterMovesPoster({
   selectedTeamInfo,
   formatDate,
   applyText,
+  applyTextAfterAnchor,
   applyAdvancedText,
   applyPositionOnly,
   scheduleMobilePreviewRender
@@ -344,7 +345,7 @@ export function updateRosterMovesPoster({
   out.rosterMovesStadiumText.style.letterSpacing = '-1px';
 
   applyText(out.rosterMovesDateText, ROSTER_MOVES_LAYOUT.dateText);
-  applyText(out.rosterMovesOpponentText, ROSTER_MOVES_LAYOUT.opponentText);
+  applyTextAfterAnchor(out.rosterMovesOpponentText, ROSTER_MOVES_LAYOUT.opponentText, out.rosterMovesDateText, ROSTER_MOVES_LAYOUT.dateText, ROSTER_MOVES_LAYOUT.opponentText.x);
   applyText(out.rosterMovesStadiumText, ROSTER_MOVES_LAYOUT.stadiumText);
 
   const counts = {

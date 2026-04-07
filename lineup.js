@@ -71,6 +71,7 @@ export function updateLineupPoster({
   lineupTextRefs,
   selectedTeamInfo,
   applyText,
+  applyTextAfterAnchor,
   scheduleMobilePreviewRender
 }) {
   const team = selectedTeamInfo(el.lineupOpponentTeam);
@@ -88,7 +89,7 @@ export function updateLineupPoster({
   el.lineupPoster.style.setProperty('--global-letter-spacing', `${Number.isFinite(spacing) ? spacing : -1}px`);
 
   applyText(out.lineupDateText, LINEUP_LAYOUT.dateText);
-  applyText(out.lineupOpponentText, LINEUP_LAYOUT.opponentText);
+  applyTextAfterAnchor(out.lineupOpponentText, LINEUP_LAYOUT.opponentText, out.lineupDateText, LINEUP_LAYOUT.dateText, LINEUP_LAYOUT.opponentText.x);
   applyText(out.lineupStadiumText, LINEUP_LAYOUT.stadiumText);
   applyText(out.lineupPitcherText, LINEUP_LAYOUT.pitcher);
 

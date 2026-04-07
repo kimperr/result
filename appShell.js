@@ -592,7 +592,7 @@ export function init({
   refreshRosterGroupEditors('callUp');
   refreshRosterGroupEditors('sendDown');
   applySharedKiaSide('home');
-  applySharedOpponentFineTune(el.lineupOpponentXInput.value || 228, el.lineupOpponentYInput.value || 354);
+  applySharedOpponentFineTune(el.lineupOpponentXInput.value || 24, el.lineupOpponentYInput.value || 354);
   syncAutoResultSelection(el, isResultManualOverride());
   updateResultPoster();
   updateLineupPoster();

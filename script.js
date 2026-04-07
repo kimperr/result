@@ -85,6 +85,7 @@ import {
 import {
   applyAdvancedText,
   applyBadge,
+  applyTextAfterAnchor,
   applyPositionOnly,
   applyScaledImage,
   applyText,
@@ -397,6 +398,7 @@ function updateResultPoster(markManualOverride = false) {
     resultManualOverride,
     selectedTeamInfo,
     applyText,
+    applyTextAfterAnchor,
     applyBadge,
     scheduleMobilePreviewRender
   });
@@ -409,6 +411,7 @@ function updateLineupPoster() {
     lineupTextRefs,
     selectedTeamInfo,
     applyText,
+    applyTextAfterAnchor,
     scheduleMobilePreviewRender
   });
 }
@@ -422,6 +425,7 @@ function updateRosterMovesPoster() {
     selectedTeamInfo,
     formatDate,
     applyText,
+    applyTextAfterAnchor,
     applyAdvancedText,
     applyPositionOnly,
     scheduleMobilePreviewRender

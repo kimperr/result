@@ -104,7 +104,7 @@ export const KIA_HOME_STADIUM = '광주 기아 챔피언스필드';
 
 export const RESULT_LAYOUT = {
   dateText: { x: 66, y: 354, size: 29 },
-  opponentText: { x: 182, y: 354, size: 28 },
+  opponentText: { x: 24, y: 354, size: 28 },
   stadiumText: { x: 66, y: 391, size: 29 },
   homeScoreText: { x: 285, y: 532, size: 140 },
   awayScoreText: { x: 285, y: 715, size: 140 },
@@ -120,7 +120,7 @@ export const RESULT_LAYOUT = {
 
 export const LINEUP_LAYOUT = {
   dateText: { x: 66, y: 354, size: 29 },
-  opponentText: { x: 196, y: 354, size: 28 },
+  opponentText: { x: 24, y: 354, size: 28 },
   stadiumText: { x: 66, y: 391, size: 29 },
   names: {},
   positions: {},
@@ -129,7 +129,7 @@ export const LINEUP_LAYOUT = {
 
 export const ROSTER_MOVES_LAYOUT = {
   dateText: { x: 66, y: 354, size: 29 },
-  opponentText: { x: 196, y: 354, size: 28 },
+  opponentText: { x: 24, y: 354, size: 28 },
   stadiumText: { x: 66, y: 391, size: 29 },
   callUpTitle: { x: 62, y: 470, size: 53, letterSpacing: -3, lineHeight: 64 },
   sendDownTitle: { x: 62, y: 859, size: 53, letterSpacing: -3, lineHeight: 64 },

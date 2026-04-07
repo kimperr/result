@@ -51,6 +51,7 @@ export function updateResultPoster({
   resultManualOverride,
   selectedTeamInfo,
   applyText,
+  applyTextAfterAnchor,
   applyBadge,
   scheduleMobilePreviewRender
 }) {
@@ -105,7 +106,7 @@ export function updateResultPoster({
   RESULT_LAYOUT.mvpRecordText.y = Number(el.mvpRecordYInput.value) || RESULT_LAYOUT.mvpRecordText.y;
 
   applyText(out.dateText, RESULT_LAYOUT.dateText);
-  applyText(out.opponentText, RESULT_LAYOUT.opponentText);
+  applyTextAfterAnchor(out.opponentText, RESULT_LAYOUT.opponentText, out.dateText, RESULT_LAYOUT.dateText, RESULT_LAYOUT.opponentText.x);
   applyText(out.stadiumText, RESULT_LAYOUT.stadiumText);
   applyText(out.homeScoreText, RESULT_LAYOUT.homeScoreText);
   applyText(out.awayScoreText, RESULT_LAYOUT.awayScoreText);
