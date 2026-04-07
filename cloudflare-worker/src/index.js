@@ -37,12 +37,15 @@ const SCHEDULE_TEAM_NAMES = {
 };
 const TV_BROADCASTERS = {
   'KN-T': 'KBS N SPORTS',
+  'K-T': 'KBS',
+  'K-2T': 'KBS2',
   'SBS-T': 'SBS SPORTS',
+  'S-T': 'SBS',
   'SS-T': 'SBS SPORTS',
+  'M-T': 'MBC',
   'MS-T': 'MBC SPORTS+',
   'SPO-T': 'SPOTV',
-  'SPO-2T': 'SPOTV2',
-  TVING: 'TVING'
+  'SPO-2T': 'SPOTV2'
 };
 
 const PLAYER_GROUP_HEADERS = new Set([PITCHER_KOR, CATCHER_KOR, INFIELDER_KOR, OUTFIELDER_KOR]);
@@ -107,7 +110,7 @@ function normalizeBroadcasterName(value) {
   return String(value || '')
     .split('/')
     .map((part) => part.trim())
-    .filter(Boolean)
+    .filter((part) => Boolean(part) && part !== 'TVING')
     .map((part) => TV_BROADCASTERS[part] || part)
     .join(' / ');
 }

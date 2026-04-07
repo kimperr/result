@@ -44,12 +44,15 @@ SCHEDULE_TEAM_NAMES = {
 }
 TV_BROADCASTERS = {
     "KN-T": "KBS N SPORTS",
+    "K-T": "KBS",
+    "K-2T": "KBS2",
     "SBS-T": "SBS SPORTS",
+    "S-T": "SBS",
     "SS-T": "SBS SPORTS",
+    "M-T": "MBC",
     "MS-T": "MBC SPORTS+",
     "SPO-T": "SPOTV",
     "SPO-2T": "SPOTV2",
-    "TVING": "TVING",
 }
 PITCHER_KOR = "\ud22c\uc218"
 PLAYER_GROUP_HEADERS = {
@@ -83,7 +86,7 @@ def clean_schedule_media_text(value: str) -> str:
 
 def normalize_broadcaster_name(value: str) -> str:
     parts = [part.strip() for part in re.split(r"\s*/\s*", value or "") if part.strip()]
-    normalized_parts = [TV_BROADCASTERS.get(part, part) for part in parts]
+    normalized_parts = [TV_BROADCASTERS.get(part, part) for part in parts if part != "TVING"]
     return " / ".join(normalized_parts)
 
 
