@@ -310,8 +310,13 @@ async function fetchSearchPlayer(name) {
   return await response.json();
 }
 
-function chooseSearchPlayer(searchResult, name) {
+function chooseSearchPlayer(searchResult, name, preferredPlayerId = '') {
   const nowPlayers = Array.isArray(searchResult.now) ? searchResult.now : [];
+  const trimmedPlayerId = String(preferredPlayerId || '').trim();
+  if (trimmedPlayerId) {
+    const matchedPlayer = nowPlayers.find((player) => String(player.P_ID || '') === trimmedPlayerId);
+    if (matchedPlayer) return matchedPlayer;
+  }
   const normalizedName = String(name || '').replace(/\s+/g, '');
   for (const player of nowPlayers) {
     const playerName = String(player.P_NM || '').replace(/\s+/g, '');
@@ -405,19 +410,26 @@ async function enrichSnapshotPlayer(player, warnings, recordSource) {
   };
 }
 
-async function buildSinglePlayerPayload(name, section, dateValue) {
+async function buildSinglePlayerPayload(name, section, dateValue, playerId = '') {
   let player = null;
+  const trimmedPlayerId = String(playerId || '').trim();
   if (/^\d{4}-\d{2}-\d{2}$/.test(dateValue)) {
     const teamCode = normalizeTeamCode('KIA');
     const previousDate = minusDays(dateValue, 1);
     const currentSnapshot = parseRegisterSnapshot(await fetchRegisterSnapshotHtml(dateValue, teamCode));
     const previousSnapshot = parseRegisterSnapshot(await fetchRegisterSnapshotHtml(previousDate, teamCode));
-    player = findPlayerInSnapshot(section === 'callUp' ? currentSnapshot : previousSnapshot, name);
+    const snapshot = section === 'callUp' ? currentSnapshot : previousSnapshot;
+    if (trimmedPlayerId && snapshot[trimmedPlayerId]) {
+      player = snapshot[trimmedPlayerId];
+    }
+    if (!player) {
+      player = findPlayerInSnapshot(snapshot, name);
+    }
   }
 
   if (!player) {
     const searchResult = await fetchSearchPlayer(name);
-    const searchedPlayer = chooseSearchPlayer(searchResult, name);
+    const searchedPlayer = chooseSearchPlayer(searchResult, name, trimmedPlayerId);
     if (searchedPlayer) {
       player = {
         playerId: String(searchedPlayer.P_ID || ''),
@@ -636,6 +648,7 @@ export default {
       }
 
       const name = (url.searchParams.get('name') || '').trim();
+      const playerId = (url.searchParams.get('playerId') || '').trim();
       const section = (url.searchParams.get('section') || 'callUp').trim() || 'callUp';
       const dateValue = (url.searchParams.get('date') || '').trim();
       if (!name) {
@@ -646,7 +659,7 @@ export default {
       }
 
       try {
-        return json(await buildSinglePlayerPayload(name, section, dateValue));
+        return json(await buildSinglePlayerPayload(name, section, dateValue, playerId));
       } catch (error) {
         return json({ error: `Worker processing failed: ${error.message || error}` }, 500);
       }

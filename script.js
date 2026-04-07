@@ -8,6 +8,7 @@ import {
   escapeDrawtext,
   formatDate,
   getFileExtension,
+  getPlayerInfo,
   getPlayerPhotoPath,
   normalizeInningsValue,
   selectedValue,
@@ -671,8 +672,10 @@ async function autoFetchRosterPlayerStats(section, index, options = {}) {
   state.requestId = requestId;
 
   try {
+    const playerInfo = getPlayerInfo(playerName);
     const data = await fetchKboPlayerStats({
       name: playerName,
+      playerId: playerInfo?.playerId || '',
       section,
       dateValue: el.rosterMovesDate?.value || ''
     });

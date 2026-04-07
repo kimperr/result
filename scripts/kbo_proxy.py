@@ -271,8 +271,13 @@ def fetch_search_player(name: str) -> dict[str, Any]:
         return json.loads(response.read().decode("utf-8", errors="replace"))
 
 
-def choose_search_player(search_result: dict[str, Any], name: str) -> dict[str, Any] | None:
+def choose_search_player(search_result: dict[str, Any], name: str, preferred_player_id: str = "") -> dict[str, Any] | None:
     now_players = list(search_result.get("now") or [])
+    trimmed_player_id = str(preferred_player_id or "").strip()
+    if trimmed_player_id:
+        matched_player = next((player for player in now_players if str(player.get("P_ID", "")) == trimmed_player_id), None)
+        if matched_player:
+            return matched_player
     normalized_name = re.sub(r"\s+", "", name or "")
     for player in now_players:
         player_name = re.sub(r"\s+", "", str(player.get("P_NM", "")))
@@ -347,19 +352,24 @@ def enrich_snapshot_player(player: dict[str, str], warnings: list[str], record_s
     }
 
 
-def build_single_player_payload(name: str, section: str, date_value: str) -> dict[str, Any]:
+def build_single_player_payload(name: str, section: str, date_value: str, player_id: str = "") -> dict[str, Any]:
     player = None
+    trimmed_player_id = str(player_id or "").strip()
     if re.fullmatch(r"\d{4}-\d{2}-\d{2}", date_value):
         team_code = normalize_team_code("KIA")
         selected_date = datetime.strptime(date_value, "%Y-%m-%d").date()
         previous_date = selected_date - timedelta(days=1)
         current_snapshot = parse_register_snapshot(fetch_register_snapshot_html(date_value, team_code))
         previous_snapshot = parse_register_snapshot(fetch_register_snapshot_html(previous_date.isoformat(), team_code))
-        player = find_player_in_snapshot(current_snapshot if section == "callUp" else previous_snapshot, name)
+        snapshot = current_snapshot if section == "callUp" else previous_snapshot
+        if trimmed_player_id and trimmed_player_id in snapshot:
+            player = snapshot[trimmed_player_id]
+        if not player:
+            player = find_player_in_snapshot(snapshot, name)
 
     if not player:
         search_result = fetch_search_player(name)
-        searched_player = choose_search_player(search_result, name)
+        searched_player = choose_search_player(search_result, name, trimmed_player_id)
         if searched_player:
             player = {
                 "playerId": str(searched_player.get("P_ID", "")),
@@ -597,6 +607,7 @@ class Handler(BaseHTTPRequestHandler):
 
             query = parse_qs(parsed.query)
             name = (query.get("name") or [""])[0].strip()
+            player_id = (query.get("playerId") or [""])[0].strip()
             section = (query.get("section") or ["callUp"])[0].strip() or "callUp"
             date_value = (query.get("date") or [""])[0].strip()
             if not name:
@@ -607,7 +618,7 @@ class Handler(BaseHTTPRequestHandler):
                 return
 
             try:
-                payload = build_single_player_payload(name, section, date_value)
+                payload = build_single_player_payload(name, section, date_value, player_id)
             except HTTPError as error:
                 self.send_error_json(error.code or 502, f"KBO request failed: {error.reason}")
                 return
