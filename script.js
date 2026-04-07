@@ -330,7 +330,7 @@ function getLineupBroadcastLabel() {
   const broadcaster = el.lineupBroadcaster?.value || 'KBS N SPORTS';
   if (!el.lineupTerrestrial?.checked) return broadcaster;
   const terrestrialMap = {
-    'KBS N SPORTS': 'KBS',
+    'KBS N SPORTS': 'KBS2',
     'SBS SPORTS': 'SBS',
     'MBC SPORTS+': 'MBC'
   };
