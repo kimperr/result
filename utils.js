@@ -108,10 +108,45 @@ export function formatOutsToInningsValue(outs) {
   return remainder ? `${innings}.${remainder}` : String(innings);
 }
 
+export function normalizeInningsValue(value) {
+  const rawValue = String(value ?? '').trim();
+  if (!rawValue) return '';
+
+  const normalizedFractions = rawValue
+    .replace(/\u2153/g, ' 1/3')
+    .replace(/\u2154/g, ' 2/3')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+  const fractionMatch = normalizedFractions.match(/^(\d+)\s+([12])\/3$/);
+  if (fractionMatch) {
+    const whole = Number(fractionMatch[1]) || 0;
+    const remainder = Number(fractionMatch[2]) || 0;
+    return formatOutsToInningsValue((whole * 3) + remainder);
+  }
+
+  const decimalMatch = normalizedFractions.match(/^(\d+)(?:\.(\d))?$/);
+  if (decimalMatch) {
+    const whole = Number(decimalMatch[1]) || 0;
+    const remainder = Number(decimalMatch[2]) || 0;
+    if (remainder <= 2) return formatOutsToInningsValue((whole * 3) + remainder);
+  }
+
+  const numericValue = Number(normalizedFractions);
+  if (Number.isFinite(numericValue) && numericValue >= 0) {
+    const whole = Math.trunc(numericValue);
+    const remainder = Math.round((numericValue - whole) * 10);
+    if (remainder <= 2) return formatOutsToInningsValue((whole * 3) + Math.max(0, remainder));
+  }
+
+  return normalizedFractions;
+}
+
 export function normalizePitcherInningsInput(input) {
   if (!(input instanceof HTMLInputElement)) return;
-  const rawValue = input.value.trim();
+  const rawValue = normalizeInningsValue(input.value);
   if (!rawValue) {
+    input.value = '';
     input.dataset.lastValidInnings = '0';
     return;
   }

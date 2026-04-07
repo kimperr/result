@@ -9,6 +9,7 @@ import {
   formatDate,
   getFileExtension,
   getPlayerPhotoPath,
+  normalizeInningsValue,
   selectedValue,
   setSelectedRadioValue,
   syncNumberRangeValues
@@ -487,8 +488,9 @@ function applyImportedPlayer(editorRefs, player) {
     editorRefs.pitcherLosses.value = String(player.stats?.losses ?? '');
     editorRefs.pitcherSaves.value = String(player.stats?.saves ?? '');
     editorRefs.pitcherHolds.value = String(player.stats?.holds ?? '');
-    editorRefs.pitcherInnings.value = String(player.stats?.innings ?? '');
-    editorRefs.pitcherInnings.dataset.lastValidInnings = String(player.stats?.innings ?? '0');
+    const normalizedInnings = normalizeInningsValue(player.stats?.innings ?? '');
+    editorRefs.pitcherInnings.value = normalizedInnings;
+    editorRefs.pitcherInnings.dataset.lastValidInnings = normalizedInnings || '0';
     editorRefs.pitcherEra.value = String(player.stats?.era ?? '');
     editorRefs.pitcherWhip.value = String(player.stats?.whip ?? '');
     return;
