@@ -118,7 +118,7 @@ export function normalizeInningsValue(value) {
     .replace(/\s+/g, ' ')
     .trim();
 
-  const fractionMatch = normalizedFractions.match(/^(\d+)\s+([12])\/3$/);
+  const fractionMatch = normalizedFractions.match(/^(?:(\d+)\s+)?([12])\/3$/);
   if (fractionMatch) {
     const whole = Number(fractionMatch[1]) || 0;
     const remainder = Number(fractionMatch[2]) || 0;

@@ -215,9 +215,14 @@ function parseRegisterSnapshot(html) {
 }
 
 function findPlayerInSnapshot(snapshot, name) {
-  const normalizedName = String(name || '').replace(/\s+/g, '');
+  const normalizedName = String(name || '')
+    .replace(/\s*\(\d+\)\s*$/, '')
+    .replace(/\s+/g, '');
   for (const player of Object.values(snapshot)) {
-    if (String(player.name || '').replace(/\s+/g, '') === normalizedName) {
+    const snapshotName = String(player.name || '')
+      .replace(/\s*\(\d+\)\s*$/, '')
+      .replace(/\s+/g, '');
+    if (snapshotName === normalizedName) {
       return player;
     }
   }
@@ -267,9 +272,9 @@ function parseInningsToOuts(value) {
     .replace(/\u2154/g, ' 2/3')
     .replace(/\s+/g, ' ')
     .trim();
-  const fractionMatch = normalized.match(/^(\d+)\s+([12])\/3$/);
+  const fractionMatch = normalized.match(/^(?:(\d+)\s+)?([12])\/3$/);
   if (fractionMatch) {
-    return (Number(fractionMatch[1]) * 3) + Number(fractionMatch[2]);
+    return (Number(fractionMatch[1] || '0') * 3) + Number(fractionMatch[2]);
   }
   const decimalMatch = normalized.match(/^(\d+)(?:\.(\d))?$/);
   if (decimalMatch) {
@@ -291,7 +296,8 @@ function calculateWhip(hits, walks, innings) {
 }
 
 async function fetchSearchPlayer(name) {
-  const body = new URLSearchParams({ name });
+  const normalizedName = String(name || '').replace(/\s*\(\d+\)\s*$/, '').trim();
+  const body = new URLSearchParams({ name: normalizedName });
   const response = await fetch(`${KBO_BASE}/ws/Controls.asmx/GetSearchPlayer`, {
     method: 'POST',
     headers: {
@@ -317,7 +323,9 @@ function chooseSearchPlayer(searchResult, name, preferredPlayerId = '') {
     const matchedPlayer = nowPlayers.find((player) => String(player.P_ID || '') === trimmedPlayerId);
     if (matchedPlayer) return matchedPlayer;
   }
-  const normalizedName = String(name || '').replace(/\s+/g, '');
+  const normalizedName = String(name || '')
+    .replace(/\s*\(\d+\)\s*$/, '')
+    .replace(/\s+/g, '');
   for (const player of nowPlayers) {
     const playerName = String(player.P_NM || '').replace(/\s+/g, '');
     if (playerName === normalizedName && String(player.P_LINK || '').includes('/Record/Player/')) {

@@ -486,11 +486,12 @@ function getRosterAutoFetchState(section, index) {
   return rosterAutoFetchState[key];
 }
 
-function applyImportedPlayer(editorRefs, player) {
+function applyImportedPlayer(editorRefs, player, options = {}) {
+  const { preferredName = '' } = options;
   clearRosterEditor(editorRefs);
   if (!editorRefs || !player) return;
 
-  editorRefs.nameInput.value = player.name || '';
+  editorRefs.nameInput.value = preferredName || player.name || '';
 
   if (player.statsType === 'pitcher') {
     editorRefs.pitcherGames.value = String(player.stats?.games ?? '');
@@ -681,7 +682,11 @@ async function autoFetchRosterPlayerStats(section, index, options = {}) {
     });
     if (state.requestId !== requestId) return;
     if ((editorRefs.nameInput?.value || '').trim() !== playerName) return;
-    applyImportedPlayer(editorRefs, data.player || { name: playerName, statsType: data.statsType, stats: {} });
+    applyImportedPlayer(
+      editorRefs,
+      data.player || { name: playerName, statsType: data.statsType, stats: {} },
+      { preferredName: playerName }
+    );
     state.lastAppliedName = playerName;
     updateRosterMovesFormVisibility(section, index);
     updateRosterMovesPoster();

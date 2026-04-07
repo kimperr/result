@@ -183,9 +183,10 @@ def parse_register_snapshot(html: str) -> dict[str, dict[str, str]]:
 
 
 def find_player_in_snapshot(snapshot: dict[str, dict[str, str]], name: str) -> dict[str, str] | None:
-    normalized_name = re.sub(r"\s+", "", name or "")
+    normalized_name = re.sub(r"\s+", "", re.sub(r"\s*\(\d+\)\s*$", "", name or ""))
     for player in snapshot.values():
-        if re.sub(r"\s+", "", player.get("name", "")) == normalized_name:
+        snapshot_name = re.sub(r"\s+", "", re.sub(r"\s*\(\d+\)\s*$", "", player.get("name", "")))
+        if snapshot_name == normalized_name:
             return player
     return None
 
@@ -233,9 +234,9 @@ def parse_innings_to_outs(value: str) -> int | None:
         return None
     normalized = raw.replace("⅓", " 1/3").replace("⅔", " 2/3")
     normalized = re.sub(r"\s+", " ", normalized).strip()
-    fraction_match = re.fullmatch(r"(\d+)\s+([12])/3", normalized)
+    fraction_match = re.fullmatch(r"(?:(\d+)\s+)?([12])/3", normalized)
     if fraction_match:
-        return (int(fraction_match.group(1)) * 3) + int(fraction_match.group(2))
+        return (int(fraction_match.group(1) or "0") * 3) + int(fraction_match.group(2))
     decimal_match = re.fullmatch(r"(\d+)(?:\.(\d))?", normalized)
     if decimal_match:
         whole = int(decimal_match.group(1))
@@ -259,7 +260,8 @@ def calculate_whip(hits: str, walks: str, innings: str) -> str:
 
 
 def fetch_search_player(name: str) -> dict[str, Any]:
-    payload = urlencode({"name": name}).encode("utf-8")
+    normalized_name = re.sub(r"\s*\(\d+\)\s*$", "", name or "").strip()
+    payload = urlencode({"name": normalized_name}).encode("utf-8")
     headers = {
         "User-Agent": USER_AGENT,
         "Accept": "application/json;q=0.9,*/*;q=0.8",
@@ -278,7 +280,7 @@ def choose_search_player(search_result: dict[str, Any], name: str, preferred_pla
         matched_player = next((player for player in now_players if str(player.get("P_ID", "")) == trimmed_player_id), None)
         if matched_player:
             return matched_player
-    normalized_name = re.sub(r"\s+", "", name or "")
+    normalized_name = re.sub(r"\s+", "", re.sub(r"\s*\(\d+\)\s*$", "", name or ""))
     for player in now_players:
         player_name = re.sub(r"\s+", "", str(player.get("P_NM", "")))
         if player_name == normalized_name and "/Record/Player/" in str(player.get("P_LINK", "")):
