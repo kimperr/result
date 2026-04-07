@@ -199,6 +199,37 @@ function formatOps(obp, slg) {
   return (obpValue + slgValue).toFixed(3);
 }
 
+function parseInningsToOuts(value) {
+  const raw = String(value || '').trim();
+  if (!raw) return null;
+  const normalized = raw
+    .replace(/\u2153/g, ' 1/3')
+    .replace(/\u2154/g, ' 2/3')
+    .replace(/\s+/g, ' ')
+    .trim();
+  const fractionMatch = normalized.match(/^(\d+)\s+([12])\/3$/);
+  if (fractionMatch) {
+    return (Number(fractionMatch[1]) * 3) + Number(fractionMatch[2]);
+  }
+  const decimalMatch = normalized.match(/^(\d+)(?:\.(\d))?$/);
+  if (decimalMatch) {
+    const whole = Number(decimalMatch[1]) || 0;
+    const remainder = Number(decimalMatch[2] || '0');
+    if (remainder <= 2) {
+      return (whole * 3) + remainder;
+    }
+  }
+  return null;
+}
+
+function calculateWhip(hits, walks, innings) {
+  const outs = parseInningsToOuts(innings);
+  const hitsValue = Number(hits);
+  const walksValue = Number(walks);
+  if (!outs || !Number.isFinite(hitsValue) || !Number.isFinite(walksValue)) return '';
+  return ((hitsValue + walksValue) / (outs / 3)).toFixed(2);
+}
+
 async function fetchSearchPlayer(name) {
   const body = new URLSearchParams({ name });
   const response = await fetch(`${KBO_BASE}/ws/Controls.asmx/GetSearchPlayer`, {
@@ -260,7 +291,7 @@ async function parsePlayerStats(link, positionHint, league = 'major') {
         holds: first.HLD || '0',
         innings: first.IP || '0',
         era: first.ERA || '0',
-        whip: second.WHIP || '0'
+        whip: second.WHIP || calculateWhip(first.H, first.BB, first.IP)
       }
     };
   }

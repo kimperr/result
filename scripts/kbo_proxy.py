@@ -181,6 +181,37 @@ def format_ops(obp: str, slg: str) -> str:
         return ""
 
 
+def parse_innings_to_outs(value: str) -> int | None:
+    raw = str(value or "").strip()
+    if not raw:
+        return None
+    normalized = raw.replace("⅓", " 1/3").replace("⅔", " 2/3")
+    normalized = re.sub(r"\s+", " ", normalized).strip()
+    fraction_match = re.fullmatch(r"(\d+)\s+([12])/3", normalized)
+    if fraction_match:
+        return (int(fraction_match.group(1)) * 3) + int(fraction_match.group(2))
+    decimal_match = re.fullmatch(r"(\d+)(?:\.(\d))?", normalized)
+    if decimal_match:
+        whole = int(decimal_match.group(1))
+        remainder = int(decimal_match.group(2) or "0")
+        if remainder <= 2:
+            return (whole * 3) + remainder
+    return None
+
+
+def calculate_whip(hits: str, walks: str, innings: str) -> str:
+    outs = parse_innings_to_outs(innings)
+    if not outs:
+        return ""
+    try:
+        hits_value = float(hits)
+        walks_value = float(walks)
+    except (TypeError, ValueError):
+        return ""
+    whip = (hits_value + walks_value) / (outs / 3)
+    return f"{whip:.2f}"
+
+
 def fetch_search_player(name: str) -> dict[str, Any]:
     payload = urlencode({"name": name}).encode("utf-8")
     headers = {
@@ -227,7 +258,7 @@ def parse_player_stats(link: str, position_hint: str, league: str = "major") -> 
                 "holds": first.get("HLD", "0"),
                 "innings": first.get("IP", "0"),
                 "era": first.get("ERA", "0"),
-                "whip": second.get("WHIP", "0"),
+                "whip": second.get("WHIP", "") or calculate_whip(first.get("H", ""), first.get("BB", ""), first.get("IP", "")),
             },
         )
 
