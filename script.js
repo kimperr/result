@@ -11,9 +11,9 @@
 ] ;
 
 const BACKGROUND_BY_RESULT = {
-  win: 'assets/bg-win.png',
-  lose: 'assets/bg-lose.png',
-  draw: 'assets/bg-draw.png'
+  win: 'assets/background/bg-win.png',
+  lose: 'assets/background/bg-lose.png',
+  draw: 'assets/background/bg-draw.png'
 };
 
 const PLAYER_NUMBER_BY_NAME = {
@@ -29,6 +29,76 @@ const PLAYER_NUMBER_BY_NAME = {
   '이성원': 58, '김도현': 60, '김시훈': 61, '정해영': 62, '이호민': 63, '김현수(64)': 64,
   '성영탁': 65, '이도현': 66, '홍민규': 67, '김대유': 69
 };
+
+const PLAYER_INFO_LIST = [
+  { name: '곽도규', throwBat: '좌사좌타', positionGroup: '투수' },
+  { name: '김대유', throwBat: '좌사좌타', positionGroup: '투수' },
+  { name: '윤중현', throwBat: '우사우타', positionGroup: '투수' },
+  { name: '이형범', throwBat: '우사우타', positionGroup: '투수' },
+  { name: '유지성', throwBat: '좌투좌타', positionGroup: '투수' },
+  { name: '윤영철', throwBat: '좌투좌타', positionGroup: '투수' },
+  { name: '이준영', throwBat: '좌투좌타', positionGroup: '투수' },
+  { name: '김사윤', throwBat: '좌투좌타', positionGroup: '투수' },
+  { name: '최지민', throwBat: '좌투좌타', positionGroup: '투수' },
+  { name: '이의리', throwBat: '좌투좌타', positionGroup: '투수' },
+  { name: '김범수', throwBat: '좌투좌타', positionGroup: '투수' },
+  { name: '김기훈', throwBat: '좌투좌타', positionGroup: '투수' },
+  { name: '양현종', throwBat: '좌투좌타', positionGroup: '투수' },
+  { name: '박상준', throwBat: '좌투좌타', positionGroup: '내야수' },
+  { name: '나성범', throwBat: '좌투좌타', positionGroup: '외야수' },
+  { name: '홍민규', throwBat: '우투좌타', positionGroup: '투수' },
+  { name: '주효상', throwBat: '우투좌타', positionGroup: '포수' },
+  { name: '한준수', throwBat: '우투좌타', positionGroup: '포수' },
+  { name: '김규성', throwBat: '우투좌타', positionGroup: '내야수' },
+  { name: '최정용', throwBat: '우투좌타', positionGroup: '내야수' },
+  { name: '이호연', throwBat: '우투좌타', positionGroup: '내야수' },
+  { name: '박정우', throwBat: '우투좌타', positionGroup: '외야수' },
+  { name: '카스트로', throwBat: '우투좌타', positionGroup: '외야수' },
+  { name: '김석환', throwBat: '우투좌타', positionGroup: '외야수' },
+  { name: '오선우', throwBat: '우투좌타', positionGroup: '외야수' },
+  { name: '고종욱', throwBat: '우투좌타', positionGroup: '외야수' },
+  { name: '김태형', throwBat: '우투우타', positionGroup: '투수' },
+  { name: '조상우', throwBat: '우투우타', positionGroup: '투수' },
+  { name: '김현수(17)', throwBat: '우투우타', positionGroup: '투수' },
+  { name: '올러', throwBat: '우투우타', positionGroup: '투수' },
+  { name: '장재혁', throwBat: '우투우타', positionGroup: '투수' },
+  { name: '네일', throwBat: '우투우타', positionGroup: '투수' },
+  { name: '황동하', throwBat: '우투우타', positionGroup: '투수' },
+  { name: '김건국', throwBat: '우투우타', positionGroup: '투수' },
+  { name: '이태양', throwBat: '우투우타', positionGroup: '투수' },
+  { name: '정찬화', throwBat: '우투우타', positionGroup: '투수' },
+  { name: '김정엽', throwBat: '우투우타', positionGroup: '투수' },
+  { name: '전상현', throwBat: '우투우타', positionGroup: '투수' },
+  { name: '홍건희', throwBat: '우투우타', positionGroup: '투수' },
+  { name: '한재승', throwBat: '우투우타', positionGroup: '투수' },
+  { name: '이성원', throwBat: '우투우타', positionGroup: '투수' },
+  { name: '김도현', throwBat: '우투우타', positionGroup: '투수' },
+  { name: '김시훈', throwBat: '우투우타', positionGroup: '투수' },
+  { name: '정해영', throwBat: '우투우타', positionGroup: '투수' },
+  { name: '이호민', throwBat: '우투우타', positionGroup: '투수' },
+  { name: '김현수(64)', throwBat: '우투우타', positionGroup: '투수' },
+  { name: '성영탁', throwBat: '우투우타', positionGroup: '투수' },
+  { name: '이도현', throwBat: '우투우타', positionGroup: '투수' },
+  { name: '김태군', throwBat: '우투우타', positionGroup: '포수' },
+  { name: '박민', throwBat: '우투우타', positionGroup: '내야수' },
+  { name: '김선빈', throwBat: '우투우타', positionGroup: '내야수' },
+  { name: '김도영', throwBat: '우투우타', positionGroup: '내야수' },
+  { name: '정해원', throwBat: '우투우타', positionGroup: '내야수' },
+  { name: '정현창', throwBat: '우투우타', positionGroup: '내야수' },
+  { name: '윤도현', throwBat: '우투우타', positionGroup: '내야수' },
+  { name: '변우혁', throwBat: '우투우타', positionGroup: '내야수' },
+  { name: '데일', throwBat: '우투우타', positionGroup: '내야수' },
+  { name: '황대인', throwBat: '우투우타', positionGroup: '내야수' },
+  { name: '김민규', throwBat: '우투우타', positionGroup: '내야수' },
+  { name: '이창진', throwBat: '우투우타', positionGroup: '외야수' },
+  { name: '박재현', throwBat: '우투우타', positionGroup: '외야수' },
+  { name: '김호령', throwBat: '우투우타', positionGroup: '외야수' },
+  { name: '한승연', throwBat: '우투우타', positionGroup: '외야수' }
+];
+
+const PLAYER_INFO_BY_NAME = Object.fromEntries(
+  PLAYER_INFO_LIST.map((player) => [player.name, player])
+);
 
 const KIA_HOME_STADIUM = '광주 기아 챔피언스필드';
 
@@ -56,6 +126,27 @@ const LINEUP_LAYOUT = {
   positions: {},
   pitcher: { x: 135, y: 1144, size: 45 }
 };
+const ROSTER_MOVES_LAYOUT = {
+  dateText: { x: 66, y: 354, size: 29 },
+  opponentText: { x: 228, y: 354, size: 28 },
+  stadiumText: { x: 66, y: 391, size: 29 },
+  callUpTitle: { x: 62, y: 470, size: 53, letterSpacing: -3, lineHeight: 64 },
+  sendDownTitle: { x: 62, y: 859, size: 53, letterSpacing: -3, lineHeight: 64 },
+  groupName: { x: 270, y: 578, size: 52, letterSpacing: 0, lineHeight: 66 },
+  groupMeta: { x: 273.6, y: 640, size: 20, letterSpacing: 0, lineHeight: 32 },
+  groupStats: { x: 276, y: 727, size: 19, letterSpacing: -1.5, lineHeight: 29 }
+};
+const MAX_ROSTER_GROUPS = 4;
+const ROSTER_SECTION_SLOT_Y = {
+  upper: 0,
+  lower: 398
+};
+const ROSTER_GROUP_GRID = [
+  { x: 0, y: 0 },
+  { x: 474, y: 0 },
+  { x: 0, y: 328 },
+  { x: 474, y: 328 }
+];
 const LINEUP_FIXED = {
   nameX: 167,
   nameSize: 47,
@@ -108,12 +199,15 @@ const el = {
   tabResult: document.getElementById('tabResult'),
   tabLineup: document.getElementById('tabLineup'),
   tabVideo: document.getElementById('tabVideo'),
+  tabRosterMoves: document.getElementById('tabRosterMoves'),
   resultControls: document.getElementById('resultControls'),
   lineupControls: document.getElementById('lineupControls'),
   videoControls: document.getElementById('videoControls'),
+  rosterMovesControls: document.getElementById('rosterMovesControls'),
   resultPoster: document.getElementById('resultPoster'),
   lineupPoster: document.getElementById('lineupPoster'),
   videoPoster: document.getElementById('videoPoster'),
+  rosterMovesPoster: document.getElementById('rosterMovesPoster'),
   previewScale: document.getElementById('previewScale'),
 
   result: document.querySelectorAll('input[name="result"]'),
@@ -148,6 +242,10 @@ const el = {
   lineupOpponentYInput: document.getElementById('lineupOpponentYInput'),
   lineupOpponentXRange: document.getElementById('lineupOpponentXRange'),
   lineupOpponentYRange: document.getElementById('lineupOpponentYRange'),
+  rosterOpponentXInput: document.getElementById('rosterOpponentXInput'),
+  rosterOpponentYInput: document.getElementById('rosterOpponentYInput'),
+  rosterOpponentXRange: document.getElementById('rosterOpponentXRange'),
+  rosterOpponentYRange: document.getElementById('rosterOpponentYRange'),
   lineupInputGrid: document.getElementById('lineupInputGrid'),
   lineupGameTime: document.getElementById('lineupGameTime'),
   lineupGameTimeCustom: document.getElementById('lineupGameTimeCustom'),
@@ -194,6 +292,109 @@ const el = {
   videoMetaSizeInput: document.getElementById('videoMetaSizeInput'),
   videoMetaSizeRange: document.getElementById('videoMetaSizeRange'),
 
+  rosterMovesDate: document.getElementById('rosterMovesDate'),
+  rosterMovesOpponentTeam: document.getElementById('rosterMovesOpponentTeam'),
+  rosterMovesStadiumName: document.getElementById('rosterMovesStadiumName'),
+  callUpDetails: document.getElementById('callUpDetails'),
+  sendDownDetails: document.getElementById('sendDownDetails'),
+  callUpCount: document.getElementById('callUpCount'),
+  sendDownCount: document.getElementById('sendDownCount'),
+  callUpGroupControls: document.getElementById('callUpGroupControls'),
+  sendDownGroupControls: document.getElementById('sendDownGroupControls'),
+  callUpName: document.getElementById('callUpName'),
+  callUpMeta: document.getElementById('callUpMeta'),
+  callUpPitcherStats: document.getElementById('callUpPitcherStats'),
+  callUpPitcherGames: document.getElementById('callUpPitcherGames'),
+  callUpPitcherWins: document.getElementById('callUpPitcherWins'),
+  callUpPitcherLosses: document.getElementById('callUpPitcherLosses'),
+  callUpPitcherSaves: document.getElementById('callUpPitcherSaves'),
+  callUpPitcherHolds: document.getElementById('callUpPitcherHolds'),
+  callUpPitcherInnings: document.getElementById('callUpPitcherInnings'),
+  callUpPitcherEra: document.getElementById('callUpPitcherEra'),
+  callUpPitcherWhip: document.getElementById('callUpPitcherWhip'),
+  callUpHitterStats: document.getElementById('callUpHitterStats'),
+  callUpHitterGames: document.getElementById('callUpHitterGames'),
+  callUpHitterHomeRuns: document.getElementById('callUpHitterHomeRuns'),
+  callUpHitterRbi: document.getElementById('callUpHitterRbi'),
+  callUpHitterSteals: document.getElementById('callUpHitterSteals'),
+  callUpHitterAvg: document.getElementById('callUpHitterAvg'),
+  callUpHitterOps: document.getElementById('callUpHitterOps'),
+  sendDownName: document.getElementById('sendDownName'),
+  sendDownMeta: document.getElementById('sendDownMeta'),
+  sendDownPitcherStats: document.getElementById('sendDownPitcherStats'),
+  sendDownPitcherGames: document.getElementById('sendDownPitcherGames'),
+  sendDownPitcherWins: document.getElementById('sendDownPitcherWins'),
+  sendDownPitcherLosses: document.getElementById('sendDownPitcherLosses'),
+  sendDownPitcherSaves: document.getElementById('sendDownPitcherSaves'),
+  sendDownPitcherHolds: document.getElementById('sendDownPitcherHolds'),
+  sendDownPitcherInnings: document.getElementById('sendDownPitcherInnings'),
+  sendDownPitcherEra: document.getElementById('sendDownPitcherEra'),
+  sendDownPitcherWhip: document.getElementById('sendDownPitcherWhip'),
+  sendDownHitterStats: document.getElementById('sendDownHitterStats'),
+  sendDownHitterGames: document.getElementById('sendDownHitterGames'),
+  sendDownHitterHomeRuns: document.getElementById('sendDownHitterHomeRuns'),
+  sendDownHitterRbi: document.getElementById('sendDownHitterRbi'),
+  sendDownHitterSteals: document.getElementById('sendDownHitterSteals'),
+  sendDownHitterAvg: document.getElementById('sendDownHitterAvg'),
+  sendDownHitterOps: document.getElementById('sendDownHitterOps'),
+  callUpBoxXInput: document.getElementById('callUpBoxXInput'),
+  callUpBoxYInput: document.getElementById('callUpBoxYInput'),
+  callUpBoxXRange: document.getElementById('callUpBoxXRange'),
+  callUpBoxYRange: document.getElementById('callUpBoxYRange'),
+  sendDownBoxXInput: document.getElementById('sendDownBoxXInput'),
+  sendDownBoxYInput: document.getElementById('sendDownBoxYInput'),
+  sendDownBoxXRange: document.getElementById('sendDownBoxXRange'),
+  sendDownBoxYRange: document.getElementById('sendDownBoxYRange'),
+  callUpCardXInput: document.getElementById('callUpCardXInput'),
+  callUpCardYInput: document.getElementById('callUpCardYInput'),
+  callUpCardXRange: document.getElementById('callUpCardXRange'),
+  callUpCardYRange: document.getElementById('callUpCardYRange'),
+  sendDownCardXInput: document.getElementById('sendDownCardXInput'),
+  sendDownCardYInput: document.getElementById('sendDownCardYInput'),
+  sendDownCardXRange: document.getElementById('sendDownCardXRange'),
+  sendDownCardYRange: document.getElementById('sendDownCardYRange'),
+  callUpNameXInput: document.getElementById('callUpNameXInput'),
+  callUpNameYInput: document.getElementById('callUpNameYInput'),
+  callUpNameXRange: document.getElementById('callUpNameXRange'),
+  callUpNameYRange: document.getElementById('callUpNameYRange'),
+  callUpNameSizeInput: document.getElementById('callUpNameSizeInput'),
+  callUpNameSizeRange: document.getElementById('callUpNameSizeRange'),
+  callUpNameSpacingInput: document.getElementById('callUpNameSpacingInput'),
+  callUpNameSpacingRange: document.getElementById('callUpNameSpacingRange'),
+  callUpNameLineHeightInput: document.getElementById('callUpNameLineHeightInput'),
+  callUpNameLineHeightRange: document.getElementById('callUpNameLineHeightRange'),
+  callUpMetaXInput: document.getElementById('callUpMetaXInput'),
+  callUpMetaYInput: document.getElementById('callUpMetaYInput'),
+  callUpMetaXRange: document.getElementById('callUpMetaXRange'),
+  callUpMetaYRange: document.getElementById('callUpMetaYRange'),
+  callUpMetaSizeInput: document.getElementById('callUpMetaSizeInput'),
+  callUpMetaSizeRange: document.getElementById('callUpMetaSizeRange'),
+  callUpMetaSpacingInput: document.getElementById('callUpMetaSpacingInput'),
+  callUpMetaSpacingRange: document.getElementById('callUpMetaSpacingRange'),
+  callUpMetaLineHeightInput: document.getElementById('callUpMetaLineHeightInput'),
+  callUpMetaLineHeightRange: document.getElementById('callUpMetaLineHeightRange'),
+  sendDownNameXInput: document.getElementById('sendDownNameXInput'),
+  sendDownNameYInput: document.getElementById('sendDownNameYInput'),
+  sendDownNameXRange: document.getElementById('sendDownNameXRange'),
+  sendDownNameYRange: document.getElementById('sendDownNameYRange'),
+  sendDownNameSizeInput: document.getElementById('sendDownNameSizeInput'),
+  sendDownNameSizeRange: document.getElementById('sendDownNameSizeRange'),
+  sendDownNameSpacingInput: document.getElementById('sendDownNameSpacingInput'),
+  sendDownNameSpacingRange: document.getElementById('sendDownNameSpacingRange'),
+  sendDownNameLineHeightInput: document.getElementById('sendDownNameLineHeightInput'),
+  sendDownNameLineHeightRange: document.getElementById('sendDownNameLineHeightRange'),
+  sendDownMetaXInput: document.getElementById('sendDownMetaXInput'),
+  sendDownMetaYInput: document.getElementById('sendDownMetaYInput'),
+  sendDownMetaXRange: document.getElementById('sendDownMetaXRange'),
+  sendDownMetaYRange: document.getElementById('sendDownMetaYRange'),
+  sendDownMetaSizeInput: document.getElementById('sendDownMetaSizeInput'),
+  sendDownMetaSizeRange: document.getElementById('sendDownMetaSizeRange'),
+  sendDownMetaSpacingInput: document.getElementById('sendDownMetaSpacingInput'),
+  sendDownMetaSpacingRange: document.getElementById('sendDownMetaSpacingRange'),
+  sendDownMetaLineHeightInput: document.getElementById('sendDownMetaLineHeightInput'),
+  sendDownMetaLineHeightRange: document.getElementById('sendDownMetaLineHeightRange'),
+  playerNameOptions: document.getElementById('playerNameOptions'),
+
   downloadBtn: document.getElementById('downloadBtn'),
   lineupCaptionSettings: document.getElementById('lineupCaptionSettings'),
   captionTools: document.getElementById('captionTools'),
@@ -230,6 +431,22 @@ const out = {
   lineupPitcherText: document.getElementById('lineupPitcherText'),
   resultMobilePreview: document.getElementById('resultMobilePreview'),
   lineupMobilePreview: document.getElementById('lineupMobilePreview'),
+  rosterMovesBgLayer: document.getElementById('rosterMovesBgLayer'),
+  rosterMovesDateText: document.getElementById('rosterMovesDateText'),
+  rosterMovesOpponentText: document.getElementById('rosterMovesOpponentText'),
+  rosterMovesStadiumText: document.getElementById('rosterMovesStadiumText'),
+  callUpTitleText: document.getElementById('callUpTitleText'),
+  rosterMovesDynamicLayer: document.getElementById('rosterMovesDynamicLayer'),
+  callUpBoxLayer: document.getElementById('callUpBoxLayer'),
+  callUpPlayerMini: document.getElementById('callUpPlayerMini'),
+  callUpNameText: document.getElementById('callUpNameText'),
+  callUpMetaText: document.getElementById('callUpMetaText'),
+  sendDownTitleText: document.getElementById('sendDownTitleText'),
+  sendDownBoxLayer: document.getElementById('sendDownBoxLayer'),
+  sendDownPlayerMini: document.getElementById('sendDownPlayerMini'),
+  sendDownNameText: document.getElementById('sendDownNameText'),
+  sendDownMetaText: document.getElementById('sendDownMetaText'),
+  rosterMovesMobilePreview: document.getElementById('rosterMovesMobilePreview'),
   videoBgImage: document.getElementById('videoBgImage'),
   videoTitleText: document.getElementById('videoTitleText'),
   videoPreviewElement: document.getElementById('videoPreviewElement'),
@@ -240,6 +457,8 @@ out.videoTrimSelected = document.getElementById('videoTrimSelected');
 
 let activeTab = 'result';
 const lineupTextRefs = { names: {}, positions: {} };
+const rosterMoveEditors = { callUp: [], sendDown: [] };
+const rosterMovePreviewGroups = { callUp: [], sendDown: [] };
 let mobilePreviewTimer = null;
 let copyToastTimer = null;
 const videoState = {
@@ -881,6 +1100,20 @@ function getPlayerPhotoPath(name) {
   return matched ? `assets/player/${PLAYER_NUMBER_BY_NAME[matched]}.png` : '';
 }
 
+function getPlayerMiniPhotoPath(name) {
+  if (!normalizeName(name)) return '';
+  const normalized = normalizeName(name);
+  const matched = Object.keys(PLAYER_NUMBER_BY_NAME).find((key) => normalizeName(key) === normalized);
+  return matched ? `assets/player_mini/${PLAYER_NUMBER_BY_NAME[matched]}.png` : '';
+}
+
+function getPlayerInfo(name) {
+  if (!normalizeName(name)) return null;
+  const normalized = normalizeName(name);
+  const matched = Object.keys(PLAYER_INFO_BY_NAME).find((key) => normalizeName(key) === normalized);
+  return matched ? PLAYER_INFO_BY_NAME[matched] : null;
+}
+
 function selectedTeamInfo(selectEl) {
   return TEAM_DB.find((team) => team.name === selectEl.value) || TEAM_DB[0];
 }
@@ -896,13 +1129,18 @@ function applySharedOpponent(teamName) {
   el.opponentTeam.value = sharedName;
   el.lineupOpponentTeam.value = sharedName;
   el.videoOpponentTeam.value = sharedName;
+  if (el.rosterMovesOpponentTeam) el.rosterMovesOpponentTeam.value = sharedName;
 
   el.stadiumName.value = selectedValue(el.kiaSide) === 'home' ? KIA_HOME_STADIUM : team.stadium;
   el.lineupStadiumName.value = selectedValue(el.lineupKiaSide) === 'home' ? KIA_HOME_STADIUM : team.stadium;
+  if (el.rosterMovesStadiumName) {
+    el.rosterMovesStadiumName.value = selectedValue(el.lineupKiaSide) === 'home' ? KIA_HOME_STADIUM : team.stadium;
+  }
 
   updateResultPoster();
   updateLineupPoster();
   updateVideoPoster();
+  updateRosterMovesPoster();
   updateSecondaryActionButtons();
 }
 
@@ -913,23 +1151,28 @@ function applySharedKiaSide(side) {
   const stadium = side === 'home' ? KIA_HOME_STADIUM : team.stadium;
   el.stadiumName.value = stadium;
   el.lineupStadiumName.value = stadium;
+  if (el.rosterMovesStadiumName) el.rosterMovesStadiumName.value = stadium;
   updateResultPoster();
   updateLineupPoster();
+  updateRosterMovesPoster();
 }
 
 function applySharedOpponentFineTune(x, y) {
   syncNumberRangeValues(el.opponentXInput, el.opponentXRange, x);
   syncNumberRangeValues(el.lineupOpponentXInput, el.lineupOpponentXRange, x);
+  syncNumberRangeValues(el.rosterOpponentXInput, el.rosterOpponentXRange, x);
   syncNumberRangeValues(el.opponentYInput, el.opponentYRange, y);
   syncNumberRangeValues(el.lineupOpponentYInput, el.lineupOpponentYRange, y);
+  syncNumberRangeValues(el.rosterOpponentYInput, el.rosterOpponentYRange, y);
   updateResultPoster();
   updateLineupPoster();
+  updateRosterMovesPoster();
 }
 
 function teamLogoFile(code, side, result) {
-  if (side === 'away') return `assets/${code}1.png`;
-  if (result === 'lose') return `assets/${code}3.png`;
-  return `assets/${code}2.png`;
+  if (side === 'away') return `assets/logo/${code}1.png`;
+  if (result === 'lose') return `assets/logo/${code}3.png`;
+  return `assets/logo/${code}2.png`;
 }
 
 function applyText(node, cfg) {
@@ -945,6 +1188,211 @@ function applyBadge(node, cfg) {
   node.style.height = `${cfg.size}px`;
   node.style.lineHeight = `${cfg.size}px`;
   node.style.fontSize = `${cfg.font}px`;
+}
+
+function applyAdvancedText(node, cfg) {
+  node.style.left = `${cfg.x}px`;
+  node.style.top = `${cfg.y}px`;
+  node.style.fontSize = `${cfg.size}px`;
+  if (cfg.letterSpacing != null) node.style.letterSpacing = `${cfg.letterSpacing}px`;
+  if (cfg.lineHeight != null) node.style.lineHeight = `${cfg.lineHeight}px`;
+}
+
+function applyScaledImage(node, cfg, baseWidth, baseHeight) {
+  const scale = (Number(cfg.scale) || 100) / 100;
+  node.style.left = `${cfg.x}px`;
+  node.style.top = `${cfg.y}px`;
+  node.style.width = `${baseWidth * scale}px`;
+  node.style.height = `${baseHeight * scale}px`;
+}
+
+function applyPositionOnly(node, cfg) {
+  node.style.left = `${cfg.x}px`;
+  node.style.top = `${cfg.y}px`;
+  node.style.width = '';
+  node.style.height = '';
+}
+
+function formatRosterNumber(value, decimals = 0) {
+  const raw = Number(value);
+  if (!Number.isFinite(raw) || raw === 0) return '';
+  if (decimals <= 0) return String(raw);
+  return raw.toFixed(decimals).replace(/\.?0+$/, '');
+}
+
+function buildPitcherStatsLines(groupRefs) {
+  const games = Number(groupRefs.pitcherGames?.value) || 0;
+  if (games <= 0) return '';
+  const line1 = [
+    String(games),
+    formatRosterNumber(groupRefs.pitcherWins?.value),
+    formatRosterNumber(groupRefs.pitcherLosses?.value),
+    formatRosterNumber(groupRefs.pitcherSaves?.value),
+    formatRosterNumber(groupRefs.pitcherHolds?.value)
+  ];
+  const labels1 = ['경기', '승', '패', '세', '홀'];
+  const firstLine = line1.map((value, index) => (value ? `${value}${labels1[index]}` : '')).filter(Boolean).join(' ');
+  const innings = formatRosterNumber(groupRefs.pitcherInnings?.value, 1);
+  const era = (Number(groupRefs.pitcherEra?.value) || 0).toFixed(2);
+  const whip = (Number(groupRefs.pitcherWhip?.value) || 0).toFixed(2);
+  const secondLine = innings ? `${innings}이닝` : '';
+  const thirdLine = [`ERA ${era}`, `WHIP ${whip}`].join(' ');
+  return [firstLine, secondLine, thirdLine].join('\n');
+}
+
+function buildHitterStatsLines(groupRefs) {
+  const games = Number(groupRefs.hitterGames?.value) || 0;
+  if (games <= 0) return '';
+  const firstLine = [
+    [String(games), '경기'],
+    [formatRosterNumber(groupRefs.hitterHomeRuns?.value), '홈런'],
+    [formatRosterNumber(groupRefs.hitterRbi?.value), '타점'],
+    [formatRosterNumber(groupRefs.hitterSteals?.value), '도루']
+  ].map(([value, label]) => (value ? `${value}${label}` : '')).filter(Boolean).join(' ');
+  const avg = (Number(groupRefs.hitterAvg?.value) || 0).toFixed(3);
+  const ops = (Number(groupRefs.hitterOps?.value) || 0).toFixed(3);
+  const secondLine = `타율 ${avg}`;
+  const thirdLine = `OPS ${ops}`;
+  return [firstLine, secondLine, thirdLine].join('\n');
+}
+
+function updateRosterMovesFormVisibility(section, index) {
+  const groupRefs = rosterMoveEditors[section]?.[index];
+  if (!groupRefs) return;
+  const info = getPlayerInfo(groupRefs.nameInput?.value || '');
+  const meta = info ? `${info.throwBat}/${info.positionGroup}` : '';
+  if (groupRefs.metaInput) groupRefs.metaInput.value = meta;
+  const isPitcher = info?.positionGroup === '투수';
+  if (groupRefs.pitcherStats) groupRefs.pitcherStats.style.display = isPitcher ? 'grid' : 'none';
+  if (groupRefs.hitterStats) groupRefs.hitterStats.style.display = isPitcher === false && info ? 'grid' : 'none';
+}
+
+function getRosterSectionCount(section) {
+  return Math.max(0, Math.min(MAX_ROSTER_GROUPS, Number(el[`${section}Count`]?.value) || 0));
+}
+
+function refreshRosterGroupEditors(section) {
+  const count = getRosterSectionCount(section);
+  rosterMoveEditors[section].forEach((groupRefs, index) => {
+    groupRefs.root.classList.toggle('is-hidden', index >= count);
+  });
+}
+
+function createRosterGroupEditor(section, index) {
+  const root = document.createElement('div');
+  root.className = 'roster-group-editor';
+  root.innerHTML = `
+    <h3>${index + 1}번 선수</h3>
+    <label class="field">선수 이름 <input class="roster-name-input" type="text" list="playerNameOptions" /></label>
+    <label class="field">유형 <input class="roster-meta-input" type="text" readonly /></label>
+    <div class="roster-stats-grid roster-pitcher-stats">
+      <div class="roster-stats-row roster-stats-row-five">
+        <label class="field">경기 <input class="roster-pitcher-games" type="number" min="0" value="0" /></label>
+        <label class="field">승 <input class="roster-pitcher-wins" type="number" min="0" value="0" /></label>
+        <label class="field">패 <input class="roster-pitcher-losses" type="number" min="0" value="0" /></label>
+        <label class="field">세 <input class="roster-pitcher-saves" type="number" min="0" value="0" /></label>
+        <label class="field">홀 <input class="roster-pitcher-holds" type="number" min="0" value="0" /></label>
+      </div>
+      <div class="roster-stats-row roster-stats-row-single">
+        <label class="field">이닝 <input class="roster-pitcher-innings" type="number" min="0" step="0.1" value="0" /></label>
+      </div>
+      <div class="roster-stats-row roster-stats-row-two">
+        <label class="field">ERA <input class="roster-pitcher-era" type="number" min="0" step="0.01" value="0" /></label>
+        <label class="field">WHIP <input class="roster-pitcher-whip" type="number" min="0" step="0.01" value="0" /></label>
+      </div>
+    </div>
+    <div class="roster-stats-grid roster-hitter-stats">
+      <div class="roster-stats-row roster-stats-row-four">
+        <label class="field">경기 <input class="roster-hitter-games" type="number" min="0" value="0" /></label>
+        <label class="field">홈런 <input class="roster-hitter-homeruns" type="number" min="0" value="0" /></label>
+        <label class="field">타점 <input class="roster-hitter-rbi" type="number" min="0" value="0" /></label>
+        <label class="field">도루 <input class="roster-hitter-steals" type="number" min="0" value="0" /></label>
+      </div>
+      <div class="roster-stats-row roster-stats-row-single">
+        <label class="field">타율 <input class="roster-hitter-avg" type="number" min="0" step="0.001" value="0" /></label>
+      </div>
+      <div class="roster-stats-row roster-stats-row-single">
+        <label class="field">OPS <input class="roster-hitter-ops" type="number" min="0" step="0.001" value="0" /></label>
+      </div>
+    </div>
+  `;
+
+  const refs = {
+    root,
+    nameInput: root.querySelector('.roster-name-input'),
+    metaInput: root.querySelector('.roster-meta-input'),
+    pitcherStats: root.querySelector('.roster-pitcher-stats'),
+    pitcherGames: root.querySelector('.roster-pitcher-games'),
+    pitcherWins: root.querySelector('.roster-pitcher-wins'),
+    pitcherLosses: root.querySelector('.roster-pitcher-losses'),
+    pitcherSaves: root.querySelector('.roster-pitcher-saves'),
+    pitcherHolds: root.querySelector('.roster-pitcher-holds'),
+    pitcherInnings: root.querySelector('.roster-pitcher-innings'),
+    pitcherEra: root.querySelector('.roster-pitcher-era'),
+    pitcherWhip: root.querySelector('.roster-pitcher-whip'),
+    hitterStats: root.querySelector('.roster-hitter-stats'),
+    hitterGames: root.querySelector('.roster-hitter-games'),
+    hitterHomeRuns: root.querySelector('.roster-hitter-homeruns'),
+    hitterRbi: root.querySelector('.roster-hitter-rbi'),
+    hitterSteals: root.querySelector('.roster-hitter-steals'),
+    hitterAvg: root.querySelector('.roster-hitter-avg'),
+    hitterOps: root.querySelector('.roster-hitter-ops')
+  };
+
+  refs.nameInput.addEventListener('input', () => updateRosterMovesFormVisibility(section, index));
+  refs.nameInput.addEventListener('change', () => updateRosterMovesFormVisibility(section, index));
+  return refs;
+}
+
+function createRosterPreviewGroup(section) {
+  const root = document.createElement('div');
+  root.className = 'roster-preview-group is-hidden';
+  root.innerHTML = `
+    <img class="roster-group-box" src="assets/box.png" alt="" />
+    <img class="roster-group-photo is-hidden" alt="" />
+    <div class="roster-group-name"></div>
+    <div class="roster-group-meta"></div>
+    <div class="roster-group-stats"></div>
+  `;
+  return {
+    root,
+    photo: root.querySelector('.roster-group-photo'),
+    box: root.querySelector('.roster-group-box'),
+    name: root.querySelector('.roster-group-name'),
+    meta: root.querySelector('.roster-group-meta'),
+    stats: root.querySelector('.roster-group-stats')
+  };
+}
+
+function buildRosterMovesUi() {
+  ['callUp', 'sendDown'].forEach((section) => {
+    const container = el[`${section}GroupControls`];
+    if (!container) return;
+    container.innerHTML = '';
+    rosterMoveEditors[section] = [];
+    for (let i = 0; i < MAX_ROSTER_GROUPS; i += 1) {
+      const refs = createRosterGroupEditor(section, i);
+      rosterMoveEditors[section].push(refs);
+      container.appendChild(refs.root);
+      updateRosterMovesFormVisibility(section, i);
+    }
+  });
+
+  if (!out.rosterMovesDynamicLayer) return;
+  out.rosterMovesDynamicLayer.innerHTML = '';
+  ['callUp', 'sendDown'].forEach((section) => {
+    rosterMovePreviewGroups[section] = [];
+    for (let i = 0; i < MAX_ROSTER_GROUPS; i += 1) {
+      const refs = createRosterPreviewGroup(section);
+      rosterMovePreviewGroups[section].push(refs);
+      out.rosterMovesDynamicLayer.appendChild(refs.root);
+    }
+  });
+}
+
+function getRosterMovesLayoutValue(key, axis) {
+  const input = el[`${key}${axis}Input`];
+  return Number(input?.value) || 0;
 }
 
 function syncFineTunePair(numberInput, rangeInput) {
@@ -968,6 +1416,32 @@ function syncFineTunePair(numberInput, rangeInput) {
   numberInput.addEventListener('input', syncFromNumber);
   rangeInput.addEventListener('input', syncFromRange);
   syncFromNumber();
+}
+
+function bindNudgeButtons() {
+  document.querySelectorAll('.nudge-btn').forEach((button) => {
+    button.addEventListener('click', () => {
+      const targetId = button.getAttribute('data-target');
+      const step = Number(button.getAttribute('data-step')) || 0;
+      if (!targetId || !step) return;
+      const input = document.getElementById(targetId);
+      const range = document.getElementById(targetId.replace('Input', 'Range'));
+      if (!(input instanceof HTMLInputElement)) return;
+      let nextValue = (Number(input.value) || 0) + step;
+      if (range instanceof HTMLInputElement) {
+        const min = Number(range.min);
+        const max = Number(range.max);
+        if (Number.isFinite(min)) nextValue = Math.max(min, nextValue);
+        if (Number.isFinite(max)) nextValue = Math.min(max, nextValue);
+        syncNumberRangeValues(input, range, nextValue);
+      } else {
+        input.value = String(nextValue);
+      }
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+      input.focus();
+      input.select?.();
+    });
+  });
 }
 
 function updateDownloadButtonLabel() {
@@ -1220,12 +1694,18 @@ function isMobilePreviewMode() {
 async function renderMobilePreview(tabName) {
   if (!window.html2canvas || !isMobilePreviewMode()) return;
 
-  const poster = tabName === 'result' ? el.resultPoster : el.lineupPoster;
-  const preview = tabName === 'result' ? out.resultMobilePreview : out.lineupMobilePreview;
+  const poster = tabName === 'result'
+    ? el.resultPoster
+    : tabName === 'lineup'
+      ? el.lineupPoster
+      : el.rosterMovesPoster;
+  const preview = tabName === 'result'
+    ? out.resultMobilePreview
+    : tabName === 'lineup'
+      ? out.lineupMobilePreview
+      : out.rosterMovesMobilePreview;
   const posterCanvas = poster.querySelector('.poster-canvas');
-  const images = tabName === 'result'
-    ? [out.backgroundLayer, out.playerPhoto, out.kiaLogo, out.oppLogo]
-    : [out.lineupBgLayer, out.lineupPlayerPhoto];
+  const images = Array.from(poster.querySelectorAll('img, video'));
 
   const wasActive = poster.classList.contains('active');
   if (!wasActive) poster.classList.add('active');
@@ -1282,6 +1762,7 @@ function scheduleMobilePreviewRender() {
     if (!isMobilePreviewMode()) return;
     await renderMobilePreview('result');
     await renderMobilePreview('lineup');
+    await renderMobilePreview('rosterMoves');
   }, 80);
 }
 
@@ -1418,22 +1899,101 @@ function updateLineupPoster() {
   scheduleMobilePreviewRender();
 }
 
+function updateRosterMovesPoster() {
+  const team = selectedTeamInfo(el.rosterMovesOpponentTeam);
+  ROSTER_MOVES_LAYOUT.opponentText.x = Number(el.rosterOpponentXInput.value) || ROSTER_MOVES_LAYOUT.opponentText.x;
+  ROSTER_MOVES_LAYOUT.opponentText.y = Number(el.rosterOpponentYInput.value) || ROSTER_MOVES_LAYOUT.opponentText.y;
+
+  out.rosterMovesDateText.textContent = formatDate(el.rosterMovesDate.value);
+  out.rosterMovesOpponentText.textContent = `vs ${team.name}`;
+  out.rosterMovesStadiumText.textContent = el.rosterMovesStadiumName.value;
+  out.rosterMovesDateText.style.letterSpacing = '-1px';
+  out.rosterMovesOpponentText.style.letterSpacing = '-1px';
+  out.rosterMovesStadiumText.style.letterSpacing = '-1px';
+
+  applyText(out.rosterMovesDateText, ROSTER_MOVES_LAYOUT.dateText);
+  applyText(out.rosterMovesOpponentText, ROSTER_MOVES_LAYOUT.opponentText);
+  applyText(out.rosterMovesStadiumText, ROSTER_MOVES_LAYOUT.stadiumText);
+
+  const counts = {
+    callUp: getRosterSectionCount('callUp'),
+    sendDown: getRosterSectionCount('sendDown')
+  };
+  const activeSections = ['callUp', 'sendDown'].filter((section) => counts[section] > 0);
+  const slotBySection = {};
+  if (activeSections[0]) slotBySection[activeSections[0]] = 'upper';
+  if (activeSections[1]) slotBySection[activeSections[1]] = 'lower';
+
+  [
+    ['callUp', out.callUpTitleText, 'CALL-UP'],
+    ['sendDown', out.sendDownTitleText, 'SEND-DOWN']
+  ].forEach(([section, node, label]) => {
+    const slot = slotBySection[section];
+    node.style.display = slot ? 'block' : 'none';
+    if (!slot) return;
+    node.textContent = label;
+    applyAdvancedText(node, slot === 'upper' ? ROSTER_MOVES_LAYOUT.callUpTitle : ROSTER_MOVES_LAYOUT.sendDownTitle);
+  });
+
+  ['callUp', 'sendDown'].forEach((section) => {
+    const slot = slotBySection[section];
+    const slotY = slot ? ROSTER_SECTION_SLOT_Y[slot] : 0;
+    rosterMovePreviewGroups[section].forEach((previewRefs, index) => {
+      const isVisible = Boolean(slot) && index < counts[section];
+      previewRefs.root.classList.toggle('is-hidden', !isVisible);
+      if (!isVisible) return;
+
+      const editorRefs = rosterMoveEditors[section][index];
+      const info = getPlayerInfo(editorRefs.nameInput.value);
+      const photoPath = getPlayerMiniPhotoPath(editorRefs.nameInput.value);
+      const basePoint = ROSTER_GROUP_GRID[index] || ROSTER_GROUP_GRID[0];
+      const groupX = basePoint.x;
+      const groupY = slotY + basePoint.y;
+
+      previewRefs.root.style.left = `${groupX}px`;
+      previewRefs.root.style.top = `${groupY}px`;
+      previewRefs.name.textContent = formatDisplayName(editorRefs.nameInput.value);
+      previewRefs.meta.textContent = info ? `${info.throwBat}/${info.positionGroup}` : '';
+      previewRefs.stats.textContent = !info
+        ? ''
+        : info.positionGroup === '투수'
+          ? buildPitcherStatsLines(editorRefs)
+          : buildHitterStatsLines(editorRefs);
+
+      previewRefs.photo.classList.toggle('is-hidden', !photoPath);
+      if (photoPath) previewRefs.photo.src = photoPath;
+
+      applyPositionOnly(previewRefs.photo, { x: 0, y: 0 });
+      applyPositionOnly(previewRefs.box, { x: 0, y: 0 });
+      applyAdvancedText(previewRefs.name, ROSTER_MOVES_LAYOUT.groupName);
+      applyAdvancedText(previewRefs.meta, ROSTER_MOVES_LAYOUT.groupMeta);
+      applyAdvancedText(previewRefs.stats, ROSTER_MOVES_LAYOUT.groupStats);
+    });
+  });
+  scheduleMobilePreviewRender();
+}
+
 function switchTab(target) {
   activeTab = target;
   const isResult = target === 'result';
   const isLineup = target === 'lineup';
   const isVideo = target === 'video';
+  const isRosterMoves = target === 'rosterMoves';
   el.tabResult.classList.toggle('active', isResult);
   el.tabLineup.classList.toggle('active', isLineup);
   el.tabVideo.classList.toggle('active', isVideo);
+  el.tabRosterMoves.classList.toggle('active', isRosterMoves);
   el.resultControls.classList.toggle('active', isResult);
   el.lineupControls.classList.toggle('active', isLineup);
   el.videoControls.classList.toggle('active', isVideo);
+  el.rosterMovesControls.classList.toggle('active', isRosterMoves);
   el.resultPoster.classList.toggle('active', isResult);
   el.lineupPoster.classList.toggle('active', isLineup);
   el.videoPoster.classList.toggle('active', isVideo);
+  el.rosterMovesPoster.classList.toggle('active', isRosterMoves);
   out.resultMobilePreview.classList.toggle('active', isResult);
   out.lineupMobilePreview.classList.toggle('active', isLineup);
+  out.rosterMovesMobilePreview.classList.toggle('active', isRosterMoves);
   el.previewScale.classList.toggle('video-mobile-plain', isVideo && isMobilePreviewMode());
   if (!isVideo) setVideoPreviewMode(false);
   updateVideoPreviewToggleVisibility();
@@ -1475,10 +2035,12 @@ async function downloadImage() {
     return;
   }
   await document.fonts.ready;
-  const poster = activeTab === 'result' ? el.resultPoster : el.lineupPoster;
-  const images = activeTab === 'result'
-    ? [out.backgroundLayer, out.playerPhoto, out.kiaLogo, out.oppLogo]
-    : [out.lineupBgLayer, out.lineupPlayerPhoto];
+  const poster = activeTab === 'result'
+    ? el.resultPoster
+    : activeTab === 'lineup'
+      ? el.lineupPoster
+      : el.rosterMovesPoster;
+  const images = Array.from(poster.querySelectorAll('img, video'));
   await Promise.all(images.map(waitForImageElement));
 
   const prevTransform = poster.style.transform;
@@ -1507,6 +2069,16 @@ function populateTeamSelect(selectEl) {
   });
 }
 
+function populatePlayerNameOptions() {
+  if (!el.playerNameOptions) return;
+  el.playerNameOptions.innerHTML = '';
+  PLAYER_INFO_LIST.forEach((player) => {
+    const option = document.createElement('option');
+    option.value = player.name;
+    el.playerNameOptions.appendChild(option);
+  });
+}
+
 function bindEvents() {
   syncFineTunePair(el.opponentXInput, el.opponentXRange);
   syncFineTunePair(el.opponentYInput, el.opponentYRange);
@@ -1514,6 +2086,8 @@ function bindEvents() {
   syncFineTunePair(el.mvpRecordYInput, el.mvpRecordYRange);
   syncFineTunePair(el.lineupOpponentXInput, el.lineupOpponentXRange);
   syncFineTunePair(el.lineupOpponentYInput, el.lineupOpponentYRange);
+  syncFineTunePair(el.rosterOpponentXInput, el.rosterOpponentXRange);
+  syncFineTunePair(el.rosterOpponentYInput, el.rosterOpponentYRange);
   syncFineTunePair(el.videoFrameXInput, el.videoFrameXRange);
   syncFineTunePair(el.videoFrameYInput, el.videoFrameYRange);
   syncFineTunePair(el.videoFrameScaleInput, el.videoFrameScaleRange);
@@ -1525,6 +2099,34 @@ function bindEvents() {
   syncFineTunePair(el.videoMetaXInput, el.videoMetaXRange);
   syncFineTunePair(el.videoMetaYInput, el.videoMetaYRange);
   syncFineTunePair(el.videoMetaSizeInput, el.videoMetaSizeRange);
+  syncFineTunePair(el.callUpBoxXInput, el.callUpBoxXRange);
+  syncFineTunePair(el.callUpBoxYInput, el.callUpBoxYRange);
+  syncFineTunePair(el.sendDownBoxXInput, el.sendDownBoxXRange);
+  syncFineTunePair(el.sendDownBoxYInput, el.sendDownBoxYRange);
+  syncFineTunePair(el.callUpCardXInput, el.callUpCardXRange);
+  syncFineTunePair(el.callUpCardYInput, el.callUpCardYRange);
+  syncFineTunePair(el.sendDownCardXInput, el.sendDownCardXRange);
+  syncFineTunePair(el.sendDownCardYInput, el.sendDownCardYRange);
+  syncFineTunePair(el.callUpNameXInput, el.callUpNameXRange);
+  syncFineTunePair(el.callUpNameYInput, el.callUpNameYRange);
+  syncFineTunePair(el.callUpNameSizeInput, el.callUpNameSizeRange);
+  syncFineTunePair(el.callUpNameSpacingInput, el.callUpNameSpacingRange);
+  syncFineTunePair(el.callUpNameLineHeightInput, el.callUpNameLineHeightRange);
+  syncFineTunePair(el.callUpMetaXInput, el.callUpMetaXRange);
+  syncFineTunePair(el.callUpMetaYInput, el.callUpMetaYRange);
+  syncFineTunePair(el.callUpMetaSizeInput, el.callUpMetaSizeRange);
+  syncFineTunePair(el.callUpMetaSpacingInput, el.callUpMetaSpacingRange);
+  syncFineTunePair(el.callUpMetaLineHeightInput, el.callUpMetaLineHeightRange);
+  syncFineTunePair(el.sendDownNameXInput, el.sendDownNameXRange);
+  syncFineTunePair(el.sendDownNameYInput, el.sendDownNameYRange);
+  syncFineTunePair(el.sendDownNameSizeInput, el.sendDownNameSizeRange);
+  syncFineTunePair(el.sendDownNameSpacingInput, el.sendDownNameSpacingRange);
+  syncFineTunePair(el.sendDownNameLineHeightInput, el.sendDownNameLineHeightRange);
+  syncFineTunePair(el.sendDownMetaXInput, el.sendDownMetaXRange);
+  syncFineTunePair(el.sendDownMetaYInput, el.sendDownMetaYRange);
+  syncFineTunePair(el.sendDownMetaSizeInput, el.sendDownMetaSizeRange);
+  syncFineTunePair(el.sendDownMetaSpacingInput, el.sendDownMetaSpacingRange);
+  syncFineTunePair(el.sendDownMetaLineHeightInput, el.sendDownMetaLineHeightRange);
 
   const resultInputs = [
     ...el.result, ...el.kiaSide, el.gameDate, el.opponentTeam,
@@ -1608,6 +2210,15 @@ function bindEvents() {
     });
   });
 
+  [el.rosterOpponentXInput, el.rosterOpponentXRange, el.rosterOpponentYInput, el.rosterOpponentYRange].forEach((input) => {
+    input.addEventListener('input', () => {
+      applySharedOpponentFineTune(el.rosterOpponentXInput.value || 0, el.rosterOpponentYInput.value || 0);
+    });
+    input.addEventListener('change', () => {
+      applySharedOpponentFineTune(el.rosterOpponentXInput.value || 0, el.rosterOpponentYInput.value || 0);
+    });
+  });
+
   el.lineupInputGrid.addEventListener('input', updateLineupPoster);
   el.lineupInputGrid.addEventListener('input', updateSecondaryActionButtons);
   el.lineupInputGrid.addEventListener('keydown', (event) => {
@@ -1628,6 +2239,61 @@ function bindEvents() {
 
   el.lineupOpponentTeam.addEventListener('change', () => {
     applySharedOpponent(el.lineupOpponentTeam.value);
+  });
+
+  [
+    el.rosterMovesDate,
+    el.rosterMovesOpponentTeam,
+    el.rosterMovesStadiumName,
+    el.callUpCount,
+    el.sendDownCount,
+    el.rosterOpponentXInput, el.rosterOpponentXRange, el.rosterOpponentYInput, el.rosterOpponentYRange
+  ].filter(Boolean).forEach((input) => {
+    input.addEventListener('input', () => {
+      refreshRosterGroupEditors('callUp');
+      refreshRosterGroupEditors('sendDown');
+      updateRosterMovesPoster();
+    });
+    input.addEventListener('change', () => {
+      refreshRosterGroupEditors('callUp');
+      refreshRosterGroupEditors('sendDown');
+      updateRosterMovesPoster();
+    });
+  });
+
+  ['callUp', 'sendDown'].forEach((section) => {
+    rosterMoveEditors[section].forEach((groupRefs, index) => {
+      [
+        groupRefs.nameInput,
+        groupRefs.pitcherGames,
+        groupRefs.pitcherWins,
+        groupRefs.pitcherLosses,
+        groupRefs.pitcherSaves,
+        groupRefs.pitcherHolds,
+        groupRefs.pitcherInnings,
+        groupRefs.pitcherEra,
+        groupRefs.pitcherWhip,
+        groupRefs.hitterGames,
+        groupRefs.hitterHomeRuns,
+        groupRefs.hitterRbi,
+        groupRefs.hitterSteals,
+        groupRefs.hitterAvg,
+        groupRefs.hitterOps
+      ].forEach((input) => {
+        input.addEventListener('input', () => {
+          updateRosterMovesFormVisibility(section, index);
+          updateRosterMovesPoster();
+        });
+        input.addEventListener('change', () => {
+          updateRosterMovesFormVisibility(section, index);
+          updateRosterMovesPoster();
+        });
+      });
+    });
+  });
+
+  el.rosterMovesOpponentTeam.addEventListener('change', () => {
+    applySharedOpponent(el.rosterMovesOpponentTeam.value);
   });
 
   const videoInputs = [
@@ -1783,6 +2449,7 @@ function bindEvents() {
   el.tabResult.addEventListener('click', () => switchTab('result'));
   el.tabLineup.addEventListener('click', () => switchTab('lineup'));
   el.tabVideo.addEventListener('click', () => switchTab('video'));
+  el.tabRosterMoves.addEventListener('click', () => switchTab('rosterMoves'));
   el.downloadBtn.addEventListener('click', downloadImage);
   el.followDownloadBtn.addEventListener('click', downloadFollowImage);
   el.copyCaptionBtn?.addEventListener('click', copyGeneratedCaption);
@@ -1805,16 +2472,22 @@ function init() {
   populateTeamSelect(el.opponentTeam);
   populateTeamSelect(el.lineupOpponentTeam);
   populateTeamSelect(el.videoOpponentTeam);
+  populateTeamSelect(el.rosterMovesOpponentTeam);
+  populatePlayerNameOptions();
+  buildRosterMovesUi();
 
   el.opponentTeam.value = 'LG 트윈스';
   el.lineupOpponentTeam.value = 'LG 트윈스';
   el.videoOpponentTeam.value = 'LG 트윈스';
+  el.rosterMovesOpponentTeam.value = 'LG 트윈스';
   el.stadiumName.value = KIA_HOME_STADIUM;
   el.lineupStadiumName.value = KIA_HOME_STADIUM;
+  el.rosterMovesStadiumName.value = KIA_HOME_STADIUM;
 
   setToday(el.gameDate);
   setToday(el.lineupDate);
   setToday(el.videoDate);
+  setToday(el.rosterMovesDate);
 
   if (out.videoBgImage.complete) {
     out.videoBgImage.style.display = out.videoBgImage.naturalWidth > 0 ? 'block' : 'none';
@@ -1822,14 +2495,18 @@ function init() {
   }
 
   bindEvents();
+  bindNudgeButtons();
   configureVideoTrimRange(0);
   updateLineupGameTimeCustomVisibility();
+  refreshRosterGroupEditors('callUp');
+  refreshRosterGroupEditors('sendDown');
   applySharedKiaSide('home');
   applySharedOpponentFineTune(el.lineupOpponentXInput.value || 228, el.lineupOpponentYInput.value || 354);
   syncAutoResultSelection();
   updateResultPoster();
   updateLineupPoster();
   updateVideoPoster();
+  updateRosterMovesPoster();
   updateVideoPreviewToggleVisibility();
   updateDownloadButtonLabel();
   updateSecondaryActionButtons();

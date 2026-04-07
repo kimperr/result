@@ -79,7 +79,28 @@
 }
 
 @font-face {
+  font-family: 'regularfont';
+  src:
+    local('regularfont'),
+    local('RegularFont'),
+    url('./fonts/regular-font.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
   font-family: 'Termina';
+  src:
+    url('./fonts/Termina-Black.woff2') format('woff2'),
+    url('./fonts/Termina-Black.woff') format('woff'),
+    url('./fonts/Termina-Black.otf') format('opentype');
+  font-weight: 900;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Termina Heavy';
   src:
     url('./fonts/Termina-Black.woff2') format('woff2'),
     url('./fonts/Termina-Black.woff') format('woff'),
@@ -120,7 +141,7 @@ body { margin: 0; font-family: 'Pretendard', sans-serif; background: #e6e6e6; }
   font-family: var(--ui-body);
 }
 
-.tab-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 12px; }
+.tab-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 12px; }
 .tab-btn {
   border: 0;
   background: #3b3e45;
@@ -336,7 +357,7 @@ textarea {
 }
 .fine-tune-row {
   display: grid;
-  grid-template-columns: 20px 1fr 84px;
+  grid-template-columns: 20px 1fr 140px;
   gap: 8px;
   align-items: center;
   font-size: 14px;
@@ -348,6 +369,26 @@ textarea {
 }
 .fine-tune-row input[type='number'] {
   width: 100%;
+}
+
+.stepper-input {
+  display: grid;
+  grid-template-columns: 32px minmax(0, 1fr) 32px;
+  gap: 6px;
+  align-items: center;
+}
+
+.nudge-btn {
+  width: 32px;
+  min-height: 32px;
+  padding: 0;
+  border: 0;
+  border-radius: 8px;
+  background: #4b4f57;
+  color: #fff;
+  font-size: 18px;
+  font-weight: 700;
+  cursor: pointer;
 }
 
 .lineup-input-grid { display: grid; gap: 6px; margin-bottom: 8px; }
@@ -471,14 +512,18 @@ textarea {
   display: flex;
   align-items: flex-start;
   justify-content: center;
-  min-height: 100vh;
+  height: 100vh;
   padding: 24px;
   background: #e6e6e6;
+  overflow-y: auto;
+  position: sticky;
+  top: 0;
 }
 .preview-scale {
-  --preview-width: min(56vw, 540px);
+  --preview-width: min(48vw, 460px);
   width: var(--preview-width);
   height: calc(var(--preview-width) * 1.25);
+  flex: 0 0 auto;
 }
 .poster {
   position: relative;
@@ -550,6 +595,177 @@ textarea {
 #lineupPoster .text { letter-spacing: var(--global-letter-spacing); }
 #lineupPoster .lineup-pitcher { letter-spacing: 24px; }
 
+.roster-stats-grid {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.roster-groups-editor {
+  display: grid;
+  gap: 12px;
+}
+
+.roster-group-editor {
+  border: 1px solid #4a4d56;
+  border-radius: 14px;
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.roster-group-editor.is-hidden {
+  display: none;
+}
+
+.roster-group-editor h3 {
+  margin: 0 0 10px;
+  font-size: 16px;
+}
+
+.roster-stats-row {
+  display: grid;
+  gap: 8px;
+}
+
+.roster-stats-row .field {
+  grid-template-columns: 1fr;
+  gap: 4px;
+  margin-bottom: 0;
+  font-size: 14px;
+  min-width: 0;
+}
+
+.roster-stats-row .field input {
+  min-width: 0;
+  font-size: 15px;
+  padding: 6px;
+}
+
+.roster-stats-row-four {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.roster-stats-row-five {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+
+.roster-stats-row-two {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.roster-stats-row-single {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.roster-section-title {
+  left: 68px;
+  top: 470px;
+  color: #fff;
+  font: 900 64px/1 'Termina Heavy', 'Termina', sans-serif;
+  letter-spacing: 0;
+  white-space: pre;
+}
+
+.roster-player-mini {
+  left: 68px;
+  top: 565px;
+  object-fit: none;
+}
+
+.roster-player-box {
+  left: 68px;
+  top: 565px;
+  object-fit: none;
+}
+
+.roster-player-name {
+  left: 294px;
+  top: 573px;
+  width: 380px;
+  color: #fff;
+  font: 400 66px/1 'boldfont', 'Pretendard', sans-serif;
+  font-family: 'boldfont', 'Pretendard', sans-serif !important;
+  letter-spacing: 0;
+  white-space: pre-line;
+}
+
+.roster-player-meta {
+  left: 294px;
+  top: 649px;
+  width: 360px;
+  color: #fff;
+  font: 400 28px/32px 'regularfont', 'Pretendard', sans-serif;
+  font-family: 'regularfont', 'Pretendard', sans-serif !important;
+  letter-spacing: 0;
+  white-space: pre-line;
+}
+
+.roster-player-stats {
+  left: 294px;
+  top: 744px;
+  width: 420px;
+  color: #fff;
+  font: 400 26px/34px 'mediumfont', 'Pretendard', sans-serif;
+  font-family: 'mediumfont', 'Pretendard', sans-serif !important;
+  letter-spacing: 0;
+  white-space: pre-line;
+}
+
+.roster-dynamic-layer {
+  inset: 0;
+}
+
+.roster-preview-group {
+  position: absolute;
+  left: 0;
+  top: 0;
+}
+
+.roster-preview-group.is-hidden {
+  display: none;
+}
+
+.roster-group-box,
+.roster-group-photo,
+.roster-group-name,
+.roster-group-meta,
+.roster-group-stats {
+  position: absolute;
+}
+
+.roster-group-box,
+.roster-group-photo {
+  object-fit: none;
+}
+
+.roster-group-photo.is-hidden {
+  display: none;
+}
+
+.roster-group-name {
+  width: 380px;
+  color: #fff;
+  font: 400 52px/66px 'boldfont', 'Pretendard', sans-serif;
+  font-family: 'boldfont', 'Pretendard', sans-serif !important;
+  white-space: pre-line;
+}
+
+.roster-group-meta {
+  width: 360px;
+  color: #fff;
+  font: 400 20px/32px 'regularfont', 'Pretendard', sans-serif;
+  font-family: 'regularfont', 'Pretendard', sans-serif !important;
+  white-space: pre-line;
+}
+
+.roster-group-stats {
+  width: 420px;
+  color: #fff;
+  font: 400 21px/29px 'mediumfont', 'Pretendard', sans-serif;
+  font-family: 'mediumfont', 'Pretendard', sans-serif !important;
+  white-space: pre-line;
+}
+
 .video-bg {
   inset: 0;
   background:
@@ -620,6 +836,11 @@ textarea {
 @media (max-width: 1200px) {
   .layout { grid-template-columns: 1fr; }
   .preview-scale { --preview-width: min(96vw, 540px); }
+  .preview-wrap {
+    position: static;
+    height: auto;
+    overflow: visible;
+  }
 }
 
 @media (max-width: 768px) {
