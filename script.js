@@ -111,7 +111,7 @@ const rosterMoveEditors = { callUp: [], sendDown: [] };
 const rosterMovePreviewGroups = { callUp: [], sendDown: [] };
 let mobilePreviewTimer = null;
 const copyToastState = { timer: null };
-const rosterImportState = { isLoading: false };
+const rosterImportState = { isLoading: false, isRefreshingStats: false };
 const rosterAutoFetchState = {};
 const videoState = {
   objectUrl: '',
@@ -437,21 +437,26 @@ function setRosterImportStatus(message, tone = 'neutral') {
 function clearRosterEditor(editorRefs) {
   if (!editorRefs) return;
   editorRefs.nameInput.value = '';
-  editorRefs.pitcherGames.value = '0';
-  editorRefs.pitcherWins.value = '0';
-  editorRefs.pitcherLosses.value = '0';
-  editorRefs.pitcherSaves.value = '0';
-  editorRefs.pitcherHolds.value = '0';
-  editorRefs.pitcherInnings.value = '0';
+  clearRosterStats(editorRefs);
+}
+
+function clearRosterStats(editorRefs) {
+  if (!editorRefs) return;
+  editorRefs.pitcherGames.value = '';
+  editorRefs.pitcherWins.value = '';
+  editorRefs.pitcherLosses.value = '';
+  editorRefs.pitcherSaves.value = '';
+  editorRefs.pitcherHolds.value = '';
+  editorRefs.pitcherInnings.value = '';
   editorRefs.pitcherInnings.dataset.lastValidInnings = '0';
-  editorRefs.pitcherEra.value = '0';
-  editorRefs.pitcherWhip.value = '0';
-  editorRefs.hitterGames.value = '0';
-  editorRefs.hitterHomeRuns.value = '0';
-  editorRefs.hitterRbi.value = '0';
-  editorRefs.hitterSteals.value = '0';
-  editorRefs.hitterAvg.value = '0';
-  editorRefs.hitterOps.value = '0';
+  editorRefs.pitcherEra.value = '';
+  editorRefs.pitcherWhip.value = '';
+  editorRefs.hitterGames.value = '';
+  editorRefs.hitterHomeRuns.value = '';
+  editorRefs.hitterRbi.value = '';
+  editorRefs.hitterSteals.value = '';
+  editorRefs.hitterAvg.value = '';
+  editorRefs.hitterOps.value = '';
 }
 
 function getRosterAutoFetchKey(section, index) {
@@ -528,9 +533,10 @@ function buildRosterImportSummary(data) {
   return parts.join(' ');
 }
 
-async function autoFetchRosterPlayerStats(section, index) {
+async function autoFetchRosterPlayerStats(section, index, options = {}) {
   const editorRefs = rosterMoveEditors[section]?.[index];
   if (!editorRefs) return;
+  const { force = false } = options;
 
   const playerName = (editorRefs.nameInput?.value || '').trim();
   const state = getRosterAutoFetchState(section, index);
@@ -544,7 +550,7 @@ async function autoFetchRosterPlayerStats(section, index) {
     return;
   }
 
-  if (state.lastAppliedName === playerName) return;
+  if (!force && state.lastAppliedName === playerName) return false;
 
   const requestId = state.requestId + 1;
   state.requestId = requestId;
@@ -561,11 +567,70 @@ async function autoFetchRosterPlayerStats(section, index) {
     state.lastAppliedName = playerName;
     updateRosterMovesFormVisibility(section, index);
     updateRosterMovesPoster();
+    return Boolean(data.player);
   } catch (error) {
     if (state.requestId !== requestId) return;
     state.lastAppliedName = '';
+    if (force) {
+      clearRosterStats(editorRefs);
+      editorRefs.nameInput.value = playerName;
+    }
     updateRosterMovesFormVisibility(section, index);
     updateRosterMovesPoster();
+    return false;
+  }
+}
+
+async function refreshRosterMoveStats() {
+  if (rosterImportState.isLoading || rosterImportState.isRefreshingStats) return;
+
+  const dateValue = el.rosterMovesDate?.value || '';
+  if (!dateValue) {
+    setRosterImportStatus('등말소 날짜를 먼저 선택한 뒤 선수 성적을 불러와 주세요.', 'error');
+    return;
+  }
+
+  const targets = [];
+  ['callUp', 'sendDown'].forEach((section) => {
+    rosterMoveEditors[section].forEach((editorRefs, index) => {
+      const playerName = (editorRefs.nameInput?.value || '').trim();
+      if (!playerName) return;
+      targets.push({ section, index, playerName });
+    });
+  });
+
+  if (!targets.length) {
+    setRosterImportStatus('성적을 불러올 선수 이름이 아직 없습니다.', 'error');
+    return;
+  }
+
+  rosterImportState.isRefreshingStats = true;
+  if (el.rosterMovesImportBtn) el.rosterMovesImportBtn.disabled = true;
+  if (el.rosterMovesStatsBtn) el.rosterMovesStatsBtn.disabled = true;
+  setRosterImportStatus(`${targets.length}명 선수 성적을 다시 불러오는 중입니다...`, 'loading');
+
+  try {
+    let successCount = 0;
+    for (const target of targets) {
+      const applied = await autoFetchRosterPlayerStats(target.section, target.index, {
+        force: true
+      });
+      if (applied) successCount += 1;
+    }
+
+    const failedCount = targets.length - successCount;
+    if (successCount) {
+      const message = failedCount
+        ? `선수 성적 ${successCount}명을 채웠고 ${failedCount}명은 기록을 찾지 못했습니다.`
+        : `선수 성적 ${successCount}명을 모두 다시 채웠습니다.`;
+      setRosterImportStatus(message, failedCount ? 'error' : 'success');
+    } else {
+      setRosterImportStatus('입력된 이름으로는 선수 성적을 찾지 못했습니다.', 'error');
+    }
+  } finally {
+    rosterImportState.isRefreshingStats = false;
+    if (el.rosterMovesImportBtn) el.rosterMovesImportBtn.disabled = false;
+    if (el.rosterMovesStatsBtn) el.rosterMovesStatsBtn.disabled = false;
   }
 }
 
@@ -592,6 +657,7 @@ async function importRosterMovesByDate() {
 
   rosterImportState.isLoading = true;
   if (el.rosterMovesImportBtn) el.rosterMovesImportBtn.disabled = true;
+  if (el.rosterMovesStatsBtn) el.rosterMovesStatsBtn.disabled = true;
   setRosterImportStatus(`${dateValue} KIA 이동 현황을 불러오는 중입니다...`, 'loading');
 
   try {
@@ -608,6 +674,7 @@ async function importRosterMovesByDate() {
   } finally {
     rosterImportState.isLoading = false;
     if (el.rosterMovesImportBtn) el.rosterMovesImportBtn.disabled = false;
+    if (el.rosterMovesStatsBtn) el.rosterMovesStatsBtn.disabled = false;
   }
 }
 
@@ -668,6 +735,7 @@ function bindEvents() {
     downloadFollowImage,
     copyGeneratedCaption,
     importRosterMovesByDate,
+    refreshRosterMoveStats,
     autoFetchRosterPlayerStats,
     syncFineTunePair,
     bindNudgeButtons,

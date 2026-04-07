@@ -97,6 +97,7 @@
 
   rosterMovesDate: document.getElementById('rosterMovesDate'),
   rosterMovesImportBtn: document.getElementById('rosterMovesImportBtn'),
+  rosterMovesStatsBtn: document.getElementById('rosterMovesStatsBtn'),
   rosterMovesImportStatus: document.getElementById('rosterMovesImportStatus'),
   rosterMovesApiOrigin: document.getElementById('rosterMovesApiOrigin'),
   rosterMovesOpponentTeam: document.getElementById('rosterMovesOpponentTeam'),

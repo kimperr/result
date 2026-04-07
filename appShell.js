@@ -150,6 +150,7 @@ export function bindEvents({
   downloadFollowImage,
   copyGeneratedCaption,
   importRosterMovesByDate,
+  refreshRosterMoveStats,
   autoFetchRosterPlayerStats,
   syncFineTunePair,
   bindNudgeButtons,
@@ -339,6 +340,7 @@ export function bindEvents({
     applySharedOpponent(el.rosterMovesOpponentTeam.value);
   });
   el.rosterMovesImportBtn?.addEventListener('click', importRosterMovesByDate);
+  el.rosterMovesStatsBtn?.addEventListener('click', refreshRosterMoveStats);
 
   const videoInputs = [
     el.videoTitleInput,

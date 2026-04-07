@@ -638,9 +638,25 @@ textarea {
   padding: 10px 12px;
 }
 
-#rosterMovesImportBtn:disabled {
+#rosterMovesImportBtn:disabled,
+#rosterMovesStatsBtn:disabled {
   opacity: 0.7;
   cursor: wait;
+}
+
+#rosterMovesStatsBtn {
+  width: 100%;
+  min-height: 40px;
+  border: 1px solid rgba(216, 220, 229, 0.22);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.05);
+  color: #f6f8fc;
+  font-family: var(--ui-title);
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  cursor: pointer;
+  padding: 9px 12px;
 }
 
 .roster-import-status {
