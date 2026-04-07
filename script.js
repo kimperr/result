@@ -434,8 +434,11 @@ function updateRosterMovesPoster() {
 
 function setRosterImportStatus(message, tone = 'neutral') {
   if (!el.rosterMovesImportStatus) return;
-  el.rosterMovesImportStatus.textContent = message;
+  const nextMessage = typeof message === 'string' ? message.trim() : '';
+  el.rosterMovesImportStatus.textContent = nextMessage;
+  el.rosterMovesImportStatus.classList.toggle('has-message', Boolean(nextMessage));
   el.rosterMovesImportStatus.classList.remove('is-loading', 'is-success', 'is-error');
+  if (!nextMessage) return;
   if (tone === 'loading') el.rosterMovesImportStatus.classList.add('is-loading');
   if (tone === 'success') el.rosterMovesImportStatus.classList.add('is-success');
   if (tone === 'error') el.rosterMovesImportStatus.classList.add('is-error');

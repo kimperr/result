@@ -660,6 +660,7 @@ textarea {
 }
 
 .roster-import-status {
+  display: none;
   margin: 0;
   padding: 10px 12px;
   border-radius: 12px;
@@ -667,6 +668,10 @@ textarea {
   color: #d8dce5;
   font-size: 13px;
   line-height: 1.45;
+}
+
+.roster-import-status.has-message {
+  display: block;
 }
 
 .roster-import-status.is-loading {
