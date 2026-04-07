@@ -478,6 +478,7 @@ function getRosterAutoFetchState(section, index) {
   const key = getRosterAutoFetchKey(section, index);
   if (!rosterAutoFetchState[key]) {
     rosterAutoFetchState[key] = {
+      debounceTimer: null,
       pendingName: '',
       lastAppliedName: '',
       requestId: 0
@@ -653,10 +654,23 @@ async function autoFillScheduleByDate(dateValue, options = {}) {
 async function autoFetchRosterPlayerStats(section, index, options = {}) {
   const editorRefs = rosterMoveEditors[section]?.[index];
   if (!editorRefs) return;
-  const { force = false } = options;
+  const { force = false, debounceMs = 0 } = options;
+  const state = getRosterAutoFetchState(section, index);
+
+  if (state.debounceTimer) {
+    clearTimeout(state.debounceTimer);
+    state.debounceTimer = null;
+  }
+
+  if (debounceMs > 0) {
+    state.debounceTimer = setTimeout(() => {
+      state.debounceTimer = null;
+      autoFetchRosterPlayerStats(section, index, { ...options, debounceMs: 0 });
+    }, debounceMs);
+    return false;
+  }
 
   const playerName = (editorRefs.nameInput?.value || '').trim();
-  const state = getRosterAutoFetchState(section, index);
   state.pendingName = playerName;
 
   if (!playerName) {
@@ -667,13 +681,14 @@ async function autoFetchRosterPlayerStats(section, index, options = {}) {
     return;
   }
 
+  const playerInfo = getPlayerInfo(playerName);
+  if (!force && !playerInfo) return false;
   if (!force && state.lastAppliedName === playerName) return false;
 
   const requestId = state.requestId + 1;
   state.requestId = requestId;
 
   try {
-    const playerInfo = getPlayerInfo(playerName);
     const data = await fetchKboPlayerStats({
       name: playerName,
       playerId: playerInfo?.playerId || '',

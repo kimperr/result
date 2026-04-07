@@ -57,6 +57,27 @@ function hidePlayerSuggestions(groupRefs) {
   groupRefs.nameSuggestions.classList.add('is-hidden');
 }
 
+function hidePlayerSuggestionsIfFocusOutside(groupRefs) {
+  if (!groupRefs?.autocomplete) return;
+  const active = document.activeElement;
+  if (active instanceof Node && groupRefs.autocomplete.contains(active)) return;
+  hidePlayerSuggestions(groupRefs);
+}
+
+function getSuggestionButtons(groupRefs) {
+  if (!groupRefs?.nameSuggestions) return [];
+  return Array.from(groupRefs.nameSuggestions.querySelectorAll('.roster-name-suggestion'))
+    .filter((button) => button instanceof HTMLButtonElement);
+}
+
+function focusSuggestion(groupRefs, index) {
+  const buttons = getSuggestionButtons(groupRefs);
+  if (!buttons.length) return false;
+  const safeIndex = Math.max(0, Math.min(index, buttons.length - 1));
+  buttons[safeIndex].focus();
+  return true;
+}
+
 function showPlayerSuggestions(groupRefs) {
   if (!groupRefs?.nameInput || !groupRefs?.nameSuggestions) return;
   const matches = getMatchingPlayerNames(groupRefs.nameInput.value);
@@ -71,14 +92,45 @@ function showPlayerSuggestions(groupRefs) {
     button.type = 'button';
     button.className = 'roster-name-suggestion';
     button.textContent = name;
-    button.addEventListener('mousedown', (event) => {
-      event.preventDefault();
+    const applySuggestion = () => {
       groupRefs.nameInput.value = name;
-      hidePlayerSuggestions(groupRefs);
       groupRefs.nameInput.dispatchEvent(new Event('input', { bubbles: true }));
       groupRefs.nameInput.dispatchEvent(new Event('change', { bubbles: true }));
+      hidePlayerSuggestions(groupRefs);
       groupRefs.nameInput.focus();
       groupRefs.nameInput.setSelectionRange(name.length, name.length);
+    };
+    button.addEventListener('mousedown', (event) => {
+      event.preventDefault();
+      applySuggestion();
+    });
+    button.addEventListener('click', (event) => {
+      event.preventDefault();
+      applySuggestion();
+    });
+    button.addEventListener('keydown', (event) => {
+      const buttons = getSuggestionButtons(groupRefs);
+      const currentIndex = buttons.indexOf(button);
+      if (event.key === 'ArrowDown') {
+        event.preventDefault();
+        focusSuggestion(groupRefs, currentIndex + 1);
+        return;
+      }
+      if (event.key === 'ArrowUp') {
+        event.preventDefault();
+        if (currentIndex <= 0) {
+          groupRefs.nameInput.focus();
+          groupRefs.nameInput.setSelectionRange(groupRefs.nameInput.value.length, groupRefs.nameInput.value.length);
+          return;
+        }
+        focusSuggestion(groupRefs, currentIndex - 1);
+        return;
+      }
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        hidePlayerSuggestions(groupRefs);
+        groupRefs.nameInput.focus();
+      }
     });
     groupRefs.nameSuggestions.appendChild(button);
   });
@@ -153,6 +205,7 @@ function createRosterGroupEditor({ section, index, onVisibilityChange, onPosterU
 
   const refs = {
     root,
+    autocomplete: root.querySelector('.roster-name-autocomplete'),
     nameInput: root.querySelector('.roster-name-input'),
     nameSuggestions: root.querySelector('.roster-name-suggestions'),
     metaInput: root.querySelector('.roster-meta-input'),
@@ -178,17 +231,41 @@ function createRosterGroupEditor({ section, index, onVisibilityChange, onPosterU
   refs.nameInput.addEventListener('input', () => {
     showPlayerSuggestions(refs);
     onVisibilityChange(section, index);
+    if (getPlayerInfo(refs.nameInput.value || '')) {
+      onAutoStatsFetch?.(section, index, { debounceMs: 180 });
+    }
   });
   refs.nameInput.addEventListener('change', () => {
     onVisibilityChange(section, index);
     onAutoStatsFetch?.(section, index);
   });
   refs.nameInput.addEventListener('blur', () => {
-    window.setTimeout(() => hidePlayerSuggestions(refs), 120);
+    window.setTimeout(() => hidePlayerSuggestionsIfFocusOutside(refs), 120);
   });
   refs.nameInput.addEventListener('keydown', (event) => {
     if (event.key === 'Escape') {
       hidePlayerSuggestions(refs);
+      return;
+    }
+    if (event.key === 'ArrowDown' && refs.nameSuggestions && !refs.nameSuggestions.classList.contains('is-hidden')) {
+      event.preventDefault();
+      focusSuggestion(refs, 0);
+      return;
+    }
+    if (event.key === 'ArrowUp' && refs.nameSuggestions && !refs.nameSuggestions.classList.contains('is-hidden')) {
+      event.preventDefault();
+      const buttons = getSuggestionButtons(refs);
+      if (buttons.length) {
+        focusSuggestion(refs, buttons.length - 1);
+      }
+      return;
+    }
+    if (event.key === 'Tab' && !event.shiftKey && refs.nameSuggestions && !refs.nameSuggestions.classList.contains('is-hidden')) {
+      const firstMatch = refs.nameSuggestions.querySelector('.roster-name-suggestion');
+      if (firstMatch instanceof HTMLButtonElement) {
+        event.preventDefault();
+        firstMatch.focus();
+      }
       return;
     }
     if (event.key === 'Enter' && refs.nameSuggestions && !refs.nameSuggestions.classList.contains('is-hidden')) {
@@ -207,6 +284,9 @@ function createRosterGroupEditor({ section, index, onVisibilityChange, onPosterU
     if ((refs.nameInput.value || '').trim()) {
       onAutoStatsFetch?.(section, index);
     }
+  });
+  refs.autocomplete?.addEventListener('focusout', () => {
+    window.setTimeout(() => hidePlayerSuggestionsIfFocusOutside(refs), 0);
   });
   refs.pitcherInnings.dataset.lastValidInnings = refs.pitcherInnings.value;
   refs.pitcherInnings.addEventListener('change', () => normalizePitcherInningsInput(refs.pitcherInnings));

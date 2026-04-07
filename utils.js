@@ -200,7 +200,7 @@ export function normalizeDecimalInput(input) {
 export function getMatchingPlayerNames(query) {
   const normalizedQuery = normalizeName(query);
   const names = PLAYER_INFO_LIST.map((player) => player.name);
-  if (!normalizedQuery) return names.slice(0, 12);
+  if (!normalizedQuery) return names;
   return names
     .filter((name) => normalizeName(name).includes(normalizedQuery))
     .sort((a, b) => {
@@ -210,6 +210,5 @@ export function getMatchingPlayerNames(query) {
       const bStarts = bNormalized.startsWith(normalizedQuery);
       if (aStarts !== bStarts) return aStarts ? -1 : 1;
       return a.localeCompare(b, 'ko');
-    })
-    .slice(0, 12);
+    });
 }

@@ -493,6 +493,7 @@ export function init({
   initializeRosterMovesUi,
   updateRosterMovesFormVisibility,
   updateRosterMovesPoster,
+  onAutoStatsFetch,
   setToday,
   bindEvents,
   configureVideoTrimRange,
@@ -522,7 +523,8 @@ export function init({
     rosterMoveEditors,
     rosterMovePreviewGroups,
     onVisibilityChange: updateRosterMovesFormVisibility,
-    onPosterUpdate: updateRosterMovesPoster
+    onPosterUpdate: updateRosterMovesPoster,
+    onAutoStatsFetch
   });
 
   el.opponentTeam.value = 'LG 트윈스';
