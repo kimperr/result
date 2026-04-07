@@ -99,7 +99,6 @@ export function updateResultPoster({
 
   out.kiaLogo.src = teamLogoFile('kia', side, result);
   out.oppLogo.src = teamLogoFile(team.code, side === 'home' ? 'away' : 'home', result);
-  const mvpRecordGap = Number(el.mvpRecordGapInput?.value);
 
   applyText(out.dateText, RESULT_LAYOUT.dateText);
   applyTextAfterAnchor(out.opponentText, RESULT_LAYOUT.opponentText, out.dateText, RESULT_LAYOUT.dateText, RESULT_LAYOUT.opponentText.x);
@@ -115,7 +114,7 @@ export function updateResultPoster({
     RESULT_LAYOUT.mvpRecordText,
     out.mvpNameText,
     RESULT_LAYOUT.mvpNameText,
-    Number.isFinite(mvpRecordGap) ? mvpRecordGap : RESULT_LAYOUT.mvpRecordText.x
+    RESULT_LAYOUT.mvpRecordText.x
   );
   applyBadge(out.badgeWin, RESULT_LAYOUT.badgeWin);
   applyBadge(out.badgeLose, RESULT_LAYOUT.badgeLose);

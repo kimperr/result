@@ -124,7 +124,7 @@ export const LINEUP_LAYOUT = {
   stadiumText: { x: 66, y: 391, size: 29 },
   names: {},
   positions: {},
-  pitcher: { x: 135, y: 1144, size: 45 }
+  pitcher: { x: 163, y: 1144, size: 45 }
 };
 
 export const ROSTER_MOVES_LAYOUT = {

@@ -157,9 +157,6 @@ export function bindEvents({
   bindNudgeButtons,
   updateLineupGameTimeCustomVisibility
 }) {
-  syncFineTunePair(el.mvpRecordGapInput, el.mvpRecordGapRange);
-  syncFineTunePair(el.lineupPitcherXInput, el.lineupPitcherXRange);
-  syncFineTunePair(el.lineupPitcherYInput, el.lineupPitcherYRange);
   syncFineTunePair(el.videoFrameXInput, el.videoFrameXRange);
   syncFineTunePair(el.videoFrameYInput, el.videoFrameYRange);
   syncFineTunePair(el.videoFrameScaleInput, el.videoFrameScaleRange);
@@ -203,8 +200,7 @@ export function bindEvents({
   const resultInputs = [
     ...el.result, ...el.kiaSide, el.gameDate, el.opponentTeam,
     el.stadiumName, el.homeScore, el.awayScore, el.mvpName, el.mvpRecord,
-    el.winnerName, el.loserName, el.saveName,
-    el.mvpRecordGapInput, el.mvpRecordGapRange
+    el.winnerName, el.loserName, el.saveName
   ].filter(Boolean);
   resultInputs.forEach((input) => {
     input.addEventListener('input', updateResultPoster);
@@ -236,11 +232,7 @@ export function bindEvents({
     el.lineupGameTime,
     el.lineupGameTimeCustom,
     el.lineupBroadcaster,
-    el.lineupTerrestrial,
-    el.lineupPitcherXInput,
-    el.lineupPitcherYInput,
-    el.lineupPitcherXRange,
-    el.lineupPitcherYRange
+    el.lineupTerrestrial
   ].filter(Boolean);
   const lineupSideInputs = [...el.lineupKiaSide];
   lineupInputs.forEach((input) => {
