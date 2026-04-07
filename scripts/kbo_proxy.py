@@ -440,6 +440,26 @@ def fetch_schedule_rows(date_value: str) -> list[dict[str, Any]]:
     return list(payload_data.get("rows") or [])
 
 
+def fetch_game_list(date_value: str) -> list[dict[str, Any]]:
+    payload = urlencode(
+        {
+            "leId": "1",
+            "srId": "0,1,3,4,5,6,7,8,9",
+            "date": date_value.replace("-", ""),
+        }
+    ).encode("utf-8")
+    headers = {
+        "User-Agent": USER_AGENT,
+        "Accept": "application/json;q=0.9,*/*;q=0.8",
+        "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+        "Referer": f"{KBO_BASE}/Schedule/GameCenter/Main.aspx?gameDate={date_value.replace('-', '')}",
+    }
+    request = Request(f"{KBO_BASE}/ws/Main.asmx/GetKboGameList", data=payload, headers=headers, method="POST")
+    with urlopen(request, timeout=20) as response:
+        payload_data = json.loads(response.read().decode("utf-8", errors="replace"))
+    return list(payload_data.get("game") or [])
+
+
 def parse_schedule_game_html(game_html: str) -> tuple[str, str]:
     match = re.search(r"<span>(.*?)</span>\s*<em>.*?</em>\s*<span>(.*?)</span>", game_html, re.S)
     if match:
@@ -452,6 +472,7 @@ def parse_schedule_game_html(game_html: str) -> tuple[str, str]:
 
 def build_schedule_payload(date_value: str, team: str) -> dict[str, Any]:
     rows = fetch_schedule_rows(date_value)
+    games = fetch_game_list(date_value)
     selected_date = datetime.strptime(date_value, "%Y-%m-%d").date()
     selected_key = f"{selected_date.month:02d}.{selected_date.day:02d}"
     target_team = normalize_team_name(team)
@@ -478,10 +499,25 @@ def build_schedule_payload(date_value: str, team: str) -> dict[str, Any]:
         if target_team not in {away_key, home_key}:
             continue
 
+        matched_game = next(
+            (
+                game
+                for game in games
+                if normalize_team_name(str(game.get("AWAY_NM", ""))) == away_key
+                and normalize_team_name(str(game.get("HOME_NM", ""))) == home_key
+            ),
+            None,
+        )
+
         opponent_short = home_team if target_team == away_key else away_team
         tv_raw = clean_schedule_media_text(cells[offset + 4].get("Text", ""))
         radio_raw = clean_schedule_media_text(cells[offset + 5].get("Text", ""))
         location = clean_html_text(cells[offset + 6].get("Text", ""))
+        starting_pitcher = ""
+        if matched_game:
+            starting_pitcher = clean_html_text(
+                str(matched_game.get("T_PIT_P_NM", "")) if target_team == away_key else str(matched_game.get("B_PIT_P_NM", ""))
+            )
 
         return {
             "found": True,
@@ -494,6 +530,9 @@ def build_schedule_payload(date_value: str, team: str) -> dict[str, Any]:
             "tv": tv_raw,
             "radio": radio_raw,
             "broadcaster": normalize_broadcaster_name(tv_raw),
+            "startingPitcher": starting_pitcher,
+            "startingPitcherAnnounced": bool(starting_pitcher),
+            "gameId": str(matched_game.get("G_ID", "")) if matched_game else "",
             "source": "KBO schedule list",
         }
 

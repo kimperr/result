@@ -115,7 +115,7 @@ let mobilePreviewTimer = null;
 const copyToastState = { timer: null };
 const rosterImportState = { isLoading: false, isRefreshingStats: false };
 const rosterAutoFetchState = {};
-const scheduleAutoFillState = { requestId: 0, lastDateValue: '' };
+const scheduleAutoFillState = { requestId: 0, lastDateValue: '', lastAutoPitcherName: '' };
 const videoState = {
   objectUrl: '',
   loopHandler: null,
@@ -583,6 +583,25 @@ function setLineupBroadcasterValue(broadcaster) {
   if (el.lineupTerrestrial) el.lineupTerrestrial.checked = isTerrestrial;
 }
 
+function setLineupStartingPitcher(name, force = false) {
+  if (!el.lineupPitcherName) return;
+  const nextName = String(name || '').trim();
+  const currentName = String(el.lineupPitcherName.value || '').trim();
+  const canOverwrite = force || !currentName || currentName === scheduleAutoFillState.lastAutoPitcherName;
+
+  if (!nextName) {
+    if (currentName && currentName === scheduleAutoFillState.lastAutoPitcherName) {
+      el.lineupPitcherName.value = '';
+      scheduleAutoFillState.lastAutoPitcherName = '';
+    }
+    return;
+  }
+
+  if (!canOverwrite) return;
+  el.lineupPitcherName.value = nextName;
+  scheduleAutoFillState.lastAutoPitcherName = nextName;
+}
+
 async function autoFillScheduleByDate(dateValue, options = {}) {
   const { syncDates = true, silent = false, force = false } = options;
   const normalizedDate = String(dateValue || '').trim();
@@ -605,6 +624,7 @@ async function autoFillScheduleByDate(dateValue, options = {}) {
     if (schedule.opponentTeam) applySharedOpponent(schedule.opponentTeam);
     setLineupGameTimeValue(schedule.gameTime);
     setLineupBroadcasterValue(schedule.broadcaster);
+    setLineupStartingPitcher(schedule.startingPitcher, force);
     scheduleAutoFillState.lastDateValue = normalizedDate;
     updateResultPoster();
     updateLineupPoster();

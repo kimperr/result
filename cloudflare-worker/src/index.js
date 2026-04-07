@@ -512,6 +512,25 @@ async function fetchScheduleRows(dateValue) {
   return Array.isArray(payload.rows) ? payload.rows : [];
 }
 
+async function fetchGameList(dateValue) {
+  const body = new URLSearchParams({
+    leId: '1',
+    srId: '0,1,3,4,5,6,7,8,9',
+    date: dateValue.replaceAll('-', '')
+  });
+
+  const payload = await fetchJson(`${KBO_BASE}/ws/Main.asmx/GetKboGameList`, {
+    method: 'POST',
+    headers: {
+      'content-type': 'application/x-www-form-urlencoded; charset=UTF-8',
+      referer: `${KBO_BASE}/Schedule/GameCenter/Main.aspx?gameDate=${dateValue.replaceAll('-', '')}`
+    },
+    body
+  });
+
+  return Array.isArray(payload.game) ? payload.game : [];
+}
+
 function parseScheduleGameHtml(gameHtml) {
   const match = String(gameHtml || '').match(/<span>(.*?)<\/span>\s*<em>[\s\S]*?<\/em>\s*<span>(.*?)<\/span>/);
   if (match) {
@@ -523,6 +542,7 @@ function parseScheduleGameHtml(gameHtml) {
 
 async function buildSchedulePayload(dateValue, team) {
   const rows = await fetchScheduleRows(dateValue);
+  const games = await fetchGameList(dateValue);
   const [, month, day] = dateValue.split('-');
   const targetDay = `${month}.${day}`;
   const targetTeam = normalizeTeamName(team);
@@ -546,10 +566,18 @@ async function buildSchedulePayload(dateValue, team) {
     const homeKey = normalizeTeamName(homeTeam);
     if (![awayKey, homeKey].includes(targetTeam)) continue;
 
+    const matchedGame = games.find((game) =>
+      normalizeTeamName(String(game?.AWAY_NM || '')) === awayKey
+      && normalizeTeamName(String(game?.HOME_NM || '')) === homeKey
+    ) || null;
+
     const opponentShort = targetTeam === awayKey ? homeTeam : awayTeam;
     const tv = cleanScheduleMediaText(cells[offset + 4]?.Text || '');
     const radio = cleanScheduleMediaText(cells[offset + 5]?.Text || '');
     const stadium = cleanHtmlText(cells[offset + 6]?.Text || '');
+    const startingPitcher = matchedGame
+      ? cleanHtmlText(targetTeam === awayKey ? matchedGame.T_PIT_P_NM : matchedGame.B_PIT_P_NM)
+      : '';
 
     return {
       found: true,
@@ -562,6 +590,9 @@ async function buildSchedulePayload(dateValue, team) {
       tv,
       radio,
       broadcaster: normalizeBroadcasterName(tv),
+      startingPitcher,
+      startingPitcherAnnounced: Boolean(startingPitcher),
+      gameId: matchedGame?.G_ID || '',
       source: 'KBO schedule list'
     };
   }
