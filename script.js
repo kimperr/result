@@ -100,6 +100,7 @@ import {
 } from './sharedState.js';
 import {
   fetchKboRosterMovesByDate,
+  fetchKboScheduleByDate,
   fetchKboPlayerStats,
   getKboProxyOrigin,
   setKboProxyOrigin
@@ -114,6 +115,7 @@ let mobilePreviewTimer = null;
 const copyToastState = { timer: null };
 const rosterImportState = { isLoading: false, isRefreshingStats: false };
 const rosterAutoFetchState = {};
+const scheduleAutoFillState = { requestId: 0, lastDateValue: '' };
 const videoState = {
   objectUrl: '',
   loopHandler: null,
@@ -535,6 +537,81 @@ function buildRosterImportSummary(data) {
   return parts.join(' ');
 }
 
+function setSharedDateValue(dateValue) {
+  [el.gameDate, el.lineupDate, el.videoDate, el.rosterMovesDate].forEach((input) => {
+    if (input) input.value = dateValue;
+  });
+}
+
+function setLineupGameTimeValue(gameTime) {
+  if (!el.lineupGameTime) return;
+  const normalized = String(gameTime || '').trim();
+  if (!normalized) return;
+
+  const hasExactOption = Array.from(el.lineupGameTime.options).some((option) => option.value === normalized);
+  if (hasExactOption) {
+    el.lineupGameTime.value = normalized;
+    if (el.lineupGameTimeCustom) el.lineupGameTimeCustom.value = '';
+    updateLineupGameTimeCustomVisibility(el);
+    return;
+  }
+
+  el.lineupGameTime.value = 'custom';
+  if (el.lineupGameTimeCustom) el.lineupGameTimeCustom.value = normalized;
+  updateLineupGameTimeCustomVisibility(el);
+}
+
+function setLineupBroadcasterValue(broadcaster) {
+  if (!el.lineupBroadcaster) return;
+  const normalized = String(broadcaster || '').trim();
+  if (!normalized) return;
+
+  let option = Array.from(el.lineupBroadcaster.options).find((item) => item.value === normalized);
+  if (!option) {
+    option = new Option(normalized, normalized);
+    el.lineupBroadcaster.add(option);
+  }
+  el.lineupBroadcaster.value = normalized;
+}
+
+async function autoFillScheduleByDate(dateValue, options = {}) {
+  const { syncDates = true, silent = false, force = false } = options;
+  const normalizedDate = String(dateValue || '').trim();
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(normalizedDate)) return false;
+  if (!force && scheduleAutoFillState.lastDateValue === normalizedDate) return true;
+
+  const requestId = scheduleAutoFillState.requestId + 1;
+  scheduleAutoFillState.requestId = requestId;
+
+  try {
+    const schedule = await fetchKboScheduleByDate({ dateValue: normalizedDate });
+    if (scheduleAutoFillState.requestId !== requestId) return false;
+    if (!schedule?.found) {
+      scheduleAutoFillState.lastDateValue = normalizedDate;
+      return false;
+    }
+
+    if (syncDates) setSharedDateValue(schedule.date || normalizedDate);
+    applySharedKiaSide(schedule.kiaSide === 'away' ? 'away' : 'home');
+    if (schedule.opponentTeam) applySharedOpponent(schedule.opponentTeam);
+    setLineupGameTimeValue(schedule.gameTime);
+    setLineupBroadcasterValue(schedule.broadcaster);
+    scheduleAutoFillState.lastDateValue = normalizedDate;
+    updateResultPoster();
+    updateLineupPoster();
+    updateVideoPoster();
+    updateRosterMovesPoster();
+    updateSecondaryActionButtons();
+    return true;
+  } catch (error) {
+    if (scheduleAutoFillState.requestId !== requestId) return false;
+    if (!silent) {
+      console.warn('KBO schedule auto-fill failed:', error);
+    }
+    return false;
+  }
+}
+
 async function autoFetchRosterPlayerStats(section, index, options = {}) {
   const editorRefs = rosterMoveEditors[section]?.[index];
   if (!editorRefs) return;
@@ -738,6 +815,7 @@ function bindEvents() {
     copyGeneratedCaption,
     importRosterMovesByDate,
     refreshRosterMoveStats,
+    autoFillScheduleByDate,
     autoFetchRosterPlayerStats,
     syncFineTunePair,
     bindNudgeButtons,
@@ -780,6 +858,7 @@ function init() {
     updateDownloadButtonLabel,
     updateSecondaryActionButtons
   });
+  void autoFillScheduleByDate(el.lineupDate?.value || '', { syncDates: true, silent: true, force: true });
 }
 
 function initializeApp() {

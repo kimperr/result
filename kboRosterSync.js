@@ -132,3 +132,45 @@ export async function fetchKboPlayerStats({
 
   return payload;
 }
+
+export async function fetchKboScheduleByDate({
+  dateValue,
+  team = 'KIA',
+  fetchImpl = fetch
+}) {
+  if (!dateValue) {
+    throw new Error('일정을 조회할 날짜를 먼저 선택해 주세요.');
+  }
+
+  const url = buildProxyUrl('/api/kbo/schedule', {
+    date: dateValue,
+    team
+  });
+
+  let response;
+  try {
+    response = await fetchImpl(url, {
+      method: 'GET',
+      headers: {
+        Accept: 'application/json'
+      }
+    });
+  } catch (error) {
+    throw new Error(`KBO API에 연결하지 못했습니다. 현재 주소: ${getKboProxyOrigin()}`);
+  }
+
+  let payload = null;
+  try {
+    payload = await response.json();
+  } catch (error) {
+    if (!response.ok) {
+      throw new Error(`KBO 응답을 읽지 못했습니다. (${response.status})`);
+    }
+  }
+
+  if (!response.ok) {
+    throw new Error(getErrorMessage(payload, `KBO 일정 불러오기에 실패했습니다. (${response.status})`));
+  }
+
+  return payload;
+}

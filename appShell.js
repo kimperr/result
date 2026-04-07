@@ -151,6 +151,7 @@ export function bindEvents({
   copyGeneratedCaption,
   importRosterMovesByDate,
   refreshRosterMoveStats,
+  autoFillScheduleByDate,
   autoFetchRosterPlayerStats,
   syncFineTunePair,
   bindNudgeButtons,
@@ -341,6 +342,11 @@ export function bindEvents({
   });
   el.rosterMovesImportBtn?.addEventListener('click', importRosterMovesByDate);
   el.rosterMovesStatsBtn?.addEventListener('click', refreshRosterMoveStats);
+  [el.gameDate, el.lineupDate, el.videoDate, el.rosterMovesDate].filter(Boolean).forEach((input) => {
+    input.addEventListener('change', () => {
+      if (input.value) autoFillScheduleByDate(input.value);
+    });
+  });
 
   const videoInputs = [
     el.videoTitleInput,

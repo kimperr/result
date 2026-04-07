@@ -29,6 +29,28 @@ TEAM_ALIASES = {
     "\uae30\uc544 \ud0c0\uc774\uac70\uc988": "KIA",
     "KIA Tigers": "KIA",
 }
+SCHEDULE_TEAM_NAMES = {
+    "KIA": "\uae30\uc544 \ud0c0\uc774\uac70\uc988",
+    "\uae30\uc544": "\uae30\uc544 \ud0c0\uc774\uac70\uc988",
+    "LG": "LG \ud2b8\uc708\uc2a4",
+    "\ub450\uc0b0": "\ub450\uc0b0 \ubca0\uc5b4\uc2a4",
+    "\ud0a4\uc6c0": "\ud0a4\uc6c0 \ud788\uc5b4\ub85c\uc988",
+    "SSG": "SSG \ub79c\ub354\uc2a4",
+    "KT": "KT \uc704\uc988",
+    "\ud55c\ud654": "\ud55c\ud654 \uc774\uae00\uc2a4",
+    "\ub86f\ub370": "\ub86f\ub370 \uc790\uc774\uc5b8\uce20",
+    "NC": "NC \ub2e4\uc774\ub178\uc2a4",
+    "\uc0bc\uc131": "\uc0bc\uc131 \ub77c\uc774\uc628\uc988",
+}
+TV_BROADCASTERS = {
+    "KN-T": "KBS N SPORTS",
+    "SBS-T": "SBS SPORTS",
+    "SS-T": "SBS SPORTS",
+    "MS-T": "MBC SPORTS+",
+    "SPO-T": "SPOTV",
+    "SPO-2T": "SPOTV2",
+    "TVING": "TVING",
+}
 PITCHER_KOR = "\ud22c\uc218"
 PLAYER_GROUP_HEADERS = {
     "\ud22c\uc218",
@@ -49,6 +71,22 @@ def clean_html_text(value: str) -> str:
     return re.sub(r"\s+", " ", text).strip()
 
 
+def strip_html_tags(value: str) -> str:
+    return re.sub(r"<[^>]+>", "", value or "")
+
+
+def clean_schedule_media_text(value: str) -> str:
+    text = re.sub(r"<br\s*/?>", " / ", value or "", flags=re.I)
+    text = clean_html_text(text)
+    return text.replace(" / / ", " / ")
+
+
+def normalize_broadcaster_name(value: str) -> str:
+    parts = [part.strip() for part in re.split(r"\s*/\s*", value or "") if part.strip()]
+    normalized_parts = [TV_BROADCASTERS.get(part, part) for part in parts]
+    return " / ".join(normalized_parts)
+
+
 def normalize_team_name(team: str) -> str:
     return TEAM_ALIASES.get((team or "").strip(), (team or "").strip().upper())
 
@@ -60,6 +98,11 @@ def normalize_team_code(team: str) -> str:
     if normalized.upper() in TEAM_CODES:
         return TEAM_CODES[normalized.upper()]
     return normalized.upper()
+
+
+def normalize_schedule_team_name(team: str) -> str:
+    normalized = clean_html_text(team)
+    return SCHEDULE_TEAM_NAMES.get(normalized, normalized)
 
 
 def fetch_text(url: str, data: dict[str, Any] | None = None) -> str:
@@ -371,6 +414,94 @@ def build_roster_payload(date_value: str, team: str) -> dict[str, Any]:
     }
 
 
+def fetch_schedule_rows(date_value: str) -> list[dict[str, Any]]:
+    selected_date = datetime.strptime(date_value, "%Y-%m-%d").date()
+    payload = urlencode(
+        {
+            "leId": "1",
+            "srIdList": "0,9",
+            "seasonId": str(selected_date.year),
+            "gameMonth": f"{selected_date.month:02d}",
+            "teamId": "",
+        }
+    ).encode("utf-8")
+    headers = {
+        "User-Agent": USER_AGENT,
+        "Accept": "application/json;q=0.9,*/*;q=0.8",
+        "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+        "Referer": f"{KBO_BASE}/Schedule/Schedule.aspx",
+    }
+    request = Request(f"{KBO_BASE}/ws/Schedule.asmx/GetScheduleList", data=payload, headers=headers, method="POST")
+    with urlopen(request, timeout=20) as response:
+        payload_data = json.loads(response.read().decode("utf-8", errors="replace"))
+    return list(payload_data.get("rows") or [])
+
+
+def parse_schedule_game_html(game_html: str) -> tuple[str, str]:
+    match = re.search(r"<span>(.*?)</span>\s*<em>.*?</em>\s*<span>(.*?)</span>", game_html, re.S)
+    if match:
+        return clean_html_text(match.group(1)), clean_html_text(match.group(2))
+    spans = re.findall(r"<span>(.*?)</span>", game_html, re.S)
+    if len(spans) >= 2:
+        return clean_html_text(spans[0]), clean_html_text(spans[-1])
+    return "", ""
+
+
+def build_schedule_payload(date_value: str, team: str) -> dict[str, Any]:
+    rows = fetch_schedule_rows(date_value)
+    selected_date = datetime.strptime(date_value, "%Y-%m-%d").date()
+    selected_key = f"{selected_date.month:02d}.{selected_date.day:02d}"
+    target_team = normalize_team_name(team)
+    current_day = ""
+
+    for row_entry in rows:
+        cells = list((row_entry or {}).get("row") or [])
+        if not cells:
+            continue
+
+        offset = 0
+        first_text = clean_html_text(cells[0].get("Text", "")) if cells else ""
+        if re.match(r"^\d{2}\.\d{2}\(", first_text):
+            current_day = first_text[:5]
+            offset = 1
+        if current_day != selected_key:
+            continue
+        if len(cells) < offset + 7:
+            continue
+
+        away_team, home_team = parse_schedule_game_html(cells[offset + 1].get("Text", ""))
+        away_key = normalize_team_name(away_team)
+        home_key = normalize_team_name(home_team)
+        if target_team not in {away_key, home_key}:
+            continue
+
+        opponent_short = home_team if target_team == away_key else away_team
+        tv_raw = clean_schedule_media_text(cells[offset + 4].get("Text", ""))
+        radio_raw = clean_schedule_media_text(cells[offset + 5].get("Text", ""))
+        location = clean_html_text(cells[offset + 6].get("Text", ""))
+
+        return {
+            "found": True,
+            "date": date_value,
+            "team": target_team,
+            "opponentTeam": normalize_schedule_team_name(opponent_short),
+            "kiaSide": "away" if target_team == away_key else "home",
+            "gameTime": clean_html_text(cells[offset].get("Text", "")),
+            "stadium": location,
+            "tv": tv_raw,
+            "radio": radio_raw,
+            "broadcaster": normalize_broadcaster_name(tv_raw),
+            "source": "KBO schedule list",
+        }
+
+    return {
+        "found": False,
+        "date": date_value,
+        "team": target_team,
+        "source": "KBO schedule list",
+    }
+
+
 class Handler(BaseHTTPRequestHandler):
     def end_headers(self) -> None:
         self.send_header("Access-Control-Allow-Origin", "*")
@@ -388,7 +519,33 @@ class Handler(BaseHTTPRequestHandler):
             self.send_response(200)
             self.send_header("Content-Type", "text/plain; charset=utf-8")
             self.end_headers()
-            self.wfile.write(b"KBO proxy is running. Use /api/kbo/roster-moves?date=YYYY-MM-DD&team=KIA")
+            self.wfile.write(b"KBO proxy is running. Use /api/kbo/schedule or /api/kbo/roster-moves")
+            return
+
+        if parsed.path == "/api/kbo/schedule":
+            query = parse_qs(parsed.query)
+            date_value = (query.get("date") or [""])[0].strip()
+            team = (query.get("team") or ["KIA"])[0].strip() or "KIA"
+            if not re.fullmatch(r"\d{4}-\d{2}-\d{2}", date_value):
+                self.send_error_json(400, "date must use YYYY-MM-DD format.")
+                return
+
+            try:
+                payload = build_schedule_payload(date_value, team)
+            except HTTPError as error:
+                self.send_error_json(error.code or 502, f"KBO request failed: {error.reason}")
+                return
+            except URLError as error:
+                self.send_error_json(502, f"KBO connection failed: {error.reason}")
+                return
+            except Exception as error:
+                self.send_error_json(500, f"Proxy processing failed: {error}")
+                return
+
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json; charset=utf-8")
+            self.end_headers()
+            self.wfile.write(json_dumps(payload))
             return
 
         if parsed.path != "/api/kbo/roster-moves":

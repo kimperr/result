@@ -22,6 +22,28 @@ const TEAM_ALIASES = {
   [KIA_TIGERS_KOR]: 'KIA',
   'KIA Tigers': 'KIA'
 };
+const SCHEDULE_TEAM_NAMES = {
+  KIA: 'KIA 타이거즈',
+  [KIA_KOR]: 'KIA 타이거즈',
+  LG: 'LG 트윈스',
+  '두산': '두산 베어스',
+  '키움': '키움 히어로즈',
+  SSG: 'SSG 랜더스',
+  KT: 'KT 위즈',
+  '한화': '한화 이글스',
+  '롯데': '롯데 자이언츠',
+  NC: 'NC 다이노스',
+  '삼성': '삼성 라이온즈'
+};
+const TV_BROADCASTERS = {
+  'KN-T': 'KBS N SPORTS',
+  'SBS-T': 'SBS SPORTS',
+  'SS-T': 'SBS SPORTS',
+  'MS-T': 'MBC SPORTS+',
+  'SPO-T': 'SPOTV',
+  'SPO-2T': 'SPOTV2',
+  TVING: 'TVING'
+};
 
 const PLAYER_GROUP_HEADERS = new Set([PITCHER_KOR, CATCHER_KOR, INFIELDER_KOR, OUTFIELDER_KOR]);
 
@@ -58,6 +80,11 @@ function normalizeTeamCode(team) {
   return TEAM_CODES[normalized] || TEAM_CODES[normalized.toUpperCase()] || normalized.toUpperCase();
 }
 
+function normalizeScheduleTeamName(team) {
+  const normalized = cleanHtmlText(team);
+  return SCHEDULE_TEAM_NAMES[normalized] || normalized;
+}
+
 function cleanHtmlText(value) {
   return (value || '')
     .replace(/<[^>]+>/g, '')
@@ -70,6 +97,19 @@ function cleanHtmlText(value) {
     .replace(/&gt;/g, '>')
     .replace(/\s+/g, ' ')
     .trim();
+}
+
+function cleanScheduleMediaText(value) {
+  return cleanHtmlText(String(value || '').replace(/<br\s*\/?>/gi, ' / ')).replace(/ \/ \/ /g, ' / ');
+}
+
+function normalizeBroadcasterName(value) {
+  return String(value || '')
+    .split('/')
+    .map((part) => part.trim())
+    .filter(Boolean)
+    .map((part) => TV_BROADCASTERS[part] || part)
+    .join(' / ');
 }
 
 function extractHiddenValue(html, fieldName) {
@@ -93,6 +133,23 @@ async function fetchText(url, options = {}) {
   }
 
   return await response.text();
+}
+
+async function fetchJson(url, options = {}) {
+  const response = await fetch(url, {
+    ...options,
+    headers: {
+      'user-agent': USER_AGENT,
+      accept: 'application/json;q=0.9,*/*;q=0.8',
+      ...(options.headers || {})
+    }
+  });
+
+  if (!response.ok) {
+    throw new Error(`KBO request failed with ${response.status}`);
+  }
+
+  return await response.json();
 }
 
 async function fetchRegisterSnapshotHtml(dateValue, teamCode) {
@@ -430,6 +487,90 @@ async function buildRosterPayload(dateValue, team) {
   };
 }
 
+async function fetchScheduleRows(dateValue) {
+  const [year, month] = dateValue.split('-');
+  const body = new URLSearchParams({
+    leId: '1',
+    srIdList: '0,9',
+    seasonId: year,
+    gameMonth: month,
+    teamId: ''
+  });
+
+  const payload = await fetchJson(`${KBO_BASE}/ws/Schedule.asmx/GetScheduleList`, {
+    method: 'POST',
+    headers: {
+      'content-type': 'application/x-www-form-urlencoded; charset=UTF-8',
+      referer: `${KBO_BASE}/Schedule/Schedule.aspx`
+    },
+    body
+  });
+
+  return Array.isArray(payload.rows) ? payload.rows : [];
+}
+
+function parseScheduleGameHtml(gameHtml) {
+  const match = String(gameHtml || '').match(/<span>(.*?)<\/span>\s*<em>[\s\S]*?<\/em>\s*<span>(.*?)<\/span>/);
+  if (match) {
+    return [cleanHtmlText(match[1]), cleanHtmlText(match[2])];
+  }
+  const spans = [...String(gameHtml || '').matchAll(/<span>(.*?)<\/span>/g)].map((item) => cleanHtmlText(item[1]));
+  return [spans[0] || '', spans[spans.length - 1] || ''];
+}
+
+async function buildSchedulePayload(dateValue, team) {
+  const rows = await fetchScheduleRows(dateValue);
+  const [, month, day] = dateValue.split('-');
+  const targetDay = `${month}.${day}`;
+  const targetTeam = normalizeTeamName(team);
+  let currentDay = '';
+
+  for (const entry of rows) {
+    const cells = Array.isArray(entry?.row) ? entry.row : [];
+    if (!cells.length) continue;
+
+    let offset = 0;
+    const firstText = cleanHtmlText(cells[0]?.Text || '');
+    if (/^\d{2}\.\d{2}\(/.test(firstText)) {
+      currentDay = firstText.slice(0, 5);
+      offset = 1;
+    }
+    if (currentDay !== targetDay) continue;
+    if (cells.length < offset + 7) continue;
+
+    const [awayTeam, homeTeam] = parseScheduleGameHtml(cells[offset + 1]?.Text || '');
+    const awayKey = normalizeTeamName(awayTeam);
+    const homeKey = normalizeTeamName(homeTeam);
+    if (![awayKey, homeKey].includes(targetTeam)) continue;
+
+    const opponentShort = targetTeam === awayKey ? homeTeam : awayTeam;
+    const tv = cleanScheduleMediaText(cells[offset + 4]?.Text || '');
+    const radio = cleanScheduleMediaText(cells[offset + 5]?.Text || '');
+    const stadium = cleanHtmlText(cells[offset + 6]?.Text || '');
+
+    return {
+      found: true,
+      date: dateValue,
+      team: targetTeam,
+      opponentTeam: normalizeScheduleTeamName(opponentShort),
+      kiaSide: targetTeam === awayKey ? 'away' : 'home',
+      gameTime: cleanHtmlText(cells[offset]?.Text || ''),
+      stadium,
+      tv,
+      radio,
+      broadcaster: normalizeBroadcasterName(tv),
+      source: 'KBO schedule list'
+    };
+  }
+
+  return {
+    found: false,
+    date: dateValue,
+    team: targetTeam,
+    source: 'KBO schedule list'
+  };
+}
+
 export default {
   async fetch(request) {
     if (request.method === 'OPTIONS') {
@@ -438,7 +579,21 @@ export default {
 
     const url = new URL(request.url);
     if (url.pathname === '/') {
-      return text('KBO worker is running. Use /api/kbo/roster-moves?date=YYYY-MM-DD&team=KIA');
+      return text('KBO worker is running. Use /api/kbo/schedule or /api/kbo/roster-moves');
+    }
+
+    if (url.pathname === '/api/kbo/schedule') {
+      const dateValue = (url.searchParams.get('date') || '').trim();
+      const team = (url.searchParams.get('team') || 'KIA').trim() || 'KIA';
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(dateValue)) {
+        return json({ error: 'date must use YYYY-MM-DD format.' }, 400);
+      }
+
+      try {
+        return json(await buildSchedulePayload(dateValue, team));
+      } catch (error) {
+        return json({ error: `Worker processing failed: ${error.message || error}` }, 500);
+      }
     }
 
     if (url.pathname !== '/api/kbo/roster-moves') {
