@@ -334,8 +334,6 @@ export function updateRosterMovesPoster({
   scheduleMobilePreviewRender
 }) {
   const team = selectedTeamInfo(el.rosterMovesOpponentTeam);
-  ROSTER_MOVES_LAYOUT.opponentText.x = Number(el.rosterOpponentXInput.value) || ROSTER_MOVES_LAYOUT.opponentText.x;
-  ROSTER_MOVES_LAYOUT.opponentText.y = Number(el.rosterOpponentYInput.value) || ROSTER_MOVES_LAYOUT.opponentText.y;
 
   out.rosterMovesDateText.textContent = formatDate(el.rosterMovesDate.value);
   out.rosterMovesOpponentText.textContent = `vs ${team.name}`;

@@ -157,14 +157,9 @@ export function bindEvents({
   bindNudgeButtons,
   updateLineupGameTimeCustomVisibility
 }) {
-  syncFineTunePair(el.opponentXInput, el.opponentXRange);
-  syncFineTunePair(el.opponentYInput, el.opponentYRange);
-  syncFineTunePair(el.mvpRecordXInput, el.mvpRecordXRange);
-  syncFineTunePair(el.mvpRecordYInput, el.mvpRecordYRange);
-  syncFineTunePair(el.lineupOpponentXInput, el.lineupOpponentXRange);
-  syncFineTunePair(el.lineupOpponentYInput, el.lineupOpponentYRange);
-  syncFineTunePair(el.rosterOpponentXInput, el.rosterOpponentXRange);
-  syncFineTunePair(el.rosterOpponentYInput, el.rosterOpponentYRange);
+  syncFineTunePair(el.mvpRecordGapInput, el.mvpRecordGapRange);
+  syncFineTunePair(el.lineupPitcherXInput, el.lineupPitcherXRange);
+  syncFineTunePair(el.lineupPitcherYInput, el.lineupPitcherYRange);
   syncFineTunePair(el.videoFrameXInput, el.videoFrameXRange);
   syncFineTunePair(el.videoFrameYInput, el.videoFrameYRange);
   syncFineTunePair(el.videoFrameScaleInput, el.videoFrameScaleRange);
@@ -208,10 +203,9 @@ export function bindEvents({
   const resultInputs = [
     ...el.result, ...el.kiaSide, el.gameDate, el.opponentTeam,
     el.stadiumName, el.homeScore, el.awayScore, el.mvpName, el.mvpRecord,
-    el.winnerName, el.loserName, el.saveName, el.globalLetterSpacing,
-    el.opponentXInput, el.opponentYInput, el.opponentXRange, el.opponentYRange,
-    el.mvpRecordXInput, el.mvpRecordYInput, el.mvpRecordXRange, el.mvpRecordYRange
-  ];
+    el.winnerName, el.loserName, el.saveName,
+    el.mvpRecordGapInput, el.mvpRecordGapRange
+  ].filter(Boolean);
   resultInputs.forEach((input) => {
     input.addEventListener('input', updateResultPoster);
     input.addEventListener('change', updateResultPoster);
@@ -243,12 +237,11 @@ export function bindEvents({
     el.lineupGameTimeCustom,
     el.lineupBroadcaster,
     el.lineupTerrestrial,
-    el.lineupLetterSpacing,
-    el.lineupOpponentXInput,
-    el.lineupOpponentYInput,
-    el.lineupOpponentXRange,
-    el.lineupOpponentYRange
-  ];
+    el.lineupPitcherXInput,
+    el.lineupPitcherYInput,
+    el.lineupPitcherXRange,
+    el.lineupPitcherYRange
+  ].filter(Boolean);
   const lineupSideInputs = [...el.lineupKiaSide];
   lineupInputs.forEach((input) => {
     input.addEventListener('input', updateLineupPoster);
@@ -265,33 +258,6 @@ export function bindEvents({
   el.lineupKiaSide.forEach((input) => {
     input.addEventListener('change', () => {
       applySharedKiaSide(selectedValue(el.lineupKiaSide));
-    });
-  });
-
-  [el.opponentXInput, el.opponentXRange, el.opponentYInput, el.opponentYRange].forEach((input) => {
-    input.addEventListener('input', () => {
-      applySharedOpponentFineTune(el.opponentXInput.value || 0, el.opponentYInput.value || 0);
-    });
-    input.addEventListener('change', () => {
-      applySharedOpponentFineTune(el.opponentXInput.value || 0, el.opponentYInput.value || 0);
-    });
-  });
-
-  [el.lineupOpponentXInput, el.lineupOpponentXRange, el.lineupOpponentYInput, el.lineupOpponentYRange].forEach((input) => {
-    input.addEventListener('input', () => {
-      applySharedOpponentFineTune(el.lineupOpponentXInput.value || 0, el.lineupOpponentYInput.value || 0);
-    });
-    input.addEventListener('change', () => {
-      applySharedOpponentFineTune(el.lineupOpponentXInput.value || 0, el.lineupOpponentYInput.value || 0);
-    });
-  });
-
-  [el.rosterOpponentXInput, el.rosterOpponentXRange, el.rosterOpponentYInput, el.rosterOpponentYRange].forEach((input) => {
-    input.addEventListener('input', () => {
-      applySharedOpponentFineTune(el.rosterOpponentXInput.value || 0, el.rosterOpponentYInput.value || 0);
-    });
-    input.addEventListener('change', () => {
-      applySharedOpponentFineTune(el.rosterOpponentXInput.value || 0, el.rosterOpponentYInput.value || 0);
     });
   });
 
@@ -322,8 +288,7 @@ export function bindEvents({
     el.rosterMovesOpponentTeam,
     el.rosterMovesStadiumName,
     el.callUpCount,
-    el.sendDownCount,
-    el.rosterOpponentXInput, el.rosterOpponentXRange, el.rosterOpponentYInput, el.rosterOpponentYRange
+    el.sendDownCount
   ].filter(Boolean).forEach((input) => {
     input.addEventListener('input', () => {
       refreshRosterGroupEditors('callUp');
@@ -592,7 +557,6 @@ export function init({
   refreshRosterGroupEditors('callUp');
   refreshRosterGroupEditors('sendDown');
   applySharedKiaSide('home');
-  applySharedOpponentFineTune(el.lineupOpponentXInput.value || 24, el.lineupOpponentYInput.value || 354);
   syncAutoResultSelection(el, isResultManualOverride());
   updateResultPoster();
   updateLineupPoster();

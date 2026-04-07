@@ -35,12 +35,10 @@
 
           <details class="tune-details">
             <summary>조정 열기</summary>
-            <label class="field">전체 자간 <input id="lineupLetterSpacing" type="number" step="0.1" value="-1" /></label>
-
-            <h2>상대팀명 미세조정</h2>
+            <h2>선발투수 이름 미세조정</h2>
             <div class="fine-tune-group">
-              <label class="fine-tune-row">간격 <input id="lineupOpponentXRange" type="range" min="0" max="120" step="0.5" value="24" /><span class="stepper-input"><button class="nudge-btn" type="button" data-target="lineupOpponentXInput" data-step="-1">-</button><input id="lineupOpponentXInput" type="number" step="0.5" value="24" /><button class="nudge-btn" type="button" data-target="lineupOpponentXInput" data-step="1">+</button></span></label>
-              <label class="fine-tune-row">Y <input id="lineupOpponentYRange" type="range" min="0" max="1350" step="0.5" value="354" /><span class="stepper-input"><button class="nudge-btn" type="button" data-target="lineupOpponentYInput" data-step="-1">-</button><input id="lineupOpponentYInput" type="number" step="0.5" value="354" /><button class="nudge-btn" type="button" data-target="lineupOpponentYInput" data-step="1">+</button></span></label>
+              <label class="fine-tune-row">X <input id="lineupPitcherXRange" type="range" min="0" max="1080" step="0.5" value="135" /><span class="stepper-input"><button class="nudge-btn" type="button" data-target="lineupPitcherXInput" data-step="-1">-</button><input id="lineupPitcherXInput" type="number" step="0.5" value="135" /><button class="nudge-btn" type="button" data-target="lineupPitcherXInput" data-step="1">+</button></span></label>
+              <label class="fine-tune-row">Y <input id="lineupPitcherYRange" type="range" min="0" max="1350" step="0.5" value="1144" /><span class="stepper-input"><button class="nudge-btn" type="button" data-target="lineupPitcherYInput" data-step="-1">-</button><input id="lineupPitcherYInput" type="number" step="0.5" value="1144" /><button class="nudge-btn" type="button" data-target="lineupPitcherYInput" data-step="1">+</button></span></label>
             </div>
           </details>
 
@@ -75,18 +73,9 @@
 
           <details class="tune-details">
             <summary>조정 열기</summary>
-            <label class="field">전체 자간 <input id="globalLetterSpacing" type="number" step="0.1" value="-1" /></label>
-
-            <h2>상대팀명 미세조정</h2>
+            <h2>성적, 갸VP와 간격 미세조정</h2>
             <div class="fine-tune-group">
-              <label class="fine-tune-row">간격 <input id="opponentXRange" type="range" min="0" max="120" step="0.5" value="24" /><span class="stepper-input"><button class="nudge-btn" type="button" data-target="opponentXInput" data-step="-1">-</button><input id="opponentXInput" type="number" step="0.5" value="24" /><button class="nudge-btn" type="button" data-target="opponentXInput" data-step="1">+</button></span></label>
-              <label class="fine-tune-row">Y <input id="opponentYRange" type="range" min="0" max="1350" step="0.5" value="354" /><span class="stepper-input"><button class="nudge-btn" type="button" data-target="opponentYInput" data-step="-1">-</button><input id="opponentYInput" type="number" step="0.5" value="354" /><button class="nudge-btn" type="button" data-target="opponentYInput" data-step="1">+</button></span></label>
-            </div>
-
-            <h2>성적 미세조정</h2>
-            <div class="fine-tune-group">
-              <label class="fine-tune-row">X <input id="mvpRecordXRange" type="range" min="0" max="1080" value="359" /><input id="mvpRecordXInput" type="number" value="359" /></label>
-              <label class="fine-tune-row">Y <input id="mvpRecordYRange" type="range" min="0" max="1350" value="1135" /><input id="mvpRecordYInput" type="number" value="1135" /></label>
+              <label class="fine-tune-row">간격 <input id="mvpRecordGapRange" type="range" min="-40" max="120" step="0.5" value="12" /><span class="stepper-input"><button class="nudge-btn" type="button" data-target="mvpRecordGapInput" data-step="-1">-</button><input id="mvpRecordGapInput" type="number" step="0.5" value="12" /><button class="nudge-btn" type="button" data-target="mvpRecordGapInput" data-step="1">+</button></span></label>
             </div>
           </details>
         </section>
@@ -199,12 +188,6 @@
 
           <details class="tune-details">
             <summary>미세조정</summary>
-
-            <h2>상대팀명 미세조정</h2>
-            <div class="fine-tune-group">
-              <label class="fine-tune-row">간격 <input id="rosterOpponentXRange" type="range" min="0" max="120" step="0.5" value="24" /><span class="stepper-input"><button class="nudge-btn" type="button" data-target="rosterOpponentXInput" data-step="-1">-</button><input id="rosterOpponentXInput" type="number" step="0.5" value="24" /><button class="nudge-btn" type="button" data-target="rosterOpponentXInput" data-step="1">+</button></span></label>
-              <label class="fine-tune-row">Y <input id="rosterOpponentYRange" type="range" min="0" max="1350" step="0.5" value="354" /><span class="stepper-input"><button class="nudge-btn" type="button" data-target="rosterOpponentYInput" data-step="-1">-</button><input id="rosterOpponentYInput" type="number" step="0.5" value="354" /><button class="nudge-btn" type="button" data-target="rosterOpponentYInput" data-step="1">+</button></span></label>
-            </div>
 
             <h2>KBO API</h2>
             <label class="field roster-import-endpoint">API URL

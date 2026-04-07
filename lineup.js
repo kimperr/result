@@ -77,21 +77,24 @@ export function updateLineupPoster({
   const team = selectedTeamInfo(el.lineupOpponentTeam);
 
   out.lineupDateText.textContent = formatDate(el.lineupDate.value);
-  LINEUP_LAYOUT.opponentText.x = Number(el.lineupOpponentXInput.value) || LINEUP_LAYOUT.opponentText.x;
-  LINEUP_LAYOUT.opponentText.y = Number(el.lineupOpponentYInput.value) || LINEUP_LAYOUT.opponentText.y;
   out.lineupOpponentText.textContent = `vs ${team.name}`;
   out.lineupStadiumText.textContent = el.lineupStadiumName.value;
   out.lineupPitcherText.textContent = formatDisplayName(el.lineupPitcherName.value);
   const lineupPhotoPath = getPlayerPhotoPath(el.lineupPitcherName.value);
   out.lineupPlayerPhoto.classList.toggle('is-hidden', !lineupPhotoPath);
   if (lineupPhotoPath) out.lineupPlayerPhoto.src = lineupPhotoPath;
-  const spacing = Number(el.lineupLetterSpacing.value);
-  el.lineupPoster.style.setProperty('--global-letter-spacing', `${Number.isFinite(spacing) ? spacing : -1}px`);
+  el.lineupPoster.style.setProperty('--global-letter-spacing', '-1px');
+  const pitcherX = Number(el.lineupPitcherXInput?.value);
+  const pitcherY = Number(el.lineupPitcherYInput?.value);
 
   applyText(out.lineupDateText, LINEUP_LAYOUT.dateText);
   applyTextAfterAnchor(out.lineupOpponentText, LINEUP_LAYOUT.opponentText, out.lineupDateText, LINEUP_LAYOUT.dateText, LINEUP_LAYOUT.opponentText.x);
   applyText(out.lineupStadiumText, LINEUP_LAYOUT.stadiumText);
-  applyText(out.lineupPitcherText, LINEUP_LAYOUT.pitcher);
+  applyText(out.lineupPitcherText, {
+    ...LINEUP_LAYOUT.pitcher,
+    x: Number.isFinite(pitcherX) ? pitcherX : LINEUP_LAYOUT.pitcher.x,
+    y: Number.isFinite(pitcherY) ? pitcherY : LINEUP_LAYOUT.pitcher.y
+  });
 
   for (let i = 1; i <= 9; i += 1) {
     const name = document.getElementById(`lineupName${i}`)?.value || '';

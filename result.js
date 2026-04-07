@@ -60,7 +60,7 @@ export function updateResultPoster({
   const team = selectedTeamInfo(el.opponentTeam);
 
   out.backgroundLayer.src = BACKGROUND_BY_RESULT[result];
-  el.resultPoster.style.setProperty('--global-letter-spacing', `${Number(el.globalLetterSpacing.value) || 0}px`);
+  el.resultPoster.style.setProperty('--global-letter-spacing', '-1px');
 
   out.dateText.textContent = formatDate(el.gameDate.value);
   out.opponentText.textContent = `vs ${team.name}`;
@@ -99,11 +99,7 @@ export function updateResultPoster({
 
   out.kiaLogo.src = teamLogoFile('kia', side, result);
   out.oppLogo.src = teamLogoFile(team.code, side === 'home' ? 'away' : 'home', result);
-
-  RESULT_LAYOUT.opponentText.x = Number(el.opponentXInput.value) || RESULT_LAYOUT.opponentText.x;
-  RESULT_LAYOUT.opponentText.y = Number(el.opponentYInput.value) || RESULT_LAYOUT.opponentText.y;
-  RESULT_LAYOUT.mvpRecordText.x = Number(el.mvpRecordXInput.value) || RESULT_LAYOUT.mvpRecordText.x;
-  RESULT_LAYOUT.mvpRecordText.y = Number(el.mvpRecordYInput.value) || RESULT_LAYOUT.mvpRecordText.y;
+  const mvpRecordGap = Number(el.mvpRecordGapInput?.value);
 
   applyText(out.dateText, RESULT_LAYOUT.dateText);
   applyTextAfterAnchor(out.opponentText, RESULT_LAYOUT.opponentText, out.dateText, RESULT_LAYOUT.dateText, RESULT_LAYOUT.opponentText.x);
@@ -114,7 +110,13 @@ export function updateResultPoster({
   applyText(out.loserText, RESULT_LAYOUT.loserText);
   applyText(out.saveText, RESULT_LAYOUT.saveText);
   applyText(out.mvpNameText, RESULT_LAYOUT.mvpNameText);
-  applyText(out.mvpRecordText, RESULT_LAYOUT.mvpRecordText);
+  applyTextAfterAnchor(
+    out.mvpRecordText,
+    RESULT_LAYOUT.mvpRecordText,
+    out.mvpNameText,
+    RESULT_LAYOUT.mvpNameText,
+    Number.isFinite(mvpRecordGap) ? mvpRecordGap : RESULT_LAYOUT.mvpRecordText.x
+  );
   applyBadge(out.badgeWin, RESULT_LAYOUT.badgeWin);
   applyBadge(out.badgeLose, RESULT_LAYOUT.badgeLose);
   applyBadge(out.badgeSave, RESULT_LAYOUT.badgeSave);

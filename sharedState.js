@@ -62,12 +62,12 @@ export function applySharedOpponentFineTune({
   updateLineupPoster,
   updateRosterMovesPoster
 }) {
-  syncNumberRangeValues(el.opponentXInput, el.opponentXRange, x);
-  syncNumberRangeValues(el.lineupOpponentXInput, el.lineupOpponentXRange, x);
-  syncNumberRangeValues(el.rosterOpponentXInput, el.rosterOpponentXRange, x);
-  syncNumberRangeValues(el.opponentYInput, el.opponentYRange, y);
-  syncNumberRangeValues(el.lineupOpponentYInput, el.lineupOpponentYRange, y);
-  syncNumberRangeValues(el.rosterOpponentYInput, el.rosterOpponentYRange, y);
+  if (el.opponentXInput && el.opponentXRange) syncNumberRangeValues(el.opponentXInput, el.opponentXRange, x);
+  if (el.lineupOpponentXInput && el.lineupOpponentXRange) syncNumberRangeValues(el.lineupOpponentXInput, el.lineupOpponentXRange, x);
+  if (el.rosterOpponentXInput && el.rosterOpponentXRange) syncNumberRangeValues(el.rosterOpponentXInput, el.rosterOpponentXRange, x);
+  if (el.opponentYInput && el.opponentYRange) syncNumberRangeValues(el.opponentYInput, el.opponentYRange, y);
+  if (el.lineupOpponentYInput && el.lineupOpponentYRange) syncNumberRangeValues(el.lineupOpponentYInput, el.lineupOpponentYRange, y);
+  if (el.rosterOpponentYInput && el.rosterOpponentYRange) syncNumberRangeValues(el.rosterOpponentYInput, el.rosterOpponentYRange, y);
   updateResultPoster();
   updateLineupPoster();
   updateRosterMovesPoster();
