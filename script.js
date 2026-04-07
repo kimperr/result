@@ -566,12 +566,21 @@ function setLineupBroadcasterValue(broadcaster) {
   const normalized = String(broadcaster || '').trim();
   if (!normalized) return;
 
-  let option = Array.from(el.lineupBroadcaster.options).find((item) => item.value === normalized);
+  const terrestrialMap = {
+    KBS2: 'KBS N SPORTS',
+    SBS: 'SBS SPORTS',
+    MBC: 'MBC SPORTS+'
+  };
+  const isTerrestrial = Object.prototype.hasOwnProperty.call(terrestrialMap, normalized);
+  const targetValue = terrestrialMap[normalized] || normalized;
+
+  let option = Array.from(el.lineupBroadcaster.options).find((item) => item.value === targetValue);
   if (!option) {
-    option = new Option(normalized, normalized);
+    option = new Option(targetValue, targetValue);
     el.lineupBroadcaster.add(option);
   }
-  el.lineupBroadcaster.value = normalized;
+  el.lineupBroadcaster.value = targetValue;
+  if (el.lineupTerrestrial) el.lineupTerrestrial.checked = isTerrestrial;
 }
 
 async function autoFillScheduleByDate(dateValue, options = {}) {
