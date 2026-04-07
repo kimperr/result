@@ -17,6 +17,10 @@ function measureRenderedTextWidth(node) {
   const text = node.textContent || '';
   if (!text) return 0;
   const style = window.getComputedStyle(node);
+  const layoutWidth = Math.max(node.scrollWidth || 0, node.offsetWidth || 0);
+  if (style.display !== 'none' && layoutWidth > 0) {
+    return layoutWidth;
+  }
   const canvas = measureRenderedTextWidth.canvas || (measureRenderedTextWidth.canvas = document.createElement('canvas'));
   const context = canvas.getContext('2d');
   if (!context) return 0;

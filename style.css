@@ -792,6 +792,16 @@ textarea {
   white-space: pre;
 }
 
+.roster-section-subtitle {
+  left: 300px;
+  top: 492px;
+  color: #fff;
+  font: 400 24px/1 'mediumfont', 'Pretendard', sans-serif;
+  font-family: 'mediumfont', 'Pretendard', sans-serif !important;
+  letter-spacing: 0;
+  white-space: pre;
+}
+
 .roster-player-mini {
   left: 68px;
   top: 565px;

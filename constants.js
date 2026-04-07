@@ -131,8 +131,10 @@ export const ROSTER_MOVES_LAYOUT = {
   dateText: { x: 66, y: 354, size: 29 },
   opponentText: { x: 7.5, y: 354, size: 28 },
   stadiumText: { x: 66, y: 391, size: 29 },
-  callUpTitle: { x: 62, y: 470, size: 53, letterSpacing: -3, lineHeight: 64 },
-  sendDownTitle: { x: 62, y: 859, size: 53, letterSpacing: -3, lineHeight: 64 },
+  callUpTitle: { x: 62, y: 470, size: 53, letterSpacing: -3, lineHeight: 64, anchorWidth: 330 },
+  callUpSubtitle: { y: 492, size: 21, gap: -9 },
+  sendDownTitle: { x: 62, y: 859, size: 53, letterSpacing: -3, lineHeight: 64, anchorWidth: 420 },
+  sendDownSubtitle: { y: 881, size: 21, gap: 38 },
   groupName: { x: 270, y: 578, size: 52, letterSpacing: 0, lineHeight: 66 },
   groupMeta: { x: 273.6, y: 640, size: 20, letterSpacing: 0, lineHeight: 32 },
   groupStats: { x: 276, y: 727, size: 19, letterSpacing: -1.5, lineHeight: 29 }

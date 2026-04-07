@@ -68,6 +68,7 @@ export async function downloadImage({
   exportVideo,
   waitForImageElement
 }) {
+  const EXPORT_IMAGE_SCALE = 4;
   if (activeTab === 'video') {
     await exportVideo();
     return;
@@ -87,7 +88,7 @@ export async function downloadImage({
   poster.style.transformOrigin = 'top left';
 
   try {
-    const canvas = await html2canvas(poster, { useCORS: true, scale: 3, backgroundColor: null });
+    const canvas = await html2canvas(poster, { useCORS: true, scale: EXPORT_IMAGE_SCALE, backgroundColor: null });
     const link = document.createElement('a');
     link.download = `${activeTab}-${Date.now()}.png`;
     link.href = canvas.toDataURL('image/png', 1);

@@ -51,6 +51,13 @@ function buildHitterStatsLines(groupRefs) {
   return [firstLine, secondLine, thirdLine].join('\n');
 }
 
+function positionSectionSubtitle(titleNode, subtitleNode, titleLayout, subtitleY, subtitleSize, subtitleGap) {
+  const anchorWidth = Number(titleLayout.anchorWidth) || 0;
+  subtitleNode.style.left = `${titleLayout.x + anchorWidth + subtitleGap}px`;
+  subtitleNode.style.top = `${subtitleY}px`;
+  subtitleNode.style.fontSize = `${subtitleSize}px`;
+}
+
 function hidePlayerSuggestions(groupRefs) {
   if (!groupRefs?.nameSuggestions) return;
   groupRefs.nameSuggestions.innerHTML = '';
@@ -436,14 +443,39 @@ export function updateRosterMovesPoster({
   if (activeSections[1]) slotBySection[activeSections[1]] = 'lower';
 
   [
-    ['callUp', out.callUpTitleText, 'CALL-UP'],
-    ['sendDown', out.sendDownTitleText, 'SEND-DOWN']
-  ].forEach(([section, node, label]) => {
+    ['callUp', out.callUpTitleText, out.callUpSubtitleText, 'CALL-UP', '등록 · 2군성적'],
+    ['sendDown', out.sendDownTitleText, out.sendDownSubtitleText, 'SEND-DOWN', '말소 · 1군성적']
+  ].forEach(([section, titleNode, subtitleNode, titleLabel, subtitleLabel]) => {
     const slot = slotBySection[section];
-    node.style.display = slot ? 'block' : 'none';
+    titleNode.style.display = slot ? 'block' : 'none';
+    subtitleNode.style.display = slot ? 'block' : 'none';
     if (!slot) return;
-    node.textContent = label;
-    applyAdvancedText(node, slot === 'upper' ? ROSTER_MOVES_LAYOUT.callUpTitle : ROSTER_MOVES_LAYOUT.sendDownTitle);
+
+    const baseTitleLayout = section === 'callUp' ? ROSTER_MOVES_LAYOUT.callUpTitle : ROSTER_MOVES_LAYOUT.sendDownTitle;
+    const slotTitleLayout = slot === 'upper' ? ROSTER_MOVES_LAYOUT.callUpTitle : ROSTER_MOVES_LAYOUT.sendDownTitle;
+    const titleLayout = {
+      ...baseTitleLayout,
+      y: slotTitleLayout.y
+    };
+    const subtitleGap = section === 'callUp'
+      ? ROSTER_MOVES_LAYOUT.callUpSubtitle.gap
+      : ROSTER_MOVES_LAYOUT.sendDownSubtitle.gap;
+    const subtitleSize = section === 'callUp'
+      ? ROSTER_MOVES_LAYOUT.callUpSubtitle.size
+      : ROSTER_MOVES_LAYOUT.sendDownSubtitle.size;
+    const subtitleY = Math.round(titleLayout.y + (((titleLayout.lineHeight || titleLayout.size) - subtitleSize) / 2));
+
+    titleNode.textContent = titleLabel;
+    subtitleNode.textContent = subtitleLabel;
+    applyAdvancedText(titleNode, titleLayout);
+    positionSectionSubtitle(
+      titleNode,
+      subtitleNode,
+      titleLayout,
+      subtitleY,
+      subtitleSize,
+      subtitleGap
+    );
   });
 
   ['callUp', 'sendDown'].forEach((section) => {

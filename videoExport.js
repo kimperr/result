@@ -39,7 +39,8 @@ export async function exportVideoFast({
   updateVideoPoster
 }) {
   const TARGET_EXPORT_FPS = 60;
-  const TARGET_VIDEO_BITS_PER_SECOND = 12_000_000;
+  const TARGET_VIDEO_BITS_PER_SECOND = 24_000_000;
+  const TARGET_AUDIO_BITS_PER_SECOND = 192_000;
   const duration = Math.max(0.1, end - start);
   const canvas = document.createElement('canvas');
   canvas.width = 1080;
@@ -49,6 +50,8 @@ export async function exportVideoFast({
     window.alert('브라우저에서 영상 캔버스를 만들 수 없습니다.');
     return;
   }
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = 'high';
 
   const formats = [
     { mimeType: 'video/mp4;codecs=avc1.42E01E,mp4a.40.2', ext: 'mp4' },
@@ -71,7 +74,8 @@ export async function exportVideoFast({
 
     const recorder = new MediaRecorder(stream, {
       mimeType: selectedFormat.mimeType,
-      videoBitsPerSecond: TARGET_VIDEO_BITS_PER_SECOND
+      videoBitsPerSecond: TARGET_VIDEO_BITS_PER_SECOND,
+      audioBitsPerSecond: TARGET_AUDIO_BITS_PER_SECOND
     });
     const chunks = [];
     recorder.addEventListener('dataavailable', (event) => {
