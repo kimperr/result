@@ -12,8 +12,28 @@ export function applyText(node, cfg) {
   node.style.fontSize = `${cfg.size}px`;
 }
 
+function measureRenderedTextWidth(node) {
+  if (!node) return 0;
+  const text = node.textContent || '';
+  if (!text) return 0;
+  const style = window.getComputedStyle(node);
+  const canvas = measureRenderedTextWidth.canvas || (measureRenderedTextWidth.canvas = document.createElement('canvas'));
+  const context = canvas.getContext('2d');
+  if (!context) return 0;
+  context.font = [
+    style.fontStyle,
+    style.fontVariant,
+    style.fontWeight,
+    style.fontSize,
+    style.fontFamily
+  ].filter(Boolean).join(' ');
+  const letterSpacing = Number.parseFloat(style.letterSpacing);
+  const spacingWidth = Number.isFinite(letterSpacing) ? Math.max(text.length - 1, 0) * letterSpacing : 0;
+  return context.measureText(text).width + spacingWidth;
+}
+
 export function applyTextAfterAnchor(node, cfg, anchorNode, anchorCfg, gap = 0) {
-  const anchorWidth = anchorNode?.getBoundingClientRect?.().width || anchorNode?.offsetWidth || 0;
+  const anchorWidth = measureRenderedTextWidth(anchorNode);
   node.style.left = `${anchorCfg.x + anchorWidth + gap}px`;
   node.style.top = `${cfg.y}px`;
   node.style.fontSize = `${cfg.size}px`;
