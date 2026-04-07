@@ -1,5 +1,6 @@
 ﻿import {
   KIA_HOME_STADIUM,
+  MAX_ROSTER_GROUPS,
   PLAYER_INFO_LIST,
   TEAM_DB
 } from './constants.js';
@@ -96,6 +97,12 @@ import {
   applySharedOpponent as applySharedOpponentState,
   applySharedOpponentFineTune as applySharedOpponentFineTuneState
 } from './sharedState.js';
+import {
+  fetchKboRosterMovesByDate,
+  fetchKboPlayerStats,
+  getKboProxyOrigin,
+  setKboProxyOrigin
+} from './kboRosterSync.js';
 
 
 let activeTab = 'result';
@@ -104,6 +111,8 @@ const rosterMoveEditors = { callUp: [], sendDown: [] };
 const rosterMovePreviewGroups = { callUp: [], sendDown: [] };
 let mobilePreviewTimer = null;
 const copyToastState = { timer: null };
+const rosterImportState = { isLoading: false };
+const rosterAutoFetchState = {};
 const videoState = {
   objectUrl: '',
   loopHandler: null,
@@ -416,6 +425,192 @@ function updateRosterMovesPoster() {
   });
 }
 
+function setRosterImportStatus(message, tone = 'neutral') {
+  if (!el.rosterMovesImportStatus) return;
+  el.rosterMovesImportStatus.textContent = message;
+  el.rosterMovesImportStatus.classList.remove('is-loading', 'is-success', 'is-error');
+  if (tone === 'loading') el.rosterMovesImportStatus.classList.add('is-loading');
+  if (tone === 'success') el.rosterMovesImportStatus.classList.add('is-success');
+  if (tone === 'error') el.rosterMovesImportStatus.classList.add('is-error');
+}
+
+function clearRosterEditor(editorRefs) {
+  if (!editorRefs) return;
+  editorRefs.nameInput.value = '';
+  editorRefs.pitcherGames.value = '0';
+  editorRefs.pitcherWins.value = '0';
+  editorRefs.pitcherLosses.value = '0';
+  editorRefs.pitcherSaves.value = '0';
+  editorRefs.pitcherHolds.value = '0';
+  editorRefs.pitcherInnings.value = '0';
+  editorRefs.pitcherInnings.dataset.lastValidInnings = '0';
+  editorRefs.pitcherEra.value = '0';
+  editorRefs.pitcherWhip.value = '0';
+  editorRefs.hitterGames.value = '0';
+  editorRefs.hitterHomeRuns.value = '0';
+  editorRefs.hitterRbi.value = '0';
+  editorRefs.hitterSteals.value = '0';
+  editorRefs.hitterAvg.value = '0';
+  editorRefs.hitterOps.value = '0';
+}
+
+function getRosterAutoFetchKey(section, index) {
+  return `${section}:${index}`;
+}
+
+function getRosterAutoFetchState(section, index) {
+  const key = getRosterAutoFetchKey(section, index);
+  if (!rosterAutoFetchState[key]) {
+    rosterAutoFetchState[key] = {
+      pendingName: '',
+      lastAppliedName: '',
+      requestId: 0
+    };
+  }
+  return rosterAutoFetchState[key];
+}
+
+function applyImportedPlayer(editorRefs, player) {
+  clearRosterEditor(editorRefs);
+  if (!editorRefs || !player) return;
+
+  editorRefs.nameInput.value = player.name || '';
+
+  if (player.statsType === 'pitcher') {
+    editorRefs.pitcherGames.value = String(player.stats?.games ?? '');
+    editorRefs.pitcherWins.value = String(player.stats?.wins ?? '');
+    editorRefs.pitcherLosses.value = String(player.stats?.losses ?? '');
+    editorRefs.pitcherSaves.value = String(player.stats?.saves ?? '');
+    editorRefs.pitcherHolds.value = String(player.stats?.holds ?? '');
+    editorRefs.pitcherInnings.value = String(player.stats?.innings ?? '');
+    editorRefs.pitcherInnings.dataset.lastValidInnings = String(player.stats?.innings ?? '0');
+    editorRefs.pitcherEra.value = String(player.stats?.era ?? '');
+    editorRefs.pitcherWhip.value = String(player.stats?.whip ?? '');
+    return;
+  }
+
+  editorRefs.hitterGames.value = String(player.stats?.games ?? '');
+  editorRefs.hitterHomeRuns.value = String(player.stats?.homeRuns ?? '');
+  editorRefs.hitterRbi.value = String(player.stats?.rbi ?? '');
+  editorRefs.hitterSteals.value = String(player.stats?.steals ?? '');
+  editorRefs.hitterAvg.value = String(player.stats?.avg ?? '');
+  editorRefs.hitterOps.value = String(player.stats?.ops ?? '');
+}
+
+function applyImportedRosterSection(section, players) {
+  const safePlayers = Array.isArray(players) ? players.slice(0, MAX_ROSTER_GROUPS) : [];
+  const countInput = section === 'callUp' ? el.callUpCount : el.sendDownCount;
+  if (countInput) countInput.value = String(safePlayers.length);
+
+  rosterMoveEditors[section].forEach((editorRefs, index) => {
+    applyImportedPlayer(editorRefs, safePlayers[index] || null);
+    updateRosterMovesFormVisibility(section, index);
+  });
+  refreshRosterGroupEditors(section);
+}
+
+function buildRosterImportSummary(data) {
+  const callUpCount = Array.isArray(data.callUp) ? data.callUp.length : 0;
+  const sendDownCount = Array.isArray(data.sendDown) ? data.sendDown.length : 0;
+  const warnings = Array.isArray(data.warnings) ? data.warnings : [];
+  const parts = [
+    `${data.date} KIA 이동 현황을 불러왔습니다.`,
+    `CALL-UP ${Math.min(callUpCount, MAX_ROSTER_GROUPS)}명`,
+    `SEND-DOWN ${Math.min(sendDownCount, MAX_ROSTER_GROUPS)}명`
+  ];
+
+  if (callUpCount > MAX_ROSTER_GROUPS || sendDownCount > MAX_ROSTER_GROUPS) {
+    parts.push('포스터 슬롯 제한으로 초과 선수는 자동 생략했습니다.');
+  }
+  if (warnings.length) {
+    parts.push(warnings[0]);
+  }
+  return parts.join(' ');
+}
+
+async function autoFetchRosterPlayerStats(section, index) {
+  const editorRefs = rosterMoveEditors[section]?.[index];
+  if (!editorRefs) return;
+
+  const playerName = (editorRefs.nameInput?.value || '').trim();
+  const state = getRosterAutoFetchState(section, index);
+  state.pendingName = playerName;
+
+  if (!playerName) {
+    state.lastAppliedName = '';
+    clearRosterEditor(editorRefs);
+    updateRosterMovesFormVisibility(section, index);
+    updateRosterMovesPoster();
+    return;
+  }
+
+  if (state.lastAppliedName === playerName) return;
+
+  const requestId = state.requestId + 1;
+  state.requestId = requestId;
+
+  try {
+    const data = await fetchKboPlayerStats({
+      name: playerName,
+      section,
+      dateValue: el.rosterMovesDate?.value || ''
+    });
+    if (state.requestId !== requestId) return;
+    if ((editorRefs.nameInput?.value || '').trim() !== playerName) return;
+    applyImportedPlayer(editorRefs, data.player || { name: playerName, statsType: data.statsType, stats: {} });
+    state.lastAppliedName = playerName;
+    updateRosterMovesFormVisibility(section, index);
+    updateRosterMovesPoster();
+  } catch (error) {
+    if (state.requestId !== requestId) return;
+    state.lastAppliedName = '';
+    updateRosterMovesFormVisibility(section, index);
+    updateRosterMovesPoster();
+  }
+}
+
+function initializeRosterProxyOrigin() {
+  if (!el.rosterMovesApiOrigin) return;
+  el.rosterMovesApiOrigin.value = getKboProxyOrigin();
+  const persist = () => {
+    const nextOrigin = setKboProxyOrigin(el.rosterMovesApiOrigin.value);
+    el.rosterMovesApiOrigin.value = nextOrigin;
+    setRosterImportStatus(`KBO API 주소를 ${nextOrigin} 로 설정했습니다.`, 'success');
+  };
+  el.rosterMovesApiOrigin.addEventListener('change', persist);
+  el.rosterMovesApiOrigin.addEventListener('blur', persist);
+}
+
+async function importRosterMovesByDate() {
+  if (rosterImportState.isLoading) return;
+
+  const dateValue = el.rosterMovesDate?.value || '';
+  if (!dateValue) {
+    setRosterImportStatus('등말소 날짜를 먼저 선택해 주세요.', 'error');
+    return;
+  }
+
+  rosterImportState.isLoading = true;
+  if (el.rosterMovesImportBtn) el.rosterMovesImportBtn.disabled = true;
+  setRosterImportStatus(`${dateValue} KIA 이동 현황을 불러오는 중입니다...`, 'loading');
+
+  try {
+    const data = await fetchKboRosterMovesByDate({ dateValue });
+    applyImportedRosterSection('callUp', data.callUp);
+    applyImportedRosterSection('sendDown', data.sendDown);
+    updateRosterMovesPoster();
+    setRosterImportStatus(buildRosterImportSummary(data), 'success');
+  } catch (error) {
+    setRosterImportStatus(
+      error instanceof Error ? error.message : 'KBO 등말소 불러오기에 실패했습니다.',
+      'error'
+    );
+  } finally {
+    rosterImportState.isLoading = false;
+    if (el.rosterMovesImportBtn) el.rosterMovesImportBtn.disabled = false;
+  }
+}
+
 function switchTab(target) {
   activeTab = target;
   switchAppTab({
@@ -472,6 +667,8 @@ function bindEvents() {
     downloadImage,
     downloadFollowImage,
     copyGeneratedCaption,
+    importRosterMovesByDate,
+    autoFetchRosterPlayerStats,
     syncFineTunePair,
     bindNudgeButtons,
     updateLineupGameTimeCustomVisibility
@@ -479,6 +676,7 @@ function bindEvents() {
 }
 
 function init() {
+  initializeRosterProxyOrigin();
   initAppShell({
     el,
     out,
@@ -495,6 +693,7 @@ function init() {
     initializeRosterMovesUi,
     updateRosterMovesFormVisibility,
     updateRosterMovesPoster,
+    onAutoStatsFetch: autoFetchRosterPlayerStats,
     setToday,
     bindEvents,
     configureVideoTrimRange,

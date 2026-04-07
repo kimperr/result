@@ -107,7 +107,7 @@ export function refreshRosterGroupEditors(el, rosterMoveEditors, section) {
   });
 }
 
-function createRosterGroupEditor({ section, index, onVisibilityChange, onPosterUpdate }) {
+function createRosterGroupEditor({ section, index, onVisibilityChange, onPosterUpdate, onAutoStatsFetch }) {
   const root = document.createElement('div');
   root.className = 'roster-group-editor';
   root.innerHTML = `
@@ -181,6 +181,7 @@ function createRosterGroupEditor({ section, index, onVisibilityChange, onPosterU
   });
   refs.nameInput.addEventListener('change', () => {
     onVisibilityChange(section, index);
+    onAutoStatsFetch?.(section, index);
   });
   refs.nameInput.addEventListener('blur', () => {
     window.setTimeout(() => hidePlayerSuggestions(refs), 120);
@@ -196,6 +197,15 @@ function createRosterGroupEditor({ section, index, onVisibilityChange, onPosterU
         event.preventDefault();
         firstMatch.click();
       }
+      return;
+    }
+    if (event.key === 'Enter') {
+      window.setTimeout(() => onAutoStatsFetch?.(section, index), 0);
+    }
+  });
+  refs.nameInput.addEventListener('blur', () => {
+    if ((refs.nameInput.value || '').trim()) {
+      onAutoStatsFetch?.(section, index);
     }
   });
   refs.pitcherInnings.dataset.lastValidInnings = refs.pitcherInnings.value;
@@ -276,7 +286,8 @@ export function buildRosterMovesUi({
   rosterMoveEditors,
   rosterMovePreviewGroups,
   onVisibilityChange,
-  onPosterUpdate
+  onPosterUpdate,
+  onAutoStatsFetch
 }) {
   ['callUp', 'sendDown'].forEach((section) => {
     const container = el[`${section}GroupControls`];
@@ -288,7 +299,8 @@ export function buildRosterMovesUi({
         section,
         index: i,
         onVisibilityChange,
-        onPosterUpdate
+        onPosterUpdate,
+        onAutoStatsFetch
       });
       rosterMoveEditors[section].push(refs);
       container.appendChild(refs.root);

@@ -96,6 +96,9 @@
   videoMetaSizeRange: document.getElementById('videoMetaSizeRange'),
 
   rosterMovesDate: document.getElementById('rosterMovesDate'),
+  rosterMovesImportBtn: document.getElementById('rosterMovesImportBtn'),
+  rosterMovesImportStatus: document.getElementById('rosterMovesImportStatus'),
+  rosterMovesApiOrigin: document.getElementById('rosterMovesApiOrigin'),
   rosterMovesOpponentTeam: document.getElementById('rosterMovesOpponentTeam'),
   rosterMovesStadiumName: document.getElementById('rosterMovesStadiumName'),
   callUpDetails: document.getElementById('callUpDetails'),

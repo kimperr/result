@@ -162,6 +162,10 @@
         <section id="rosterMovesControls" class="tab-panel">
           <h1>등말소 만들기</h1>
           <label class="field">날짜 <input id="rosterMovesDate" type="date" /></label>
+          <div class="roster-import-tools">
+            <button id="rosterMovesImportBtn" type="button">설정 날짜로 KBO 등말소 불러오기</button>
+            <p id="rosterMovesImportStatus" class="roster-import-status">로컬 KBO 프록시를 실행하면 설정한 날짜 기준 KIA 이동 현황을 자동으로 채웁니다.</p>
+          </div>
           <label class="field">상대팀 <select id="rosterMovesOpponentTeam"></select></label>
           <label class="field">구장 <input id="rosterMovesStadiumName" type="text" /></label>
           <details id="callUpDetails" class="tune-details" open>
@@ -200,6 +204,11 @@
               <label class="fine-tune-row">X <input id="rosterOpponentXRange" type="range" min="0" max="1080" step="0.5" value="228" /><span class="stepper-input"><button class="nudge-btn" type="button" data-target="rosterOpponentXInput" data-step="-1">-</button><input id="rosterOpponentXInput" type="number" step="0.5" value="228" /><button class="nudge-btn" type="button" data-target="rosterOpponentXInput" data-step="1">+</button></span></label>
               <label class="fine-tune-row">Y <input id="rosterOpponentYRange" type="range" min="0" max="1350" step="0.5" value="354" /><span class="stepper-input"><button class="nudge-btn" type="button" data-target="rosterOpponentYInput" data-step="-1">-</button><input id="rosterOpponentYInput" type="number" step="0.5" value="354" /><button class="nudge-btn" type="button" data-target="rosterOpponentYInput" data-step="1">+</button></span></label>
             </div>
+
+            <h2>KBO API</h2>
+            <label class="field roster-import-endpoint">API URL
+              <input id="rosterMovesApiOrigin" type="url" placeholder="http://127.0.0.1:8765 또는 https://your-worker.workers.dev" />
+            </label>
           </details>
         </section>
 

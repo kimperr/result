@@ -149,6 +149,8 @@ export function bindEvents({
   downloadImage,
   downloadFollowImage,
   copyGeneratedCaption,
+  importRosterMovesByDate,
+  autoFetchRosterPlayerStats,
   syncFineTunePair,
   bindNudgeButtons,
   updateLineupGameTimeCustomVisibility
@@ -336,6 +338,7 @@ export function bindEvents({
   el.rosterMovesOpponentTeam.addEventListener('change', () => {
     applySharedOpponent(el.rosterMovesOpponentTeam.value);
   });
+  el.rosterMovesImportBtn?.addEventListener('click', importRosterMovesByDate);
 
   const videoInputs = [
     el.videoTitleInput,

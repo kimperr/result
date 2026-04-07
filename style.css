@@ -606,6 +606,68 @@ textarea {
   gap: 12px;
 }
 
+.roster-import-tools {
+  display: grid;
+  gap: 8px;
+  margin: 4px 0 14px;
+}
+
+.roster-import-endpoint {
+  grid-template-columns: 64px 1fr;
+  margin-bottom: 0;
+  font-size: 14px;
+}
+
+.roster-import-endpoint input {
+  min-height: 38px;
+  font-size: 14px;
+}
+
+#rosterMovesImportBtn {
+  width: 100%;
+  min-height: 42px;
+  border: 0;
+  border-radius: 12px;
+  background: #0e5ca8;
+  color: #fff;
+  font-family: var(--ui-title);
+  font-size: 17px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  cursor: pointer;
+  padding: 10px 12px;
+}
+
+#rosterMovesImportBtn:disabled {
+  opacity: 0.7;
+  cursor: wait;
+}
+
+.roster-import-status {
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.06);
+  color: #d8dce5;
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.roster-import-status.is-loading {
+  color: #cfe6ff;
+  background: rgba(14, 92, 168, 0.2);
+}
+
+.roster-import-status.is-success {
+  color: #d8ffd9;
+  background: rgba(37, 140, 62, 0.22);
+}
+
+.roster-import-status.is-error {
+  color: #ffd7d7;
+  background: rgba(179, 44, 44, 0.22);
+}
+
 .roster-group-editor {
   border: 1px solid #4a4d56;
   border-radius: 14px;
