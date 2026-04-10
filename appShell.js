@@ -68,7 +68,11 @@ export async function downloadImage({
   exportVideo,
   waitForImageElement
 }) {
-  const EXPORT_IMAGE_SCALE = 4;
+  const isMobileExport = window.matchMedia('(max-width: 768px)').matches;
+  const exportImageScale = isMobileExport ? 2 : 4;
+  const exportMimeType = isMobileExport ? 'image/jpeg' : 'image/png';
+  const exportQuality = isMobileExport ? 0.9 : 1;
+  const exportExtension = isMobileExport ? 'jpg' : 'png';
   if (activeTab === 'video') {
     await exportVideo();
     return;
@@ -88,10 +92,10 @@ export async function downloadImage({
   poster.style.transformOrigin = 'top left';
 
   try {
-    const canvas = await html2canvas(poster, { useCORS: true, scale: EXPORT_IMAGE_SCALE, backgroundColor: null });
+    const canvas = await html2canvas(poster, { useCORS: true, scale: exportImageScale, backgroundColor: null });
     const link = document.createElement('a');
-    link.download = `${activeTab}-${Date.now()}.png`;
-    link.href = canvas.toDataURL('image/png', 1);
+    link.download = `${activeTab}-${Date.now()}.${exportExtension}`;
+    link.href = canvas.toDataURL(exportMimeType, exportQuality);
     link.click();
   } finally {
     poster.style.transform = prevTransform;

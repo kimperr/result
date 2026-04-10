@@ -36,11 +36,13 @@ export async function exportVideoFast({
   setVideoSaveProgress,
   hideVideoSaveProgress,
   drawVideoCompositeFrame,
-  updateVideoPoster
+  updateVideoPoster,
+  onExportSuccess
 }) {
+  const isMobileExport = window.matchMedia('(max-width: 768px)').matches;
   const TARGET_EXPORT_FPS = 60;
   const TARGET_VIDEO_BITS_PER_SECOND = 24_000_000;
-  const TARGET_AUDIO_BITS_PER_SECOND = 192_000;
+  const TARGET_AUDIO_BITS_PER_SECOND = isMobileExport ? 128_000 : 192_000;
   const duration = Math.max(0.1, end - start);
   const canvas = document.createElement('canvas');
   canvas.width = 1080;
@@ -153,6 +155,7 @@ export async function exportVideoFast({
     link.download = `video-${Date.now()}.${selectedFormat.ext}`;
     link.click();
     URL.revokeObjectURL(downloadUrl);
+    onExportSuccess?.();
   } finally {
     exportVideo.pause();
     exportVideo.removeAttribute('src');

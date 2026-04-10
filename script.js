@@ -340,6 +340,30 @@ function updateVideoPoster(previewTarget = 'keep') {
   });
 }
 
+function resetVideoComposerAfterExport() {
+  if (videoState.objectUrl) {
+    URL.revokeObjectURL(videoState.objectUrl);
+    videoState.objectUrl = '';
+  }
+  videoState.sourceBytes = null;
+  videoState.sourceExt = 'mp4';
+  setVideoPreviewMode(false);
+  el.videoFileInput.value = '';
+  el.videoTitleInput.value = '';
+  el.videoMetaOverride.value = '';
+  out.videoFramePreviewImage.removeAttribute('src');
+  out.videoPreviewElement.pause();
+  out.videoPreviewElement.removeAttribute('src');
+  out.videoPreviewElement.load();
+  el.videoStartTime.value = '0';
+  el.videoEndTime.value = '0';
+  invalidateVideoOverlayCache();
+  configureVideoTrimRange(0);
+  updateVideoPoster();
+  out.videoTitleText.textContent = '';
+  out.videoMetaText.textContent = '';
+}
+
 async function exportVideo() {
   await exportCurrentVideo({
     el,
@@ -367,7 +391,8 @@ async function exportVideoFast(sourceVideo, start, end, layout, titleLines, meta
     setVideoSaveProgress,
     hideVideoSaveProgress,
     drawVideoCompositeFrame,
-    updateVideoPoster
+    updateVideoPoster,
+    onExportSuccess: resetVideoComposerAfterExport
   });
 }
 
