@@ -212,6 +212,22 @@ def extract_stats_tables(html: str) -> list[dict[str, str]]:
     return tables
 
 
+def parse_player_profile(html: str, fallback_position: str = "") -> tuple[str, str]:
+    match = re.search(
+        r'id="cphContents_cphContents_cphContents_(?:uc)?[Pp]layerProfile_lblPosition"[^>]*>(.*?)</span>',
+        html,
+        re.S,
+    )
+    position_text = clean_html_text(match.group(1)) if match else ""
+    if not position_text:
+        position_text = clean_html_text(fallback_position)
+
+    profile_match = re.fullmatch(r"([^()]+?)(?:\(([^)]+)\))?", position_text)
+    position_group = clean_html_text(profile_match.group(1)) if profile_match else clean_html_text(position_text)
+    throw_bat = clean_html_text(profile_match.group(2)) if profile_match and profile_match.group(2) else ""
+    return position_group or clean_html_text(fallback_position), throw_bat
+
+
 def build_futures_link(player: dict[str, str]) -> str:
     player_id = player.get("playerId", "")
     if not player_id:
@@ -219,6 +235,14 @@ def build_futures_link(player: dict[str, str]) -> str:
     if player.get("position") == PITCHER_KOR:
         return f"/Futures/Player/PitcherDetail.aspx?playerId={player_id}"
     return f"/Futures/Player/HitterDetail.aspx?playerId={player_id}"
+
+
+def build_major_link(player_id: str, position_hint: str = "") -> str:
+    if not player_id:
+        return ""
+    if PITCHER_KOR in clean_html_text(position_hint):
+        return f"/Record/Player/PitcherDetail/Basic.aspx?playerId={player_id}"
+    return f"/Record/Player/HitterDetail/Basic.aspx?playerId={player_id}"
 
 
 def format_ops(obp: str, slg: str) -> str:
@@ -291,16 +315,23 @@ def choose_search_player(search_result: dict[str, Any], name: str, preferred_pla
     return now_players[0] if now_players else None
 
 
-def parse_player_stats(link: str, position_hint: str, league: str = "major") -> tuple[str, dict[str, str]]:
+def parse_player_stats(link: str, position_hint: str, league: str = "major") -> tuple[str, dict[str, str], str, str]:
     html = fetch_text(urljoin(KBO_BASE, link))
     tables = extract_stats_tables(html)
-    is_pitcher = "PitcherDetail" in link or position_hint == PITCHER_KOR
+    position_group, throw_bat = parse_player_profile(html, position_hint)
+    player_id_match = re.search(r"playerId=(\d+)", link)
+    player_id = player_id_match.group(1) if player_id_match else ""
+    if player_id and PITCHER_KOR in position_group and "PitcherDetail" not in link:
+        return parse_player_stats(f"/Record/Player/PitcherDetail/Basic.aspx?playerId={player_id}", position_group, league)
+    if player_id and PITCHER_KOR not in position_group and "HitterDetail" not in link:
+        return parse_player_stats(f"/Record/Player/HitterDetail/Basic.aspx?playerId={player_id}", position_group, league)
+    is_pitcher = "PitcherDetail" in link or PITCHER_KOR in clean_html_text(position_hint) or PITCHER_KOR in position_group
 
     if is_pitcher:
         first = tables[0] if len(tables) > 0 else {}
         second = tables[1] if len(tables) > 1 else {}
         if not first.get("G"):
-            return ("pitcher", {})
+            return ("pitcher", {}, position_group, throw_bat)
         return (
             "pitcher",
             {
@@ -313,12 +344,14 @@ def parse_player_stats(link: str, position_hint: str, league: str = "major") -> 
                 "era": first.get("ERA", "0"),
                 "whip": second.get("WHIP", "") or calculate_whip(first.get("H", ""), first.get("BB", ""), first.get("IP", "")),
             },
+            position_group,
+            throw_bat,
         )
 
     first = tables[0] if len(tables) > 0 else {}
     second = tables[1] if len(tables) > 1 else {}
     if not first.get("G"):
-        return ("hitter", {})
+        return ("hitter", {}, position_group, throw_bat)
     return (
         "hitter",
         {
@@ -329,16 +362,20 @@ def parse_player_stats(link: str, position_hint: str, league: str = "major") -> 
             "avg": first.get("AVG", "0"),
             "ops": format_ops(first.get("OBP", ""), first.get("SLG", "")) if league == "futures" else second.get("OPS", "0"),
         },
+        position_group,
+        throw_bat,
     )
 
 
 def enrich_snapshot_player(player: dict[str, str], warnings: list[str], record_source: str) -> dict[str, Any]:
-    stats_type = "pitcher" if player.get("position") == PITCHER_KOR else "hitter"
+    stats_type = "pitcher" if PITCHER_KOR in clean_html_text(player.get("position", "")) else "hitter"
     stats: dict[str, str] = {}
+    position_group = player.get("position", "")
+    throw_bat = ""
     player_link = build_futures_link(player) if record_source == "futures" else player.get("link", "")
     if player_link:
         try:
-            stats_type, stats = parse_player_stats(player_link, player.get("position", ""), record_source)
+            stats_type, stats, position_group, throw_bat = parse_player_stats(player_link, player.get("position", ""), record_source)
         except Exception:
             if record_source == "major":
                 warnings.append(f"Could not parse season stats for {player.get('name', 'unknown player')}. Filled name only.")
@@ -346,7 +383,9 @@ def enrich_snapshot_player(player: dict[str, str], warnings: list[str], record_s
     return {
         "playerId": player.get("playerId", ""),
         "name": player.get("name", ""),
-        "position": player.get("position", ""),
+        "position": position_group,
+        "positionGroup": position_group,
+        "throwBat": throw_bat,
         "statsType": stats_type,
         "stats": stats,
         "link": player_link,
@@ -354,9 +393,10 @@ def enrich_snapshot_player(player: dict[str, str], warnings: list[str], record_s
     }
 
 
-def build_single_player_payload(name: str, section: str, date_value: str, player_id: str = "") -> dict[str, Any]:
+def build_single_player_payload(name: str, section: str, date_value: str, player_id: str = "", position_group: str = "") -> dict[str, Any]:
     player = None
     trimmed_player_id = str(player_id or "").strip()
+    position_hint = clean_html_text(position_group)
     if re.fullmatch(r"\d{4}-\d{2}-\d{2}", date_value):
         team_code = normalize_team_code("KIA")
         selected_date = datetime.strptime(date_value, "%Y-%m-%d").date()
@@ -379,6 +419,14 @@ def build_single_player_payload(name: str, section: str, date_value: str, player
                 "position": str(searched_player.get("POS_NO", "")),
                 "link": str(searched_player.get("P_LINK", "")),
             }
+
+    if not player and trimmed_player_id and position_hint:
+        player = {
+            "playerId": trimmed_player_id,
+            "name": str(name or "").strip(),
+            "position": position_hint,
+            "link": build_futures_link({"playerId": trimmed_player_id, "position": position_hint}) if section == "callUp" else build_major_link(trimmed_player_id, position_hint),
+        }
 
     if not player:
         raise ValueError("해당 이름의 현역 선수를 찾지 못했습니다.")
@@ -610,6 +658,7 @@ class Handler(BaseHTTPRequestHandler):
             query = parse_qs(parsed.query)
             name = (query.get("name") or [""])[0].strip()
             player_id = (query.get("playerId") or [""])[0].strip()
+            position_group = (query.get("positionGroup") or [""])[0].strip()
             section = (query.get("section") or ["callUp"])[0].strip() or "callUp"
             date_value = (query.get("date") or [""])[0].strip()
             if not name:
@@ -620,7 +669,7 @@ class Handler(BaseHTTPRequestHandler):
                 return
 
             try:
-                payload = build_single_player_payload(name, section, date_value, player_id)
+                payload = build_single_player_payload(name, section, date_value, player_id, position_group)
             except HTTPError as error:
                 self.send_error_json(error.code or 502, f"KBO request failed: {error.reason}")
                 return

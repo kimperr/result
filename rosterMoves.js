@@ -15,6 +15,30 @@ import {
   normalizePitcherInningsInput
 } from './utils.js';
 
+function getStoredRosterMeta(groupRefs) {
+  const currentName = String(groupRefs?.nameInput?.value || '').trim();
+  const storedName = String(groupRefs?.metaInput?.dataset.playerName || '').trim();
+  if (!currentName || !storedName || currentName !== storedName) return null;
+
+  const throwBat = String(groupRefs?.metaInput?.dataset.throwBat || '').trim();
+  const positionGroup = String(groupRefs?.metaInput?.dataset.positionGroup || '').trim();
+  if (!throwBat && !positionGroup) return null;
+
+  return { throwBat, positionGroup };
+}
+
+function resolveRosterPlayerInfo(groupRefs) {
+  const fallbackInfo = getPlayerInfo(groupRefs?.nameInput?.value || '');
+  const storedMeta = getStoredRosterMeta(groupRefs);
+  if (!fallbackInfo && !storedMeta) return null;
+
+  return {
+    ...(fallbackInfo || {}),
+    throwBat: storedMeta?.throwBat || '',
+    positionGroup: storedMeta?.positionGroup || fallbackInfo?.positionGroup || ''
+  };
+}
+
 function buildPitcherStatsLines(groupRefs) {
   const games = Number(groupRefs.pitcherGames?.value) || 0;
   if (games <= 0) return '';
@@ -151,8 +175,8 @@ export function getRosterSectionCount(el, section) {
 export function updateRosterMovesFormVisibility(rosterMoveEditors, section, index) {
   const groupRefs = rosterMoveEditors[section]?.[index];
   if (!groupRefs) return;
-  const info = getPlayerInfo(groupRefs.nameInput?.value || '');
-  const meta = info ? `${info.throwBat}/${info.positionGroup}` : '';
+  const info = resolveRosterPlayerInfo(groupRefs);
+  const meta = info ? [info.throwBat, info.positionGroup].filter(Boolean).join('/') : '';
   if (groupRefs.metaInput) groupRefs.metaInput.value = meta;
   const isPitcher = info?.positionGroup === '투수';
   if (groupRefs.pitcherStats) groupRefs.pitcherStats.style.display = isPitcher ? 'grid' : 'none';
@@ -487,7 +511,7 @@ export function updateRosterMovesPoster({
       if (!isVisible) return;
 
       const editorRefs = rosterMoveEditors[section][index];
-      const info = getPlayerInfo(editorRefs.nameInput.value);
+      const info = resolveRosterPlayerInfo(editorRefs);
       const photoPath = getPlayerMiniPhotoPath(editorRefs.nameInput.value);
       const basePoint = ROSTER_GROUP_GRID[index] || ROSTER_GROUP_GRID[0];
       const groupX = basePoint.x;
@@ -496,7 +520,7 @@ export function updateRosterMovesPoster({
       previewRefs.root.style.left = `${groupX}px`;
       previewRefs.root.style.top = `${groupY}px`;
       previewRefs.name.textContent = formatDisplayName(editorRefs.nameInput.value);
-      previewRefs.meta.textContent = info ? `${info.throwBat}/${info.positionGroup}` : '';
+      previewRefs.meta.textContent = info ? [info.throwBat, info.positionGroup].filter(Boolean).join('/') : '';
       previewRefs.stats.textContent = !info
         ? ''
         : info.positionGroup === '투수'

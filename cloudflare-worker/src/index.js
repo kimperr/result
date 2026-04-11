@@ -249,12 +249,29 @@ function extractStatsTables(html) {
   return tables;
 }
 
+function parsePlayerProfile(html, fallbackPosition = '') {
+  const match = html.match(/id="cphContents_cphContents_cphContents_(?:uc)?playerProfile_lblPosition"[^>]*>(.*?)<\/span>/is);
+  const positionText = cleanHtmlText(match ? match[1] : '') || cleanHtmlText(fallbackPosition);
+  const parsed = positionText.match(/^([^()]+?)(?:\(([^)]+)\))?$/);
+  return {
+    positionGroup: cleanHtmlText(parsed?.[1] || '') || cleanHtmlText(fallbackPosition),
+    throwBat: cleanHtmlText(parsed?.[2] || '')
+  };
+}
+
 function buildFuturesLink(player) {
   if (!player?.playerId) return '';
-  if (player.position === PITCHER_KOR) {
+  if (cleanHtmlText(player.position || '').includes(PITCHER_KOR)) {
     return `/Futures/Player/PitcherDetail.aspx?playerId=${player.playerId}`;
   }
   return `/Futures/Player/HitterDetail.aspx?playerId=${player.playerId}`;
+}
+
+function buildMajorLink(playerId, positionHint = '') {
+  if (!playerId) return '';
+  return cleanHtmlText(positionHint).includes(PITCHER_KOR)
+    ? `/Record/Player/PitcherDetail/Basic.aspx?playerId=${playerId}`
+    : `/Record/Player/HitterDetail/Basic.aspx?playerId=${playerId}`;
 }
 
 function formatOps(obp, slg) {
@@ -343,7 +360,18 @@ function chooseSearchPlayer(searchResult, name, preferredPlayerId = '') {
 async function parsePlayerStats(link, positionHint, league = 'major') {
   const html = await fetchText(new URL(link, KBO_BASE).toString());
   const tables = extractStatsTables(html);
-  const isPitcher = link.includes('PitcherDetail') || positionHint === PITCHER_KOR;
+  const profile = parsePlayerProfile(html, positionHint);
+  const playerIdMatch = link.match(/playerId=(\d+)/);
+  const playerId = playerIdMatch ? playerIdMatch[1] : '';
+  if (playerId && cleanHtmlText(profile.positionGroup).includes(PITCHER_KOR) && !link.includes('PitcherDetail')) {
+    return parsePlayerStats(`/Record/Player/PitcherDetail/Basic.aspx?playerId=${playerId}`, profile.positionGroup, league);
+  }
+  if (playerId && !cleanHtmlText(profile.positionGroup).includes(PITCHER_KOR) && !link.includes('HitterDetail')) {
+    return parsePlayerStats(`/Record/Player/HitterDetail/Basic.aspx?playerId=${playerId}`, profile.positionGroup, league);
+  }
+  const isPitcher = link.includes('PitcherDetail')
+    || cleanHtmlText(positionHint).includes(PITCHER_KOR)
+    || cleanHtmlText(profile.positionGroup).includes(PITCHER_KOR);
 
   if (isPitcher) {
     const first = tables[0] || {};
@@ -351,7 +379,9 @@ async function parsePlayerStats(link, positionHint, league = 'major') {
     if (!first.G) {
       return {
         statsType: 'pitcher',
-        stats: {}
+        stats: {},
+        positionGroup: profile.positionGroup,
+        throwBat: profile.throwBat
       };
     }
     return {
@@ -365,7 +395,9 @@ async function parsePlayerStats(link, positionHint, league = 'major') {
         innings: first.IP || '0',
         era: first.ERA || '0',
         whip: second.WHIP || calculateWhip(first.H, first.BB, first.IP)
-      }
+      },
+      positionGroup: profile.positionGroup,
+      throwBat: profile.throwBat
     };
   }
 
@@ -374,7 +406,9 @@ async function parsePlayerStats(link, positionHint, league = 'major') {
   if (!first.G) {
     return {
       statsType: 'hitter',
-      stats: {}
+      stats: {},
+      positionGroup: profile.positionGroup,
+      throwBat: profile.throwBat
     };
   }
   return {
@@ -386,13 +420,17 @@ async function parsePlayerStats(link, positionHint, league = 'major') {
       steals: first.SB || '0',
       avg: first.AVG || '0',
       ops: league === 'futures' ? formatOps(first.OBP, first.SLG) : (second.OPS || '0')
-    }
+    },
+    positionGroup: profile.positionGroup,
+    throwBat: profile.throwBat
   };
 }
 
 async function enrichSnapshotPlayer(player, warnings, recordSource) {
-  let statsType = player.position === PITCHER_KOR ? 'pitcher' : 'hitter';
+  let statsType = cleanHtmlText(player.position || '').includes(PITCHER_KOR) ? 'pitcher' : 'hitter';
   let stats = {};
+  let positionGroup = player.position || '';
+  let throwBat = '';
   const statsLink = recordSource === 'futures' ? buildFuturesLink(player) : player.link;
 
   if (statsLink) {
@@ -400,6 +438,8 @@ async function enrichSnapshotPlayer(player, warnings, recordSource) {
       const parsed = await parsePlayerStats(statsLink, player.position, recordSource);
       statsType = parsed.statsType;
       stats = parsed.stats;
+      positionGroup = parsed.positionGroup || positionGroup;
+      throwBat = parsed.throwBat || '';
     } catch (error) {
       if (recordSource === 'major') {
         warnings.push(`Could not parse season stats for ${player.name}. Filled name only.`);
@@ -410,7 +450,9 @@ async function enrichSnapshotPlayer(player, warnings, recordSource) {
   return {
     playerId: player.playerId,
     name: player.name,
-    position: player.position,
+    position: positionGroup,
+    positionGroup,
+    throwBat,
     statsType,
     stats,
     link: statsLink || player.link,
@@ -418,9 +460,10 @@ async function enrichSnapshotPlayer(player, warnings, recordSource) {
   };
 }
 
-async function buildSinglePlayerPayload(name, section, dateValue, playerId = '') {
+async function buildSinglePlayerPayload(name, section, dateValue, playerId = '', positionGroup = '') {
   let player = null;
   const trimmedPlayerId = String(playerId || '').trim();
+  const positionHint = cleanHtmlText(positionGroup);
   if (/^\d{4}-\d{2}-\d{2}$/.test(dateValue)) {
     const teamCode = normalizeTeamCode('KIA');
     const previousDate = minusDays(dateValue, 1);
@@ -446,6 +489,17 @@ async function buildSinglePlayerPayload(name, section, dateValue, playerId = '')
         link: String(searchedPlayer.P_LINK || '')
       };
     }
+  }
+
+  if (!player && trimmedPlayerId && positionHint) {
+    player = {
+      playerId: trimmedPlayerId,
+      name: String(name || '').trim(),
+      position: positionHint,
+      link: section === 'callUp'
+        ? buildFuturesLink({ playerId: trimmedPlayerId, position: positionHint })
+        : buildMajorLink(trimmedPlayerId, positionHint)
+    };
   }
 
   if (!player) {
@@ -657,6 +711,7 @@ export default {
 
       const name = (url.searchParams.get('name') || '').trim();
       const playerId = (url.searchParams.get('playerId') || '').trim();
+      const positionGroup = (url.searchParams.get('positionGroup') || '').trim();
       const section = (url.searchParams.get('section') || 'callUp').trim() || 'callUp';
       const dateValue = (url.searchParams.get('date') || '').trim();
       if (!name) {
@@ -667,7 +722,7 @@ export default {
       }
 
       try {
-        return json(await buildSinglePlayerPayload(name, section, dateValue, playerId));
+        return json(await buildSinglePlayerPayload(name, section, dateValue, playerId, positionGroup));
       } catch (error) {
         return json({ error: `Worker processing failed: ${error.message || error}` }, 500);
       }

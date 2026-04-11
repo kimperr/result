@@ -69,22 +69,43 @@ export function normalizeName(name) {
   return (name || '').replace(/\s+/g, '');
 }
 
+function splitPlayerVariantSuffix(name) {
+  const raw = String(name || '').trim();
+  const match = raw.match(/^(.*?)(?:_(\d+))?$/);
+  return {
+    baseName: (match?.[1] || raw).trim(),
+    variantSuffix: match?.[2] || ''
+  };
+}
+
 export function formatDisplayName(name) {
-  return (name || '').replace(/\s*\(\d+\)\s*$/, '').trim();
+  const { baseName } = splitPlayerVariantSuffix(name);
+  return baseName.replace(/\s*\(\d+\)\s*$/, '').trim();
+}
+
+function findPlayerNumberByName(name) {
+  const { baseName } = splitPlayerVariantSuffix(name);
+  if (!normalizeName(baseName)) return null;
+  const normalized = normalizeName(baseName);
+  const matched = Object.keys(PLAYER_NUMBER_BY_NAME).find((key) => normalizeName(key) === normalized);
+  if (!matched) return null;
+  return {
+    playerNumber: PLAYER_NUMBER_BY_NAME[matched],
+    variantSuffix: splitPlayerVariantSuffix(name).variantSuffix
+  };
 }
 
 export function getPlayerPhotoPath(name) {
-  if (!normalizeName(name)) return '';
-  const normalized = normalizeName(name);
-  const matched = Object.keys(PLAYER_NUMBER_BY_NAME).find((key) => normalizeName(key) === normalized);
-  return matched ? `assets/player/${PLAYER_NUMBER_BY_NAME[matched]}.png` : '';
+  const playerRef = findPlayerNumberByName(name);
+  if (!playerRef) return '';
+  const suffix = playerRef.variantSuffix ? `_${playerRef.variantSuffix}` : '';
+  return `assets/player/${playerRef.playerNumber}${suffix}.png`;
 }
 
 export function getPlayerMiniPhotoPath(name) {
-  if (!normalizeName(name)) return '';
-  const normalized = normalizeName(name);
-  const matched = Object.keys(PLAYER_NUMBER_BY_NAME).find((key) => normalizeName(key) === normalized);
-  return matched ? `assets/player_mini/${PLAYER_NUMBER_BY_NAME[matched]}.png` : '';
+  const playerRef = findPlayerNumberByName(name);
+  if (!playerRef) return '';
+  return `assets/player_mini/${playerRef.playerNumber}.png`;
 }
 
 export function getPlayerInfo(name) {

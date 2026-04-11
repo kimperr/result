@@ -91,6 +91,7 @@ export async function fetchKboRosterMovesByDate({
 export async function fetchKboPlayerStats({
   name,
   playerId,
+  positionGroup,
   section,
   dateValue,
   fetchImpl = fetch
@@ -103,6 +104,7 @@ export async function fetchKboPlayerStats({
   const url = buildProxyUrl('/api/kbo/player-stats', {
     name: trimmedName,
     playerId: String(playerId || '').trim(),
+    positionGroup: String(positionGroup || '').trim(),
     section,
     date: dateValue
   });

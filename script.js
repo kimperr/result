@@ -7,6 +7,7 @@
 import {
   escapeDrawtext,
   formatDate,
+  formatDisplayName,
   getFileExtension,
   getPlayerInfo,
   getPlayerPhotoPath,
@@ -167,6 +168,10 @@ function getGeneratedCaptionText() {
     return getResultCaptionText(el, resultManualOverride);
   }
 
+  if (activeTab === 'rosterMoves') {
+    return getRosterMovesCaptionText();
+  }
+
   return '';
 }
 
@@ -212,7 +217,7 @@ function updateSecondaryActionButtons() {
   if (el.lineupCaptionSettings) {
     el.lineupCaptionSettings.style.display = activeTab === 'lineup' ? 'block' : 'none';
   }
-  const showCaptionTools = activeTab === 'lineup' || activeTab === 'result';
+  const showCaptionTools = activeTab === 'lineup' || activeTab === 'result' || activeTab === 'rosterMoves';
   if (el.captionTools) {
     el.captionTools.style.display = showCaptionTools ? 'grid' : 'none';
   }
@@ -442,6 +447,30 @@ function updateLineupPoster() {
   });
 }
 
+function getRosterSectionCaptionNames(section) {
+  const count = getRosterSectionCount(section);
+  return rosterMoveEditors[section]
+    .slice(0, count)
+    .map((editorRefs) => formatDisplayName(editorRefs?.nameInput?.value || ''))
+    .filter(Boolean);
+}
+
+function getRosterMovesCaptionText() {
+  const teamName = (el.rosterMovesOpponentTeam?.value || '').trim();
+  const callUpNames = getRosterSectionCaptionNames('callUp');
+  const sendDownNames = getRosterSectionCaptionNames('sendDown');
+  const lines = [`𝐑𝐎𝐒𝐓𝐄𝐑 𝐌𝐎𝐕𝐄𝐒${teamName ? ` vs ${teamName}` : ''}`];
+
+  if (callUpNames.length) {
+    lines.push(`▲등록 : ${callUpNames.join(', ')}`);
+  }
+  if (sendDownNames.length) {
+    lines.push(`▼말소 : ${sendDownNames.join(', ')}`);
+  }
+
+  return lines.join('\n');
+}
+
 function updateRosterMovesPoster() {
   renderRosterMovesPoster({
     el,
@@ -456,6 +485,7 @@ function updateRosterMovesPoster() {
     applyPositionOnly,
     scheduleMobilePreviewRender
   });
+  updateSecondaryActionButtons();
 }
 
 function setRosterImportStatus(message, tone = 'neutral') {
@@ -473,6 +503,12 @@ function setRosterImportStatus(message, tone = 'neutral') {
 function clearRosterEditor(editorRefs) {
   if (!editorRefs) return;
   editorRefs.nameInput.value = '';
+  if (editorRefs.metaInput) {
+    editorRefs.metaInput.value = '';
+    delete editorRefs.metaInput.dataset.playerName;
+    delete editorRefs.metaInput.dataset.throwBat;
+    delete editorRefs.metaInput.dataset.positionGroup;
+  }
   clearRosterStats(editorRefs);
 }
 
@@ -518,6 +554,11 @@ function applyImportedPlayer(editorRefs, player, options = {}) {
   if (!editorRefs || !player) return;
 
   editorRefs.nameInput.value = preferredName || player.name || '';
+  if (editorRefs.metaInput) {
+    editorRefs.metaInput.dataset.playerName = editorRefs.nameInput.value;
+    editorRefs.metaInput.dataset.throwBat = String(player.throwBat || '').trim();
+    editorRefs.metaInput.dataset.positionGroup = String(player.positionGroup || player.position || '').trim();
+  }
 
   if (player.statsType === 'pitcher') {
     editorRefs.pitcherGames.value = String(player.stats?.games ?? '');
@@ -717,6 +758,7 @@ async function autoFetchRosterPlayerStats(section, index, options = {}) {
     const data = await fetchKboPlayerStats({
       name: playerName,
       playerId: playerInfo?.playerId || '',
+      positionGroup: playerInfo?.positionGroup || '',
       section,
       dateValue: el.rosterMovesDate?.value || ''
     });

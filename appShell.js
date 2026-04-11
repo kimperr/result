@@ -83,13 +83,32 @@ export async function downloadImage({
     : activeTab === 'lineup'
       ? el.lineupPoster
       : el.rosterMovesPoster;
+  const posterCanvas = poster.querySelector('.poster-canvas');
   const images = Array.from(poster.querySelectorAll('img, video'));
   await Promise.all(images.map(waitForImageElement));
 
+  const prevPosterWidth = poster.style.width;
+  const prevPosterHeight = poster.style.height;
   const prevTransform = poster.style.transform;
   const prevOrigin = poster.style.transformOrigin;
+  const prevCanvasPosition = posterCanvas?.style.position || '';
+  const prevCanvasInset = posterCanvas?.style.inset || '';
+  const prevCanvasWidth = posterCanvas?.style.width || '';
+  const prevCanvasHeight = posterCanvas?.style.height || '';
+  const prevCanvasTransform = posterCanvas?.style.transform || '';
+  const prevCanvasOrigin = posterCanvas?.style.transformOrigin || '';
+  poster.style.width = '1080px';
+  poster.style.height = '1350px';
   poster.style.transform = 'none';
   poster.style.transformOrigin = 'top left';
+  if (posterCanvas) {
+    posterCanvas.style.position = 'relative';
+    posterCanvas.style.inset = 'auto';
+    posterCanvas.style.width = '1080px';
+    posterCanvas.style.height = '1350px';
+    posterCanvas.style.transform = 'none';
+    posterCanvas.style.transformOrigin = 'top left';
+  }
 
   try {
     const canvas = await html2canvas(poster, { useCORS: true, scale: exportImageScale, backgroundColor: null });
@@ -98,8 +117,18 @@ export async function downloadImage({
     link.href = canvas.toDataURL(exportMimeType, exportQuality);
     link.click();
   } finally {
+    poster.style.width = prevPosterWidth;
+    poster.style.height = prevPosterHeight;
     poster.style.transform = prevTransform;
     poster.style.transformOrigin = prevOrigin;
+    if (posterCanvas) {
+      posterCanvas.style.position = prevCanvasPosition;
+      posterCanvas.style.inset = prevCanvasInset;
+      posterCanvas.style.width = prevCanvasWidth;
+      posterCanvas.style.height = prevCanvasHeight;
+      posterCanvas.style.transform = prevCanvasTransform;
+      posterCanvas.style.transformOrigin = prevCanvasOrigin;
+    }
   }
 }
 
