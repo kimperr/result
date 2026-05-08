@@ -16,10 +16,13 @@ import android.provider.MediaStore
 import android.view.Gravity
 import android.view.View
 import android.view.ViewGroup
+import android.widget.AdapterView
+import android.widget.ArrayAdapter
 import android.widget.Button
 import android.widget.EditText
 import android.widget.LinearLayout
 import android.widget.ScrollView
+import android.widget.Spinner
 import android.widget.TextView
 import java.io.BufferedInputStream
 import java.io.ByteArrayOutputStream
@@ -92,6 +95,18 @@ class MainActivity : Activity() {
         }
         content.addView(posterView)
 
+        content.addView(spinner("선수 선택", PLAYER_OPTIONS.map { it.name }) { index ->
+            state.playerName = PLAYER_OPTIONS[index].name
+            state.playerNumber = PLAYER_OPTIONS[index].number
+            loadPlayerImage()
+            posterView.invalidate()
+        })
+        content.addView(spinner("상대팀", TEAM_OPTIONS.map { it.name }) { index ->
+            state.teamCode = TEAM_OPTIONS[index].code
+            state.opponentText = "vs ${TEAM_OPTIONS[index].name} · ${TEAM_OPTIONS[index].stadium}"
+            posterView.invalidate()
+        })
+
         content.addView(input("선수 이름", state.playerName) {
             state.playerName = it
             loadPlayerImage()
@@ -140,6 +155,29 @@ class MainActivity : Activity() {
         content.addView(statusText)
 
         return root
+    }
+
+    private fun spinner(label: String, values: List<String>, onSelected: (Int) -> Unit): View {
+        val box = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(0, dp(8), 0, dp(4))
+        }
+        box.addView(TextView(this).apply {
+            text = label
+            setTextColor(Color.WHITE)
+            textSize = 13f
+        })
+        box.addView(Spinner(this).apply {
+            adapter = ArrayAdapter(this@MainActivity, android.R.layout.simple_spinner_dropdown_item, values)
+            onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+                override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
+                    onSelected(position)
+                }
+
+                override fun onNothingSelected(parent: AdapterView<*>?) = Unit
+            }
+        })
+        return box
     }
 
     private fun input(label: String, value: String, onChange: (String) -> Unit): View {
@@ -262,7 +300,7 @@ class MainActivity : Activity() {
     }
 
     private fun loadPlayerImage() {
-        val number = playerNumber(state.playerName)
+        val number = state.playerNumber
         val url = "$GITHUB_ASSET_BASE/assets/player/$number.png"
         thread {
             try {
@@ -297,6 +335,8 @@ private enum class MakerMode { LINEUP, RESULT, VIDEO, ROSTER }
 private data class MakerState(
     var mode: MakerMode = MakerMode.RESULT,
     var playerName: String = "아데를린",
+    var playerNumber: Int = 24,
+    var teamCode: String = "lg",
     var title: String = "KIA TIGERS",
     var meta: String = "4타수 2안타 1홈런",
     var dateText: String = "2026.05.08",
@@ -312,6 +352,8 @@ private class PosterView(
     private val paint = Paint(Paint.ANTI_ALIAS_FLAG)
     private val white = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = Color.WHITE }
     private val dark = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = Color.rgb(18, 18, 18) }
+    private val backgroundCache = mutableMapOf<String, Bitmap?>()
+    private val logoCache = mutableMapOf<String, Bitmap?>()
 
     fun renderBitmap(): Bitmap {
         val bitmap = Bitmap.createBitmap(1080, 1350, Bitmap.Config.ARGB_8888)
@@ -338,11 +380,19 @@ private class PosterView(
             MakerMode.VIDEO -> Color.rgb(24, 24, 24)
             MakerMode.ROSTER -> Color.rgb(102, 9, 18)
         }
-        canvas.drawColor(bgColor)
-        paint.color = Color.argb(55, 255, 255, 255)
-        canvas.drawRoundRect(RectF(54f, 54f, w - 54f, h - 54f), 28f, 28f, paint)
-        paint.color = bgColor
-        canvas.drawRoundRect(RectF(70f, 70f, w - 70f, h - 70f), 22f, 22f, paint)
+        val background = backgroundForMode()
+        if (background != null) {
+            canvas.drawBitmap(background, null, RectF(0f, 0f, w, h), null)
+        } else {
+            canvas.drawColor(bgColor)
+            paint.color = Color.argb(55, 255, 255, 255)
+            canvas.drawRoundRect(RectF(54f, 54f, w - 54f, h - 54f), 28f, 28f, paint)
+            paint.color = bgColor
+            canvas.drawRoundRect(RectF(70f, 70f, w - 70f, h - 70f), 22f, 22f, paint)
+        }
+
+        logo("kia2")?.let { canvas.drawBitmap(it, null, RectF(70f, 440f, 220f, 590f), null) }
+        logo("${state.teamCode}1")?.let { canvas.drawBitmap(it, null, RectF(860f, 440f, 1010f, 590f), null) }
 
         state.playerBitmap?.let { bitmap ->
             val dest = RectF(210f, 260f, 870f, 1060f)
@@ -383,7 +433,56 @@ private class PosterView(
         MakerMode.VIDEO -> "VIDEO"
         MakerMode.ROSTER -> "ROSTER"
     }
+
+    private fun backgroundForMode(): Bitmap? {
+        val path = when (state.mode) {
+            MakerMode.LINEUP -> "background/bg-lineup.png"
+            MakerMode.RESULT -> "background/bg-win.png"
+            MakerMode.VIDEO -> "background/bg-video.png"
+            MakerMode.ROSTER -> "background/bg-rostermoves.png"
+        }
+        return backgroundCache.getOrPut(path) { loadAsset(path) }
+    }
+
+    private fun logo(name: String): Bitmap? {
+        val path = "logo/$name.png"
+        return logoCache.getOrPut(path) { loadAsset(path) }
+    }
+
+    private fun loadAsset(path: String): Bitmap? = try {
+        context.assets.open(path).use { BitmapFactory.decodeStream(it) }
+    } catch (_: Throwable) {
+        null
+    }
 }
+
+private data class PlayerOption(val name: String, val number: Int)
+private data class TeamOption(val name: String, val stadium: String, val code: String)
+
+private val PLAYER_OPTIONS = listOf(
+    PlayerOption("아데를린", 24),
+    PlayerOption("김도영", 5),
+    PlayerOption("김선빈", 3),
+    PlayerOption("나성범", 47),
+    PlayerOption("박찬호", 1),
+    PlayerOption("최형우", 34),
+    PlayerOption("김태군", 42),
+    PlayerOption("정해영", 62),
+    PlayerOption("양현종", 54),
+    PlayerOption("네일", 40)
+)
+
+private val TEAM_OPTIONS = listOf(
+    TeamOption("LG 트윈스", "잠실 야구장", "lg"),
+    TeamOption("두산 베어스", "잠실 야구장", "doo"),
+    TeamOption("키움 히어로즈", "고척 스카이돔", "kiw"),
+    TeamOption("SSG 랜더스", "인천 SSG 랜더스필드", "ssg"),
+    TeamOption("KT 위즈", "수원 KT위즈파크", "kt"),
+    TeamOption("한화 이글스", "대전 한화생명 볼파크", "han"),
+    TeamOption("롯데 자이언츠", "사직 야구장", "lot"),
+    TeamOption("NC 다이노스", "창원 NC파크", "nc"),
+    TeamOption("삼성 라이온즈", "대구 삼성 라이온즈파크", "sam")
+)
 
 private fun DataOutputStream.writeField(boundary: String, name: String, value: String) {
     writeBytes("--$boundary\r\n")
