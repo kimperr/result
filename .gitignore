@@ -1,0 +1,9 @@
+node_modules/
+dist/
+.env
+.env.local
+apps/mobile/android/
+apps/video-server/renders/
+apps/video-server/uploads/
+*.log
+

@@ -1,0 +1,9 @@
+{
+  "appId": "com.kimperr.kiamaker",
+  "appName": "KIA Maker",
+  "webDir": "dist",
+  "server": {
+    "androidScheme": "https"
+  }
+}
+

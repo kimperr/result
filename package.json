@@ -1,0 +1,21 @@
+{
+  "name": "kia-maker-apk",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev:mobile": "npm --workspace @kia-maker/mobile run dev",
+    "dev:server": "npm --workspace @kia-maker/video-server run dev",
+    "build:mobile": "npm --workspace @kia-maker/mobile run build",
+    "start:server": "npm --workspace @kia-maker/video-server run start",
+    "cap:add:android": "npm --workspace @kia-maker/mobile run cap:add:android",
+    "cap:sync": "npm --workspace @kia-maker/mobile run cap:sync"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^7.2.0"
+  }
+}
+

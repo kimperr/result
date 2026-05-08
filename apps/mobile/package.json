@@ -1,0 +1,21 @@
+{
+  "name": "@kia-maker/mobile",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 0.0.0.0",
+    "build": "vite build",
+    "preview": "vite preview --host 0.0.0.0",
+    "cap:add:android": "capacitor add android",
+    "cap:sync": "capacitor sync android"
+  },
+  "dependencies": {
+    "@capacitor/android": "^7.2.0",
+    "@capacitor/core": "^7.2.0",
+    "@kia-maker/shared": "0.1.0",
+    "vite": "^6.3.5"
+  },
+  "devDependencies": {}
+}
+
