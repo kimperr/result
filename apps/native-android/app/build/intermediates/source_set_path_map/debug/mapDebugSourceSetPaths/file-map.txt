@@ -1,0 +1,7 @@
+com.kimperr.kiamaker.nativeapp-pngs-0 D:\result\kia-maker-apk\apps\native-android\app\build\generated\res\pngs\debug
+com.kimperr.kiamaker.nativeapp-resValues-1 D:\result\kia-maker-apk\apps\native-android\app\build\generated\res\resValues\debug
+com.kimperr.kiamaker.nativeapp-packageDebugResources-2 D:\result\kia-maker-apk\apps\native-android\app\build\intermediates\incremental\debug\packageDebugResources\merged.dir
+com.kimperr.kiamaker.nativeapp-packageDebugResources-3 D:\result\kia-maker-apk\apps\native-android\app\build\intermediates\incremental\debug\packageDebugResources\stripped.dir
+com.kimperr.kiamaker.nativeapp-debug-4 D:\result\kia-maker-apk\apps\native-android\app\build\intermediates\merged_res\debug\mergeDebugResources
+com.kimperr.kiamaker.nativeapp-debug-5 D:\result\kia-maker-apk\apps\native-android\app\src\debug\res
+com.kimperr.kiamaker.nativeapp-main-6 D:\result\kia-maker-apk\apps\native-android\app\src\main\res
