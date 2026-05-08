@@ -10,8 +10,11 @@ import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.Rect
 import android.graphics.RectF
+import android.graphics.Typeface
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
+import android.os.Environment
 import android.provider.MediaStore
 import android.view.Gravity
 import android.view.View
@@ -26,6 +29,8 @@ import android.widget.Spinner
 import android.widget.TextView
 import java.io.BufferedInputStream
 import java.io.ByteArrayOutputStream
+import java.io.File
+import java.io.FileOutputStream
 import java.io.DataOutputStream
 import java.net.HttpURLConnection
 import java.net.URL
@@ -267,18 +272,44 @@ class MainActivity : Activity() {
                 val values = ContentValues().apply {
                     put(MediaStore.Images.Media.DISPLAY_NAME, "kia-maker-${System.currentTimeMillis()}.png")
                     put(MediaStore.Images.Media.MIME_TYPE, "image/png")
-                    put(MediaStore.Images.Media.RELATIVE_PATH, "Pictures/KIA Maker")
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                        put(MediaStore.Images.Media.RELATIVE_PATH, "${Environment.DIRECTORY_PICTURES}/KIA Maker")
+                        put(MediaStore.Images.Media.IS_PENDING, 1)
+                    }
                 }
                 val uri = contentResolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values)
                     ?: error("이미지 저장 URI를 만들지 못했습니다.")
                 contentResolver.openOutputStream(uri)?.use { out ->
                     bitmap.compress(Bitmap.CompressFormat.PNG, 100, out)
+                } ?: error("이미지 저장 스트림을 열지 못했습니다.")
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                    values.clear()
+                    values.put(MediaStore.Images.Media.IS_PENDING, 0)
+                    contentResolver.update(uri, values, null, null)
                 }
                 status("PNG 저장 완료")
             } catch (error: Throwable) {
+                try {
+                    val file = savePosterPngFallback()
+                    status("PNG fallback saved: ${file.absolutePath}")
+                    return@thread
+                } catch (_: Throwable) {
+                    // Keep the original error message below if the fallback also fails.
+                }
                 status("PNG 저장 실패: ${error.message}")
             }
         }
+    }
+
+    private fun savePosterPngFallback(): File {
+        val directory = File(getExternalFilesDir(Environment.DIRECTORY_PICTURES), "KIA Maker").apply {
+            mkdirs()
+        }
+        val file = File(directory, "kia-maker-${System.currentTimeMillis()}.png")
+        FileOutputStream(file).use { out ->
+            posterView.renderBitmap().compress(Bitmap.CompressFormat.PNG, 100, out)
+        }
+        return file
     }
 
     private fun renderVideo() {
@@ -336,14 +367,22 @@ class MainActivity : Activity() {
         val values = ContentValues().apply {
             put(MediaStore.Video.Media.DISPLAY_NAME, "kia-maker-${System.currentTimeMillis()}.mp4")
             put(MediaStore.Video.Media.MIME_TYPE, "video/mp4")
-            put(MediaStore.Video.Media.RELATIVE_PATH, "Movies/KIA Maker")
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                put(MediaStore.Video.Media.RELATIVE_PATH, "${Environment.DIRECTORY_MOVIES}/KIA Maker")
+                put(MediaStore.Video.Media.IS_PENDING, 1)
+            }
         }
         val uri = contentResolver.insert(MediaStore.Video.Media.EXTERNAL_CONTENT_URI, values)
             ?: error("영상 저장 URI를 만들지 못했습니다.")
         URL(videoUrl).openStream().use { input ->
             contentResolver.openOutputStream(uri)?.use { output ->
                 input.copyTo(output)
-            }
+            } ?: error("영상 저장 스트림을 열지 못했습니다.")
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            values.clear()
+            values.put(MediaStore.Video.Media.IS_PENDING, 0)
+            contentResolver.update(uri, values, null, null)
         }
     }
 
@@ -410,6 +449,13 @@ private class PosterView(
     private val dark = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = Color.rgb(18, 18, 18) }
     private val backgroundCache = mutableMapOf<String, Bitmap?>()
     private val logoCache = mutableMapOf<String, Bitmap?>()
+    private val pretendardRegular = font("fonts/Pretendard-Regular.ttf", Typeface.NORMAL)
+    private val pretendardBold = font("fonts/Pretendard-Bold.ttf", Typeface.BOLD)
+    private val pretendardLight = font("fonts/Pretendard-Light.ttf", Typeface.NORMAL)
+    private val terminaBlack = font("fonts/Termina-Black.otf", Typeface.BOLD)
+    private val boldFont = font("fonts/boldfont.ttf", Typeface.BOLD)
+    private val mediumFont = font("fonts/medium-font.ttf", Typeface.NORMAL)
+    private val regularFont = font("fonts/regular-font.ttf", Typeface.NORMAL)
 
     fun renderBitmap(): Bitmap {
         val bitmap = Bitmap.createBitmap(1080, 1350, Bitmap.Config.ARGB_8888)
@@ -447,11 +493,11 @@ private class PosterView(
             canvas.drawRoundRect(RectF(70f, 70f, w - 70f, h - 70f), 22f, 22f, paint)
         }
 
-        logo("kia2")?.let { canvas.drawBitmap(it, null, RectF(70f, 440f, 220f, 590f), null) }
-        logo("${state.teamCode}1")?.let { canvas.drawBitmap(it, null, RectF(860f, 440f, 1010f, 590f), null) }
+        logo("kia2")?.let { canvas.drawBitmap(it, null, RectF(0f, 0f, w, h), null) }
+        logo("${state.teamCode}1")?.let { canvas.drawBitmap(it, null, RectF(0f, 0f, w, h), null) }
 
         state.playerBitmap?.let { bitmap ->
-            val dest = RectF(210f, 260f, 870f, 1060f)
+            val dest = RectF(0f, 0f, w, h)
             canvas.drawBitmap(bitmap, null, dest, null)
         }
 
@@ -502,81 +548,120 @@ private class PosterView(
         }
     }
 
+    private fun textPaint(size: Float, typeface: Typeface, align: Paint.Align = Paint.Align.LEFT): Paint {
+        white.textSize = size
+        white.typeface = typeface
+        white.textAlign = align
+        white.style = Paint.Style.FILL
+        white.color = Color.WHITE
+        return white
+    }
+
+    private fun baseline(top: Float, size: Float): Float = top + size * 0.92f
+
+    private fun drawSpacedCentered(canvas: Canvas, text: String, centerX: Float, y: Float, spacing: Float, paint: Paint) {
+        if (spacing == 0f) {
+            val previous = paint.textAlign
+            paint.textAlign = Paint.Align.CENTER
+            canvas.drawText(text, centerX, y, paint)
+            paint.textAlign = previous
+            return
+        }
+
+        val chars = text.toList()
+        val widths = chars.map { paint.measureText(it.toString()) }
+        val total = widths.sum() + spacing * (chars.size - 1).coerceAtLeast(0)
+        var cursor = centerX - total / 2f
+        val previous = paint.textAlign
+        paint.textAlign = Paint.Align.LEFT
+        chars.forEachIndexed { index, char ->
+            canvas.drawText(char.toString(), cursor, y, paint)
+            cursor += widths[index] + spacing
+        }
+        paint.textAlign = previous
+    }
+
     private fun drawResult(canvas: Canvas) {
         drawTopMeta(canvas)
-        white.typeface = android.graphics.Typeface.DEFAULT_BOLD
-        white.textAlign = Paint.Align.CENTER
-        white.textSize = 132f
-        canvas.drawText(state.awayScore, 300f, 650f, white)
-        canvas.drawText(state.homeScore, 300f, 835f, white)
-        white.textSize = 42f
-        canvas.drawText(state.playerName, 540f, 1120f, white)
-        white.typeface = android.graphics.Typeface.DEFAULT
-        white.textSize = 28f
-        canvas.drawText(state.meta, 540f, 1165f, white)
-        white.textAlign = Paint.Align.LEFT
-        white.textSize = 30f
-        canvas.drawText("W  ${state.winnerName}", 130f, 1010f, white)
-        canvas.drawText("L  ${state.loserName}", 130f, 1058f, white)
-        canvas.drawText("S  ${state.saveName}", 130f, 1106f, white)
+        canvas.drawText(state.homeScore, 285f, baseline(532f, 140f), textPaint(140f, terminaBlack))
+        canvas.drawText(state.awayScore, 285f, baseline(715f, 140f), textPaint(140f, terminaBlack))
+
+        fun badge(label: String, x: Float, y: Float, color: Int) {
+            paint.color = color
+            paint.style = Paint.Style.FILL
+            canvas.drawRect(RectF(x, y, x + 42f, y + 42f), paint)
+            canvas.drawText(label, x + 21f, y + 31f, textPaint(31f, pretendardBold, Paint.Align.CENTER))
+        }
+        if (state.winnerName.isNotBlank()) {
+            badge("W", 68f, 957f, Color.rgb(106, 199, 0))
+            canvas.drawText(state.winnerName, 127f, baseline(959f, 33f), textPaint(33f, pretendardBold))
+        }
+        if (state.loserName.isNotBlank()) {
+            badge("L", 68f, 1008f, Color.rgb(202, 0, 0))
+            canvas.drawText(state.loserName, 127f, baseline(1011f, 33f), textPaint(33f, pretendardBold))
+        }
+        if (state.saveName.isNotBlank()) {
+            badge("S", 68f, 1059f, Color.rgb(226, 181, 0))
+            canvas.drawText(state.saveName, 127f, baseline(1062f, 33f), textPaint(33f, pretendardBold))
+        }
+
+        canvas.drawText(state.playerName, 252f, baseline(1120f, 39f), textPaint(39f, pretendardBold))
+        if (state.meta.isNotBlank()) {
+            canvas.drawText("(${state.meta})", 252f + white.measureText(state.playerName) + 12f, baseline(1135f, 20f), textPaint(20f, pretendardRegular))
+        }
     }
 
     private fun drawLineup(canvas: Canvas) {
         drawTopMeta(canvas)
-        white.textAlign = Paint.Align.LEFT
-        white.typeface = android.graphics.Typeface.DEFAULT_BOLD
-        white.textSize = 48f
-        state.lineupText.lines().filter { it.isNotBlank() }.take(9).forEachIndexed { index, line ->
-            canvas.drawText(line.trim(), 170f, 495f + index * 72f, white)
+        val nameY = floatArrayOf(480f, 553f, 624f, 695f, 768f, 840f, 912f, 985f, 1056f)
+        val posY = floatArrayOf(475f, 548f, 619f, 690f, 763f, 835f, 907f, 980f, 1051f)
+        state.lineupText.lines().filter { it.isNotBlank() }.take(9).forEachIndexed { index, raw ->
+            val parts = raw.trim().split(Regex("\\s+"))
+            val name = parts.drop(1).dropLast(1).joinToString(" ").ifBlank { parts.getOrNull(1) ?: raw.trim() }
+            val pos = parts.lastOrNull().orEmpty()
+            canvas.drawText(name, 167f, baseline(nameY[index], 47f), textPaint(47f, boldFont))
+            canvas.drawText(pos, 399f, baseline(posY[index], 49f), textPaint(49f, boldFont))
         }
-        white.textAlign = Paint.Align.CENTER
-        white.textSize = 44f
-        canvas.drawText("STARTER  ${state.playerName}", 540f, 1160f, white)
+        canvas.drawText(state.playerName, 163f, baseline(1144f, 45f), textPaint(45f, pretendardBold))
     }
 
     private fun drawRoster(canvas: Canvas) {
         drawTopMeta(canvas)
-        white.typeface = android.graphics.Typeface.DEFAULT_BOLD
-        white.textAlign = Paint.Align.LEFT
-        white.textSize = 54f
-        canvas.drawText("CALL-UP", 70f, 535f, white)
-        canvas.drawText("SEND-DOWN", 70f, 900f, white)
-        white.typeface = android.graphics.Typeface.DEFAULT
-        white.textSize = 36f
+        canvas.drawText("CALL-UP", 62f, baseline(470f, 53f), textPaint(53f, terminaBlack))
+        canvas.drawText("SEND-DOWN", 62f, baseline(859f, 53f), textPaint(53f, terminaBlack))
         state.callUpText.lines().filter { it.isNotBlank() }.take(4).forEachIndexed { index, line ->
-            canvas.drawText(line.trim(), 280f, 620f + index * 62f, white)
+            canvas.drawText(line.trim(), 270f, baseline(578f + index * 66f, 52f), textPaint(52f, boldFont))
         }
         state.sendDownText.lines().filter { it.isNotBlank() }.take(4).forEachIndexed { index, line ->
-            canvas.drawText(line.trim(), 280f, 985f + index * 62f, white)
+            canvas.drawText(line.trim(), 270f, baseline(976f + index * 66f, 52f), textPaint(52f, boldFont))
         }
     }
 
     private fun drawVideo(canvas: Canvas) {
-        white.typeface = android.graphics.Typeface.DEFAULT_BOLD
-        white.textAlign = Paint.Align.CENTER
-        white.textSize = 76f
+        val titlePaint = textPaint(77f, boldFont, Paint.Align.CENTER).apply { color = Color.rgb(17, 17, 17) }
         state.title.lines().take(2).forEachIndexed { index, line ->
-            canvas.drawText(line, 540f, 285f + index * 88f, white)
+            drawSpacedCentered(canvas, line, 540f, baseline(246f, 77f) + index * 93f, -3f, titlePaint)
         }
         paint.style = Paint.Style.STROKE
         paint.strokeWidth = 8f
-        paint.color = Color.WHITE
+        paint.color = Color.argb(170, 255, 255, 255)
         canvas.drawRect(Rect(90, 516, 990, 1022), paint)
         paint.style = Paint.Style.FILL
-        white.typeface = android.graphics.Typeface.DEFAULT
-        white.textSize = 40f
+        val metaPaint = textPaint(40f, mediumFont, Paint.Align.CENTER).apply { color = Color.rgb(17, 17, 17) }
         state.meta.lines().take(2).forEachIndexed { index, line ->
-            canvas.drawText(line, 540f, 1120f + index * 52f, white)
+            canvas.drawText(line, 540f, baseline(1107f, 40f) + index * 54f, metaPaint)
         }
     }
 
     private fun drawTopMeta(canvas: Canvas) {
-        white.typeface = android.graphics.Typeface.DEFAULT
-        white.textAlign = Paint.Align.LEFT
-        white.textSize = 29f
-        canvas.drawText(state.dateText, 66f, 354f, white)
-        white.textSize = 28f
-        canvas.drawText(state.opponentText, 66f, 392f, white)
+        val parts = state.opponentText.split("·", limit = 2)
+        val opponent = parts.firstOrNull()?.trim().orEmpty()
+        val stadium = parts.getOrNull(1)?.trim().orEmpty()
+        canvas.drawText(state.dateText, 66f, baseline(354f, 29f), textPaint(29f, pretendardRegular))
+        canvas.drawText(opponent, 7.5f + 66f + white.measureText(state.dateText), baseline(354f, 28f), textPaint(28f, pretendardBold))
+        if (stadium.isNotBlank()) {
+            canvas.drawText(stadium, 66f, baseline(391f, 29f), textPaint(29f, pretendardLight))
+        }
     }
 
     private fun backgroundForMode(): Bitmap? {
@@ -592,6 +677,12 @@ private class PosterView(
     private fun logo(name: String): Bitmap? {
         val path = "logo/$name.png"
         return logoCache.getOrPut(path) { loadAsset(path) }
+    }
+
+    private fun font(path: String, fallbackStyle: Int): Typeface = try {
+        Typeface.createFromAsset(context.assets, path)
+    } catch (_: Throwable) {
+        Typeface.create(Typeface.DEFAULT, fallbackStyle)
     }
 
     private fun loadAsset(path: String): Bitmap? = try {
