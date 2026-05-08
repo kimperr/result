@@ -3,11 +3,296 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>KIA Maker</title>
+    <title>야구 이미지 생성기</title>
+    <link rel="stylesheet" href="style.css" />
   </head>
   <body>
-    <main id="app"></main>
-    <script type="module" src="/src/main.js"></script>
+    <main class="layout">
+      <section class="controls">
+        <div class="tab-row">
+          <button id="tabLineup" class="tab-btn active" type="button">라인업</button>
+          <button id="tabResult" class="tab-btn" type="button">경기결과</button>
+          <button id="tabVideo" class="tab-btn" type="button">영상편집</button>
+          <button id="tabRosterMoves" class="tab-btn" type="button">등말소</button>
+        </div>
+
+        <section id="lineupControls" class="tab-panel active">
+          <h1>라인업 만들기</h1>
+          <div class="field-row compact">
+            <label><input type="radio" name="lineupKiaSide" value="home" checked /> 홈</label>
+            <label><input type="radio" name="lineupKiaSide" value="away" /> 원정</label>
+          </div>
+
+          <label class="field">날짜 <input id="lineupDate" type="date" /></label>
+          <label class="field">상대팀 <select id="lineupOpponentTeam"></select></label>
+          <label class="field">구장 <input id="lineupStadiumName" type="text" /></label>
+
+          <h2>1~9번 타자/포지션</h2>
+          <div id="lineupInputGrid" class="lineup-input-grid"></div>
+
+          <h2>선발투수</h2>
+          <label class="field">투수 이름 <input id="lineupPitcherName" type="text" /></label>
+
+        </section>
+
+        <section id="resultControls" class="tab-panel">
+          <h1>경기결과 만들기</h1>
+          <div class="field-row compact">
+            <label><input type="radio" name="result" value="win" checked /> 승리</label>
+            <label><input type="radio" name="result" value="lose" /> 패배</label>
+            <label><input type="radio" name="result" value="draw" /> 무승부</label>
+          </div>
+          <div class="field-row compact">
+            <label><input type="radio" name="kiaSide" value="home" checked /> 홈</label>
+            <label><input type="radio" name="kiaSide" value="away" /> 원정</label>
+          </div>
+
+          <label class="field">날짜 <input id="gameDate" type="date" /></label>
+          <label class="field">상대팀 <select id="opponentTeam"></select></label>
+          <label class="field">구장 <input id="stadiumName" type="text" /></label>
+
+          <h2>스코어</h2>
+          <label class="field">원정 점수 <input id="awayScore" type="number" min="0" /></label>
+          <label class="field">홈 점수 <input id="homeScore" type="number" min="0" /></label>
+
+          <h2>선수</h2>
+          <label class="field">갸VP <input id="mvpName" type="text" /></label>
+          <label class="field">성적 <input id="mvpRecord" type="text" /></label>
+          <label class="field">승리 투수 <input id="winnerName" type="text" /></label>
+          <label class="field">패배 투수 <input id="loserName" type="text" /></label>
+          <label class="field">세이브 <input id="saveName" type="text" /></label>
+
+        </section>
+
+        <section id="videoControls" class="tab-panel">
+          <h1>영상편집</h1>
+          <label class="field">영상 파일 <input id="videoFileInput" type="file" accept="video/*" /></label>
+
+          <div class="field field-stack">
+            <span>미리보기 재생</span>
+            <div class="playback-editor">
+              <button id="videoPlayToggle" class="playback-btn" type="button">▶️</button>
+              <div class="playback-bar-wrap">
+                <input id="videoPlaybackRange" class="playback-range" type="range" min="0" max="0" step="0.1" value="0" />
+              </div>
+              <div id="videoPlaybackTime" class="playback-time">0.0 / 0.0</div>
+            </div>
+          </div>
+
+          <div class="field field-stack">
+            <span>구간 자르기</span>
+            <div class="trim-editor">
+              <input id="videoStartTime" class="trim-value" type="number" min="0" step="0.1" value="0" />
+              <div class="trim-slider-wrap">
+                <div class="trim-track"></div>
+                <div id="videoTrimSelected" class="trim-selected"></div>
+                <input id="videoTrimStartRange" class="trim-range trim-range-start" type="range" min="0" max="0" step="0.1" value="0" />
+                <input id="videoTrimEndRange" class="trim-range trim-range-end" type="range" min="0" max="0" step="0.1" value="0" />
+              </div>
+              <input id="videoEndTime" class="trim-value" type="number" min="0" step="0.1" value="0" />
+            </div>
+          </div>
+
+          <label class="field">제목 <textarea id="videoTitleInput" rows="3" placeholder="제목 입력 후 Enter로 줄바꿈"></textarea></label>
+          <label class="field">날짜 <input id="videoDate" type="date" /></label>
+          <label class="field">상대팀 <select id="videoOpponentTeam"></select></label>
+
+          <details class="tune-details">
+            <summary>내용 직접 입력</summary>
+            <label class="field">내용 <textarea id="videoMetaOverride" rows="3" placeholder="내용 입력 후 Enter로 줄바꿈"></textarea></label>
+          </details>
+
+          <details class="tune-details">
+            <summary>조정 열기</summary>
+
+            <h2>영상 위치 조정</h2>
+            <div class="fine-tune-group">
+              <label class="fine-tune-row">X <input id="videoFrameXRange" type="range" min="0" max="260" value="90" /><input id="videoFrameXInput" type="number" value="90" /></label>
+              <label class="fine-tune-row">Y <input id="videoFrameYRange" type="range" min="200" max="700" value="516" /><input id="videoFrameYInput" type="number" value="516" /></label>
+              <label class="fine-tune-row">크기 <input id="videoFrameScaleRange" type="range" min="60" max="130" value="120" /><input id="videoFrameScaleInput" type="number" value="120" /></label>
+            </div>
+
+            <h2>제목 위치 조정</h2>
+            <div class="fine-tune-group">
+              <label class="fine-tune-row">X <input id="videoTitleXRange" type="range" min="0" max="240" value="120" /><input id="videoTitleXInput" type="number" value="120" /></label>
+              <label class="fine-tune-row">Y <input id="videoTitleYRange" type="range" min="100" max="320" value="246" /><input id="videoTitleYInput" type="number" value="246" /></label>
+              <label class="fine-tune-row">크기 <input id="videoTitleSizeRange" type="range" min="36" max="88" value="77" /><input id="videoTitleSizeInput" type="number" value="77" /></label>
+              <label class="fine-tune-row">자간 <input id="videoTitleSpacingRange" type="range" min="-8" max="8" value="-3" /><input id="videoTitleSpacingInput" type="number" value="-3" /></label>
+              <label class="fine-tune-row">줄간격 <input id="videoTitleLineHeightRange" type="range" min="40" max="110" value="93" /><input id="videoTitleLineHeightInput" type="number" value="93" /></label>
+            </div>
+
+            <h2>날짜/상대팀 위치 조정</h2>
+            <div class="fine-tune-group">
+              <label class="fine-tune-row">X <input id="videoMetaXRange" type="range" min="0" max="240" value="120" /><input id="videoMetaXInput" type="number" value="120" /></label>
+              <label class="fine-tune-row">Y <input id="videoMetaYRange" type="range" min="760" max="1180" value="1107" /><input id="videoMetaYInput" type="number" value="1107" /></label>
+              <label class="fine-tune-row">크기 <input id="videoMetaSizeRange" type="range" min="20" max="44" value="40" /><input id="videoMetaSizeInput" type="number" value="40" /></label>
+            </div>
+          </details>
+
+        </section>
+
+        <section id="rosterMovesControls" class="tab-panel">
+          <h1>등말소 만들기</h1>
+          <label class="field">날짜 <input id="rosterMovesDate" type="date" /></label>
+          <div class="roster-import-tools">
+            <button id="rosterMovesImportBtn" type="button">설정 날짜로 KBO 등말소 불러오기</button>
+            <button id="rosterMovesStatsBtn" type="button" class="secondary-action">현재 이름 기준 선수 성적 불러오기</button>
+            <p id="rosterMovesImportStatus" class="roster-import-status"></p>
+          </div>
+          <label class="field">상대팀 <select id="rosterMovesOpponentTeam"></select></label>
+          <label class="field">구장 <input id="rosterMovesStadiumName" type="text" /></label>
+          <details id="callUpDetails" class="tune-details" open>
+            <summary>CALL-UP</summary>
+            <label class="field">인원
+              <select id="callUpCount">
+                <option value="0" selected>0</option>
+                <option value="1">1</option>
+                <option value="2">2</option>
+                <option value="3">3</option>
+                <option value="4">4</option>
+              </select>
+            </label>
+            <div id="callUpGroupControls" class="roster-groups-editor"></div>
+          </details>
+
+          <details id="sendDownDetails" class="tune-details" open>
+            <summary>SEND-DOWN</summary>
+            <label class="field">인원
+              <select id="sendDownCount">
+                <option value="0" selected>0</option>
+                <option value="1">1</option>
+                <option value="2">2</option>
+                <option value="3">3</option>
+                <option value="4">4</option>
+              </select>
+            </label>
+            <div id="sendDownGroupControls" class="roster-groups-editor"></div>
+          </details>
+
+          <details class="tune-details">
+            <summary>미세조정</summary>
+
+            <h2>KBO API</h2>
+            <label class="field roster-import-endpoint">API URL
+              <input id="rosterMovesApiOrigin" type="url" placeholder="http://127.0.0.1:8765 또는 https://your-worker.workers.dev" />
+            </label>
+          </details>
+        </section>
+
+        <div class="button-row">
+          <button id="videoPreviewToggleBtn" type="button">미리보기</button>
+          <button id="downloadBtn" type="button">PNG 저장</button>
+          <button id="followDownloadBtn" type="button">팔로우 유도사진 저장</button>
+          <div id="videoSaveProgress" class="save-progress">
+            <div class="save-progress-bar">
+              <div id="videoSaveProgressFill" class="save-progress-fill"></div>
+            </div>
+            <div id="videoSaveProgressText" class="save-progress-text">0%</div>
+          </div>
+        </div>
+
+        <details id="lineupCaptionSettings" class="tune-details">
+          <summary>라인업 문구 설정</summary>
+          <label class="field">
+            시각
+            <select id="lineupGameTime">
+              <option value="18:30">18:30</option>
+              <option value="17:00">17:00</option>
+              <option value="14:00">14:00</option>
+              <option value="custom">직접입력</option>
+            </select>
+          </label>
+          <label class="field">직접입력 시각 <input id="lineupGameTimeCustom" type="text" placeholder="예: 18:30" /></label>
+          <label class="field">
+            방송국
+            <select id="lineupBroadcaster">
+              <option value="KBS N SPORTS">KBS N SPORTS</option>
+              <option value="SBS SPORTS">SBS SPORTS</option>
+              <option value="MBC SPORTS+">MBC SPORTS+</option>
+              <option value="SPOTV">SPOTV</option>
+              <option value="SPOTV2">SPOTV2</option>
+            </select>
+          </label>
+          <label class="field checkbox-field"><input id="lineupTerrestrial" type="checkbox" /> 지상파 표기로 바꾸기</label>
+        </details>
+
+        <div id="captionTools" class="caption-tools">
+          <textarea id="captionOutput" class="caption-output" readonly></textarea>
+          <button id="copyCaptionBtn" type="button">문구 복사</button>
+        </div>
+        <div id="copyToast" class="copy-toast" role="status" aria-live="polite"></div>
+      </section>
+
+      <section class="preview-wrap">
+        <div id="previewScale" class="preview-scale">
+          <div id="resultPoster" class="poster tab-preview">
+            <div class="poster-canvas">
+              <img id="backgroundLayer" class="layer bg" src="assets/background/bg-win.png" alt="배경" />
+              <img id="playerPhoto" class="layer player is-hidden" src="" alt="선수" />
+              <img id="kiaLogo" class="layer team-logo" src="assets/logo/kia2.png" alt="KIA 로고" />
+              <img id="oppLogo" class="layer team-logo" src="assets/logo/lg1.png" alt="상대 로고" />
+              <div id="dateText" class="layer text date"></div>
+              <div id="opponentText" class="layer text opponent"></div>
+              <div id="stadiumText" class="layer text stadium"></div>
+              <div id="homeScoreText" class="layer text score"></div>
+              <div id="awayScoreText" class="layer text score"></div>
+              <div id="badgeWin" class="layer badge win">승</div>
+              <div id="badgeLose" class="layer badge lose">패</div>
+              <div id="badgeSave" class="layer badge save">세</div>
+              <div id="winnerText" class="layer text pitcher"></div>
+              <div id="loserText" class="layer text pitcher"></div>
+              <div id="saveText" class="layer text pitcher"></div>
+              <div id="mvpNameText" class="layer text mvp-name"></div>
+              <div id="mvpRecordText" class="layer text mvp-record"></div>
+            </div>
+          </div>
+          <img id="resultMobilePreview" class="mobile-preview" alt="결과 미리보기" />
+
+          <div id="lineupPoster" class="poster tab-preview active">
+            <div class="poster-canvas">
+              <img id="lineupBgLayer" class="layer bg" src="assets/background/bg-lineup.png" alt="라인업 배경" />
+              <img id="lineupPlayerPhoto" class="layer player is-hidden" src="" alt="선발 투수" />
+              <div id="lineupDateText" class="layer text lineup-date"></div>
+              <div id="lineupOpponentText" class="layer text lineup-opponent"></div>
+              <div id="lineupStadiumText" class="layer text lineup-stadium"></div>
+              <div id="lineupTextLayer" class="layer lineup-text-layer"></div>
+              <div id="lineupPitcherText" class="layer text lineup-pitcher"></div>
+            </div>
+          </div>
+          <img id="lineupMobilePreview" class="mobile-preview active" alt="라인업 미리보기" />
+
+          <div id="videoPoster" class="poster tab-preview">
+            <div class="poster-canvas video-canvas">
+              <img id="videoBgImage" class="layer video-bg-image" src="assets/background/bg-video.png" alt="영상 배경" />
+              <div class="layer video-bg"></div>
+              <div id="videoTitleText" class="layer video-title-text"></div>
+              <video id="videoPreviewElement" class="layer video-preview-element" playsinline preload="metadata"></video>
+              <div id="videoMetaText" class="layer video-meta-text"></div>
+              <img id="videoFramePreviewImage" class="layer video-frame-preview-image" alt="영상 미리보기" />
+            </div>
+          </div>
+
+          <div id="rosterMovesPoster" class="poster tab-preview">
+            <div class="poster-canvas">
+              <img id="rosterMovesBgLayer" class="layer bg" src="assets/background/bg-rostermoves.png" alt="등말소 배경" />
+              <div id="rosterMovesDateText" class="layer text date"></div>
+              <div id="rosterMovesOpponentText" class="layer text opponent"></div>
+              <div id="rosterMovesStadiumText" class="layer text stadium"></div>
+              <div id="callUpTitleText" class="layer roster-section-title">CALL-UP</div>
+              <div id="callUpSubtitleText" class="layer roster-section-subtitle">등록 · 2군성적</div>
+              <div id="sendDownTitleText" class="layer roster-section-title">SEND-DOWN</div>
+              <div id="sendDownSubtitleText" class="layer roster-section-subtitle">말소 · 1군성적</div>
+              <div id="rosterMovesDynamicLayer" class="layer roster-dynamic-layer"></div>
+            </div>
+          </div>
+          <img id="rosterMovesMobilePreview" class="mobile-preview" alt="등말소 미리보기" />
+        </div>
+      </section>
+    </main>
+
+    <datalist id="playerNameOptions"></datalist>
+
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+    <script type="module" src="script.js?v=20260407e"></script>
   </body>
 </html>
-

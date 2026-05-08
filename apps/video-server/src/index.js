@@ -42,6 +42,8 @@ app.post('/api/render-video', async (request, reply) => {
   const outputName = `${id}.mp4`;
   const outputPath = join(rendersDir, outputName);
   let layout = null;
+  let start = 0;
+  let duration = 0;
 
   for await (const part of request.parts()) {
     if (part.type === 'file' && part.fieldname === 'video') {
@@ -50,6 +52,10 @@ app.post('/api/render-video', async (request, reply) => {
       await pipeline(part.file, createWriteStream(overlayPath));
     } else if (part.type === 'field' && part.fieldname === 'layout') {
       layout = JSON.parse(String(part.value || '{}'));
+    } else if (part.type === 'field' && part.fieldname === 'start') {
+      start = Number(part.value) || 0;
+    } else if (part.type === 'field' && part.fieldname === 'duration') {
+      duration = Number(part.value) || 0;
     }
   }
 
@@ -63,7 +69,9 @@ app.post('/api/render-video', async (request, reply) => {
     videoPath,
     overlayPath,
     outputPath,
-    frame
+    frame,
+    start,
+    duration
   });
 
   await Promise.allSettled([unlink(videoPath), unlink(overlayPath)]);
@@ -74,7 +82,7 @@ app.post('/api/render-video', async (request, reply) => {
   };
 });
 
-async function renderVideo({ videoPath, overlayPath, outputPath, frame }) {
+async function renderVideo({ videoPath, overlayPath, outputPath, frame, start, duration }) {
   const filter = [
     `[1:v]scale=${frame.width}:${frame.height}:force_original_aspect_ratio=increase`,
     `crop=${frame.width}:${frame.height}`,
@@ -88,6 +96,9 @@ async function renderVideo({ videoPath, overlayPath, outputPath, frame }) {
     '1',
     '-i',
     overlayPath,
+    '-ss',
+    String(Math.max(0, start || 0)),
+    ...(duration > 0 ? ['-t', String(duration)] : []),
     '-i',
     videoPath,
     '-filter_complex',

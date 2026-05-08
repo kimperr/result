@@ -95,8 +95,13 @@ if (-not $healthOk) {
   throw "Cloudflare tunnel URL was created, but health check failed: $publicUrl/health"
 }
 
-$configPath = Join-Path $repoRoot "apps\mobile\src\config.js"
-"export const DEFAULT_SERVER_URL = '$publicUrl';" | Set-Content -Encoding UTF8 $configPath
+$legacyConfigPath = Join-Path $repoRoot "apps\mobile\src\config.js"
+$appConfigPath = Join-Path $repoRoot "apps\mobile\appConfig.js"
+"export const DEFAULT_SERVER_URL = '$publicUrl';" | Set-Content -Encoding UTF8 $legacyConfigPath
+@"
+export const DEFAULT_SERVER_URL = '$publicUrl';
+export const GITHUB_ASSET_BASE = 'https://raw.githubusercontent.com/kimperr/result/main';
+"@ | Set-Content -Encoding UTF8 $appConfigPath
 
 Push-Location $repoRoot
 try {
@@ -114,4 +119,3 @@ Write-Host $publicUrl
 Write-Host ""
 Write-Host "Health:"
 Write-Host "$publicUrl/health"
-
