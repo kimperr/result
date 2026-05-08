@@ -3,7 +3,8 @@ dist/
 .env
 .env.local
 apps/mobile/android/
+apps/native-android/.gradle/
+apps/native-android/app/build/
 apps/video-server/renders/
 apps/video-server/uploads/
 *.log
-
