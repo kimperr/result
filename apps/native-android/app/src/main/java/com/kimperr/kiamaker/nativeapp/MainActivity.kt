@@ -39,6 +39,7 @@ private const val DEFAULT_SERVER_URL = "https://performing-flip-inflation-galaxy
 class MainActivity : Activity() {
     private val state = MakerState()
     private lateinit var posterView: PosterView
+    private lateinit var formContent: LinearLayout
     private lateinit var statusText: TextView
     private var selectedVideoUri: Uri? = null
 
@@ -76,6 +77,7 @@ class MainActivity : Activity() {
                 text = label
                 setOnClickListener {
                     state.mode = mode
+                    updateFieldVisibility()
                     posterView.invalidate()
                 }
             }, LinearLayout.LayoutParams(0, dp(44), 1f))
@@ -87,6 +89,7 @@ class MainActivity : Activity() {
             orientation = LinearLayout.VERTICAL
             setPadding(dp(14), dp(8), dp(14), dp(16))
         }
+        formContent = content
         scroll.addView(content)
         root.addView(scroll, LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, 0, 1f))
 
@@ -183,7 +186,23 @@ class MainActivity : Activity() {
         }
         content.addView(statusText)
 
+        updateFieldVisibility()
         return root
+    }
+
+    private fun updateFieldVisibility() {
+        if (!::formContent.isInitialized) return
+
+        val visibleIndexes = when (state.mode) {
+            MakerMode.LINEUP -> setOf(0, 1, 2, 3, 6, 7, 11, 14, 15)
+            MakerMode.RESULT -> setOf(0, 1, 2, 3, 4, 5, 6, 7, 9, 10, 14, 15)
+            MakerMode.VIDEO -> setOf(0, 4, 5, 8, 14, 15)
+            MakerMode.ROSTER -> setOf(0, 1, 2, 3, 6, 7, 12, 13, 14, 15)
+        }
+
+        for (index in 0 until formContent.childCount) {
+            formContent.getChildAt(index).visibility = if (index in visibleIndexes) View.VISIBLE else View.GONE
+        }
     }
 
     private fun spinner(label: String, values: List<String>, onSelected: (Int) -> Unit): View {
