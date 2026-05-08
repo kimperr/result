@@ -16,6 +16,8 @@ import android.os.Build
 import android.os.Bundle
 import android.os.Environment
 import android.provider.MediaStore
+import android.text.Editable
+import android.text.TextWatcher
 import android.view.Gravity
 import android.view.View
 import android.view.ViewGroup
@@ -47,6 +49,7 @@ class MainActivity : Activity() {
     private lateinit var formContent: LinearLayout
     private lateinit var statusText: TextView
     private var selectedVideoUri: Uri? = null
+    private var playerImageRequestId = 0
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -103,15 +106,17 @@ class MainActivity : Activity() {
         }
         content.addView(posterView)
 
-        content.addView(spinner("선수 선택", PLAYER_OPTIONS.map { it.name }) { index ->
-            state.playerName = PLAYER_OPTIONS[index].name
-            state.playerNumber = PLAYER_OPTIONS[index].number
+        content.addView(spinner("선수 선택", listOf("선택 안함") + PLAYER_OPTIONS.map { it.name }) { index ->
+            val player = PLAYER_OPTIONS.getOrNull(index - 1)
+            state.playerName = player?.name.orEmpty()
+            state.playerNumber = player?.number ?: 24
             loadPlayerImage()
             posterView.invalidate()
         })
-        content.addView(spinner("상대팀", TEAM_OPTIONS.map { it.name }) { index ->
-            state.teamCode = TEAM_OPTIONS[index].code
-            state.opponentText = "vs ${TEAM_OPTIONS[index].name} · ${TEAM_OPTIONS[index].stadium}"
+        content.addView(spinner("상대팀", listOf("선택 안함") + TEAM_OPTIONS.map { it.name }) { index ->
+            val team = TEAM_OPTIONS.getOrNull(index - 1)
+            state.teamCode = team?.code ?: "lg"
+            state.opponentText = if (team == null) "" else "vs ${team.name} · ${team.stadium}"
             posterView.invalidate()
         })
 
@@ -250,6 +255,13 @@ class MainActivity : Activity() {
             setSingleLine(false)
             setBackgroundColor(Color.rgb(34, 34, 34))
             setPadding(dp(10), dp(8), dp(10), dp(8))
+            addTextChangedListener(object : TextWatcher {
+                override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) = Unit
+                override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
+                    onChange(s?.toString().orEmpty())
+                }
+                override fun afterTextChanged(s: Editable?) = Unit
+            })
             setOnFocusChangeListener { view, hasFocus ->
                 if (!hasFocus) onChange((view as EditText).text.toString())
             }
@@ -387,28 +399,35 @@ class MainActivity : Activity() {
     }
 
     private fun loadPlayerImage() {
+        if (state.playerName.isBlank()) {
+            playerImageRequestId += 1
+            state.playerBitmap = null
+            runOnUiThread { posterView.invalidate() }
+            return
+        }
         val number = state.playerNumber
+        val requestId = ++playerImageRequestId
+        state.playerBitmap = null
+        runOnUiThread { posterView.invalidate() }
         val url = "$GITHUB_ASSET_BASE/assets/player/$number.png"
         thread {
             try {
-                URL(url).openStream().use { input ->
-                    state.playerBitmap = BitmapFactory.decodeStream(BufferedInputStream(input))
+                val bitmap = URL(url).openStream().use { input ->
+                    BitmapFactory.decodeStream(BufferedInputStream(input))
                 }
+                if (requestId != playerImageRequestId) return@thread
+                state.playerBitmap = bitmap
                 runOnUiThread { posterView.invalidate() }
             } catch (_: Throwable) {
+                if (requestId != playerImageRequestId) return@thread
                 state.playerBitmap = null
                 runOnUiThread { posterView.invalidate() }
             }
         }
     }
 
-    private fun playerNumber(name: String): Int = when (name.trim()) {
-        "아데를린" -> 24
-        "김도영" -> 5
-        "김선빈" -> 3
-        "나성범" -> 47
-        else -> 24
-    }
+    private fun playerNumber(name: String): Int =
+        PLAYER_OPTIONS.firstOrNull { it.name == name.trim() }?.number ?: 24
 
     private fun status(message: String) {
         runOnUiThread { statusText.text = message }
@@ -421,21 +440,21 @@ private enum class MakerMode { LINEUP, RESULT, VIDEO, ROSTER }
 
 private data class MakerState(
     var mode: MakerMode = MakerMode.RESULT,
-    var playerName: String = "아데를린",
+    var playerName: String = "",
     var playerNumber: Int = 24,
     var teamCode: String = "lg",
-    var title: String = "KIA TIGERS",
-    var meta: String = "4타수 2안타 1홈런",
-    var dateText: String = "2026.05.08",
-    var opponentText: String = "vs LG 트윈스 · 광주",
-    var awayScore: String = "3",
-    var homeScore: String = "5",
-    var winnerName: String = "양현종",
-    var loserName: String = "상대투수",
-    var saveName: String = "정해영",
-    var lineupText: String = "1 박찬호 SS\n2 김선빈 2B\n3 김도영 3B\n4 최형우 DH\n5 나성범 RF\n6 아데를린 1B\n7 김태군 C\n8 최원준 CF\n9 이창진 LF",
-    var callUpText: String = "아데를린 내야수\n김도현 투수",
-    var sendDownText: String = "홍길동 내야수",
+    var title: String = "",
+    var meta: String = "",
+    var dateText: String = "",
+    var opponentText: String = "",
+    var awayScore: String = "",
+    var homeScore: String = "",
+    var winnerName: String = "",
+    var loserName: String = "",
+    var saveName: String = "",
+    var lineupText: String = "",
+    var callUpText: String = "",
+    var sendDownText: String = "",
     var serverUrl: String = DEFAULT_SERVER_URL,
     var playerBitmap: Bitmap? = null
 )
@@ -493,12 +512,16 @@ private class PosterView(
             canvas.drawRoundRect(RectF(70f, 70f, w - 70f, h - 70f), 22f, 22f, paint)
         }
 
-        logo("kia2")?.let { canvas.drawBitmap(it, null, RectF(0f, 0f, w, h), null) }
-        logo("${state.teamCode}1")?.let { canvas.drawBitmap(it, null, RectF(0f, 0f, w, h), null) }
+        if (state.mode == MakerMode.RESULT) {
+            logo("kia2")?.let { canvas.drawBitmap(it, null, RectF(0f, 0f, w, h), null) }
+            logo("${state.teamCode}1")?.let { canvas.drawBitmap(it, null, RectF(0f, 0f, w, h), null) }
+        }
 
-        state.playerBitmap?.let { bitmap ->
-            val dest = RectF(0f, 0f, w, h)
-            canvas.drawBitmap(bitmap, null, dest, null)
+        if (state.mode == MakerMode.RESULT || state.mode == MakerMode.LINEUP) {
+            state.playerBitmap?.let { bitmap ->
+                val dest = RectF(0f, 0f, w, h)
+                canvas.drawBitmap(bitmap, null, dest, null)
+            }
         }
 
         drawModeContent(canvas)
