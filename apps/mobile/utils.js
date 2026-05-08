@@ -106,7 +106,7 @@ export function getPlayerPhotoPath(name) {
 export function getPlayerMiniPhotoPath(name) {
   const playerRef = findPlayerNumberByName(name);
   if (!playerRef) return '';
-  return `assets/player_mini/${playerRef.playerNumber}.png`;
+  return `${GITHUB_ASSET_BASE}/assets/player_mini/${playerRef.playerNumber}.png`;
 }
 
 export function getPlayerInfo(name) {
