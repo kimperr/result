@@ -2,7 +2,7 @@ import { DEFAULT_VIDEO_LAYOUT, getPlayerPhotoUrl } from '@kia-maker/shared';
 import './styles.css';
 
 const state = {
-  serverUrl: localStorage.getItem('serverUrl') || 'http://localhost:8787',
+  serverUrl: localStorage.getItem('serverUrl') || 'https://collectors-fcc-neighborhood-constitution.trycloudflare.com',
   playerName: '아데를린',
   title: 'KIA TIGERS',
   meta: 'VIDEO MAKER',
@@ -152,4 +152,3 @@ async function renderVideoOnServer() {
 }
 
 render();
-
