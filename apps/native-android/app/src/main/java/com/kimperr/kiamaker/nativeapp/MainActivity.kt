@@ -109,6 +109,7 @@ class MainActivity : Activity() {
 
         content.addView(input("선수 이름", state.playerName) {
             state.playerName = it
+            state.playerNumber = playerNumber(it)
             loadPlayerImage()
             posterView.invalidate()
         })
@@ -130,6 +131,34 @@ class MainActivity : Activity() {
         })
         content.addView(input("영상 서버", state.serverUrl) {
             state.serverUrl = it.trim()
+        })
+
+        content.addView(input("스코어", "${state.awayScore}:${state.homeScore}") {
+            val parts = it.split(":", "-", " ")
+            if (parts.size >= 2) {
+                state.awayScore = parts[0].trim().ifBlank { state.awayScore }
+                state.homeScore = parts[1].trim().ifBlank { state.homeScore }
+                posterView.invalidate()
+            }
+        })
+        content.addView(input("승/패/세이브", "${state.winnerName}/${state.loserName}/${state.saveName}") {
+            val parts = it.split("/")
+            if (parts.isNotEmpty()) state.winnerName = parts[0].trim()
+            if (parts.size > 1) state.loserName = parts[1].trim()
+            if (parts.size > 2) state.saveName = parts[2].trim()
+            posterView.invalidate()
+        })
+        content.addView(input("라인업", state.lineupText) {
+            state.lineupText = it
+            posterView.invalidate()
+        })
+        content.addView(input("콜업", state.callUpText) {
+            state.callUpText = it
+            posterView.invalidate()
+        })
+        content.addView(input("말소", state.sendDownText) {
+            state.sendDownText = it
+            posterView.invalidate()
         })
 
         val actions = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
@@ -341,6 +370,14 @@ private data class MakerState(
     var meta: String = "4타수 2안타 1홈런",
     var dateText: String = "2026.05.08",
     var opponentText: String = "vs LG 트윈스 · 광주",
+    var awayScore: String = "3",
+    var homeScore: String = "5",
+    var winnerName: String = "양현종",
+    var loserName: String = "상대투수",
+    var saveName: String = "정해영",
+    var lineupText: String = "1 박찬호 SS\n2 김선빈 2B\n3 김도영 3B\n4 최형우 DH\n5 나성범 RF\n6 아데를린 1B\n7 김태군 C\n8 최원준 CF\n9 이창진 LF",
+    var callUpText: String = "아데를린 내야수\n김도현 투수",
+    var sendDownText: String = "홍길동 내야수",
     var serverUrl: String = DEFAULT_SERVER_URL,
     var playerBitmap: Bitmap? = null
 )
@@ -399,6 +436,9 @@ private class PosterView(
             canvas.drawBitmap(bitmap, null, dest, null)
         }
 
+        drawModeContent(canvas)
+        return
+
         white.textAlign = Paint.Align.CENTER
         white.typeface = android.graphics.Typeface.DEFAULT_BOLD
         white.textSize = 82f
@@ -432,6 +472,92 @@ private class PosterView(
         MakerMode.RESULT -> "RESULT"
         MakerMode.VIDEO -> "VIDEO"
         MakerMode.ROSTER -> "ROSTER"
+    }
+
+    private fun drawModeContent(canvas: Canvas) {
+        when (state.mode) {
+            MakerMode.RESULT -> drawResult(canvas)
+            MakerMode.LINEUP -> drawLineup(canvas)
+            MakerMode.ROSTER -> drawRoster(canvas)
+            MakerMode.VIDEO -> drawVideo(canvas)
+        }
+    }
+
+    private fun drawResult(canvas: Canvas) {
+        drawTopMeta(canvas)
+        white.typeface = android.graphics.Typeface.DEFAULT_BOLD
+        white.textAlign = Paint.Align.CENTER
+        white.textSize = 132f
+        canvas.drawText(state.awayScore, 300f, 650f, white)
+        canvas.drawText(state.homeScore, 300f, 835f, white)
+        white.textSize = 42f
+        canvas.drawText(state.playerName, 540f, 1120f, white)
+        white.typeface = android.graphics.Typeface.DEFAULT
+        white.textSize = 28f
+        canvas.drawText(state.meta, 540f, 1165f, white)
+        white.textAlign = Paint.Align.LEFT
+        white.textSize = 30f
+        canvas.drawText("W  ${state.winnerName}", 130f, 1010f, white)
+        canvas.drawText("L  ${state.loserName}", 130f, 1058f, white)
+        canvas.drawText("S  ${state.saveName}", 130f, 1106f, white)
+    }
+
+    private fun drawLineup(canvas: Canvas) {
+        drawTopMeta(canvas)
+        white.textAlign = Paint.Align.LEFT
+        white.typeface = android.graphics.Typeface.DEFAULT_BOLD
+        white.textSize = 48f
+        state.lineupText.lines().filter { it.isNotBlank() }.take(9).forEachIndexed { index, line ->
+            canvas.drawText(line.trim(), 170f, 495f + index * 72f, white)
+        }
+        white.textAlign = Paint.Align.CENTER
+        white.textSize = 44f
+        canvas.drawText("STARTER  ${state.playerName}", 540f, 1160f, white)
+    }
+
+    private fun drawRoster(canvas: Canvas) {
+        drawTopMeta(canvas)
+        white.typeface = android.graphics.Typeface.DEFAULT_BOLD
+        white.textAlign = Paint.Align.LEFT
+        white.textSize = 54f
+        canvas.drawText("CALL-UP", 70f, 535f, white)
+        canvas.drawText("SEND-DOWN", 70f, 900f, white)
+        white.typeface = android.graphics.Typeface.DEFAULT
+        white.textSize = 36f
+        state.callUpText.lines().filter { it.isNotBlank() }.take(4).forEachIndexed { index, line ->
+            canvas.drawText(line.trim(), 280f, 620f + index * 62f, white)
+        }
+        state.sendDownText.lines().filter { it.isNotBlank() }.take(4).forEachIndexed { index, line ->
+            canvas.drawText(line.trim(), 280f, 985f + index * 62f, white)
+        }
+    }
+
+    private fun drawVideo(canvas: Canvas) {
+        white.typeface = android.graphics.Typeface.DEFAULT_BOLD
+        white.textAlign = Paint.Align.CENTER
+        white.textSize = 76f
+        state.title.lines().take(2).forEachIndexed { index, line ->
+            canvas.drawText(line, 540f, 285f + index * 88f, white)
+        }
+        paint.style = Paint.Style.STROKE
+        paint.strokeWidth = 8f
+        paint.color = Color.WHITE
+        canvas.drawRect(Rect(90, 516, 990, 1022), paint)
+        paint.style = Paint.Style.FILL
+        white.typeface = android.graphics.Typeface.DEFAULT
+        white.textSize = 40f
+        state.meta.lines().take(2).forEachIndexed { index, line ->
+            canvas.drawText(line, 540f, 1120f + index * 52f, white)
+        }
+    }
+
+    private fun drawTopMeta(canvas: Canvas) {
+        white.typeface = android.graphics.Typeface.DEFAULT
+        white.textAlign = Paint.Align.LEFT
+        white.textSize = 29f
+        canvas.drawText(state.dateText, 66f, 354f, white)
+        white.textSize = 28f
+        canvas.drawText(state.opponentText, 66f, 392f, white)
     }
 
     private fun backgroundForMode(): Bitmap? {
