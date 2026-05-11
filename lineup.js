@@ -1,5 +1,12 @@
 import { LINEUP_FIXED, LINEUP_LAYOUT } from './constants.js';
-import { formatDate, formatDisplayName, formatLineupPosition, getPlayerPhotoPath } from './utils.js';
+import {
+  formatDate,
+  formatDisplayName,
+  formatLineupPosition,
+  formatOpponentLabel,
+  getPlayerPhotoPath,
+  isTravelDayOpponent
+} from './utils.js';
 
 export function getLineupBroadcastLabel(el) {
   const broadcaster = el.lineupBroadcaster?.value || 'KBS N SPORTS';
@@ -28,10 +35,11 @@ export function updateLineupGameTimeCustomVisibility(el) {
 
 export function getLineupCaptionText(el) {
   const teamName = (el.lineupOpponentTeam.value || '').trim();
+  const opponentLabel = formatOpponentLabel(teamName, isTravelDayOpponent(el.lineupOpponentTeam));
   const timeLabel = getLineupGameTimeLabel(el);
   const broadcasterLabel = getLineupBroadcastLabel(el);
   return [
-    `𝐖𝐈𝐍𝐍𝐈𝐍𝐆 𝐋𝐈𝐍𝐄𝐔𝐏 vs ${teamName}`,
+    `𝐖𝐈𝐍𝐍𝐈𝐍𝐆 𝐋𝐈𝐍𝐄𝐔𝐏 ${opponentLabel}`,
     `⏰️ ${timeLabel} / 📺 ${broadcasterLabel}`
   ].join('\n');
 }
@@ -75,9 +83,10 @@ export function updateLineupPoster({
   scheduleMobilePreviewRender
 }) {
   const team = selectedTeamInfo(el.lineupOpponentTeam);
+  const isTravelDay = isTravelDayOpponent(el.lineupOpponentTeam);
 
   out.lineupDateText.textContent = formatDate(el.lineupDate.value);
-  out.lineupOpponentText.textContent = `vs ${team.name}`;
+  out.lineupOpponentText.textContent = formatOpponentLabel(team.name, isTravelDay);
   out.lineupStadiumText.textContent = el.lineupStadiumName.value;
   out.lineupPitcherText.textContent = formatDisplayName(el.lineupPitcherName.value);
   const lineupPhotoPath = getPlayerPhotoPath(el.lineupPitcherName.value);

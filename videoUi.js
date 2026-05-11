@@ -1,5 +1,5 @@
 import { VIDEO_LAYOUT } from './constants.js';
-import { formatSecondsLabel, formatVideoMeta } from './utils.js';
+import { formatSecondsLabel, formatVideoMeta, isTravelDayOpponent } from './utils.js';
 
 export function getVideoMetaLines(el) {
   const overrideLines = (el.videoMetaOverride?.value || '')
@@ -9,7 +9,9 @@ export function getVideoMetaLines(el) {
 
   if (overrideLines.length) return overrideLines;
 
-  return formatVideoMeta(el.videoDate.value, el.videoOpponentTeam.value)
+  return formatVideoMeta(el.videoDate.value, el.videoOpponentTeam.value, {
+    travelDay: isTravelDayOpponent(el.videoOpponentTeam)
+  })
     .split('\n')
     .filter(Boolean);
 }

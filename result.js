@@ -2,7 +2,9 @@ import { BACKGROUND_BY_RESULT, RESULT_LAYOUT } from './constants.js';
 import {
   formatDate,
   formatDisplayName,
+  formatOpponentLabel,
   getPlayerPhotoPath,
+  isTravelDayOpponent,
   parseScoreInput,
   selectedValue,
   setSelectedRadioValue
@@ -35,12 +37,13 @@ export function syncAutoResultSelection(el, resultManualOverride) {
 
 export function getResultCaptionText(el, resultManualOverride) {
   const teamName = (el.opponentTeam.value || '').trim();
+  const opponentLabel = formatOpponentLabel(teamName, isTravelDayOpponent(el.opponentTeam));
   const resultMap = { win: '승리', draw: '무승부', lose: '패배' };
   const resultLabel = resultMap[syncAutoResultSelection(el, resultManualOverride)] || '승리';
   const homeScore = el.homeScore.value || '0';
   const awayScore = el.awayScore.value || '0';
   return [
-    `𝐅𝐈𝐍𝐀𝐋 vs ${teamName}`,
+    `𝐅𝐈𝐍𝐀𝐋 ${opponentLabel}`,
     `${awayScore} - ${homeScore} ${resultLabel}`
   ].join('\n');
 }
@@ -58,12 +61,13 @@ export function updateResultPoster({
   const result = syncAutoResultSelection(el, resultManualOverride);
   const side = selectedValue(el.kiaSide);
   const team = selectedTeamInfo(el.opponentTeam);
+  const isTravelDay = isTravelDayOpponent(el.opponentTeam);
 
   out.backgroundLayer.src = BACKGROUND_BY_RESULT[result];
   el.resultPoster.style.setProperty('--global-letter-spacing', '-1px');
 
   out.dateText.textContent = formatDate(el.gameDate.value);
-  out.opponentText.textContent = `vs ${team.name}`;
+  out.opponentText.textContent = formatOpponentLabel(team.name, isTravelDay);
   out.stadiumText.textContent = el.stadiumName.value;
   out.homeScoreText.textContent = el.awayScore.value || '0';
   out.awayScoreText.textContent = el.homeScore.value || '0';

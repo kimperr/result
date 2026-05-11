@@ -6,10 +6,12 @@ import {
 } from './constants.js';
 import {
   formatDisplayName,
+  formatOpponentLabel,
   formatRosterNumber,
   getPlayerInfo,
   getPlayerMiniPhotoPath,
   getMatchingPlayerNames,
+  isTravelDayOpponent,
   normalizeDecimalInput,
   normalizeIntegerInput,
   normalizePitcherInningsInput
@@ -445,9 +447,10 @@ export function updateRosterMovesPoster({
   scheduleMobilePreviewRender
 }) {
   const team = selectedTeamInfo(el.rosterMovesOpponentTeam);
+  const isTravelDay = isTravelDayOpponent(el.rosterMovesOpponentTeam);
 
   out.rosterMovesDateText.textContent = formatDate(el.rosterMovesDate.value);
-  out.rosterMovesOpponentText.textContent = `vs ${team.name}`;
+  out.rosterMovesOpponentText.textContent = formatOpponentLabel(team.name, isTravelDay);
   out.rosterMovesStadiumText.textContent = el.rosterMovesStadiumName.value;
   out.rosterMovesDateText.style.letterSpacing = '-1px';
   out.rosterMovesOpponentText.style.letterSpacing = '-1px';

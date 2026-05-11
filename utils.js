@@ -31,10 +31,22 @@ export function formatDate(value) {
   return `${y}.${m}.${d}`;
 }
 
-export function formatVideoMeta(dateValue, opponentName) {
+export const TRAVEL_DAY_LABEL = '이동일';
+
+export function isTravelDayOpponent(input) {
+  return input?.dataset?.scheduleDayType === 'travel';
+}
+
+export function formatOpponentLabel(opponentName, isTravelDay = false) {
+  if (isTravelDay) return TRAVEL_DAY_LABEL;
+  return opponentName ? `vs ${opponentName}` : '';
+}
+
+export function formatVideoMeta(dateValue, opponentName, options = {}) {
   const lines = [];
   if (dateValue) lines.push(formatDate(dateValue));
-  if (opponentName) lines.push(`vs ${opponentName}`);
+  const opponentLabel = formatOpponentLabel(opponentName, options.travelDay);
+  if (opponentLabel) lines.push(opponentLabel);
   return lines.join('\n');
 }
 

@@ -8,9 +8,11 @@ import {
   escapeDrawtext,
   formatDate,
   formatDisplayName,
+  formatOpponentLabel,
   getFileExtension,
   getPlayerInfo,
   getPlayerPhotoPath,
+  isTravelDayOpponent,
   normalizeInningsValue,
   selectedValue,
   setSelectedRadioValue,
@@ -271,6 +273,7 @@ function selectedTeamInfoByName(teamName) {
 }
 
 function applySharedOpponent(teamName) {
+  setScheduleDayType('');
   applySharedOpponentState({
     teamName,
     el,
@@ -282,6 +285,21 @@ function applySharedOpponent(teamName) {
     updateVideoPoster,
     updateRosterMovesPoster,
     updateSecondaryActionButtons
+  });
+}
+
+function setScheduleDayType(type) {
+  [
+    el.opponentTeam,
+    el.lineupOpponentTeam,
+    el.videoOpponentTeam,
+    el.rosterMovesOpponentTeam
+  ].filter(Boolean).forEach((input) => {
+    if (type) {
+      input.dataset.scheduleDayType = type;
+    } else {
+      delete input.dataset.scheduleDayType;
+    }
   });
 }
 
@@ -457,9 +475,10 @@ function getRosterSectionCaptionNames(section) {
 
 function getRosterMovesCaptionText() {
   const teamName = (el.rosterMovesOpponentTeam?.value || '').trim();
+  const opponentLabel = formatOpponentLabel(teamName, isTravelDayOpponent(el.rosterMovesOpponentTeam));
   const callUpNames = getRosterSectionCaptionNames('callUp');
   const sendDownNames = getRosterSectionCaptionNames('sendDown');
-  const lines = [`𝐑𝐎𝐒𝐓𝐄𝐑 𝐌𝐎𝐕𝐄𝐒${teamName ? ` vs ${teamName}` : ''}`];
+  const lines = [`𝐑𝐎𝐒𝐓𝐄𝐑 𝐌𝐎𝐕𝐄𝐒${opponentLabel ? ` ${opponentLabel}` : ''}`];
 
   if (callUpNames.length) {
     lines.push(`▲등록 : ${callUpNames.join(', ')}`);
@@ -678,6 +697,13 @@ function setLineupStartingPitcher(name, force = false) {
   scheduleAutoFillState.lastAutoPitcherName = nextName;
 }
 
+function isMondayDateValue(dateValue) {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(dateValue || '').trim());
+  if (!match) return false;
+  const [, year, month, day] = match.map(Number);
+  return new Date(year, month - 1, day).getDay() === 1;
+}
+
 async function autoFillScheduleByDate(dateValue, options = {}) {
   const { syncDates = true, silent = false, force = false } = options;
   const normalizedDate = String(dateValue || '').trim();
@@ -691,10 +717,19 @@ async function autoFillScheduleByDate(dateValue, options = {}) {
     const schedule = await fetchKboScheduleByDate({ dateValue: normalizedDate });
     if (scheduleAutoFillState.requestId !== requestId) return false;
     if (!schedule?.found) {
+      const isTravelDay = isMondayDateValue(normalizedDate);
+      setScheduleDayType(isTravelDay ? 'travel' : '');
+      if (syncDates) setSharedDateValue(schedule?.date || normalizedDate);
       scheduleAutoFillState.lastDateValue = normalizedDate;
-      return false;
+      updateResultPoster();
+      updateLineupPoster();
+      updateVideoPoster();
+      updateRosterMovesPoster();
+      updateSecondaryActionButtons();
+      return isTravelDay;
     }
 
+    setScheduleDayType('');
     if (syncDates) setSharedDateValue(schedule.date || normalizedDate);
     applySharedKiaSide(schedule.kiaSide === 'away' ? 'away' : 'home');
     if (schedule.opponentTeam) applySharedOpponent(schedule.opponentTeam);
