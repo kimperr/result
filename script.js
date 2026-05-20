@@ -39,6 +39,10 @@ import {
   updateResultPoster as renderResultPoster
 } from './result.js';
 import {
+  getCanceledCaptionText,
+  updateCanceledPoster as renderCanceledPoster
+} from './canceled.js';
+import {
   bindNudgeButtons as initializeNudgeButtons,
   copyGeneratedCaption as copyCaptionText,
   downloadFollowImage,
@@ -174,6 +178,10 @@ function getGeneratedCaptionText() {
     return getRosterMovesCaptionText();
   }
 
+  if (activeTab === 'canceled') {
+    return getCanceledCaptionText(el);
+  }
+
   return '';
 }
 
@@ -219,7 +227,10 @@ function updateSecondaryActionButtons() {
   if (el.lineupCaptionSettings) {
     el.lineupCaptionSettings.style.display = activeTab === 'lineup' ? 'block' : 'none';
   }
-  const showCaptionTools = activeTab === 'lineup' || activeTab === 'result' || activeTab === 'rosterMoves';
+  const showCaptionTools = activeTab === 'lineup'
+    || activeTab === 'result'
+    || activeTab === 'rosterMoves'
+    || activeTab === 'canceled';
   if (el.captionTools) {
     el.captionTools.style.display = showCaptionTools ? 'grid' : 'none';
   }
@@ -284,6 +295,7 @@ function applySharedOpponent(teamName) {
     updateLineupPoster,
     updateVideoPoster,
     updateRosterMovesPoster,
+    updateCanceledPoster,
     updateSecondaryActionButtons
   });
 }
@@ -293,7 +305,8 @@ function setScheduleDayType(type) {
     el.opponentTeam,
     el.lineupOpponentTeam,
     el.videoOpponentTeam,
-    el.rosterMovesOpponentTeam
+    el.rosterMovesOpponentTeam,
+    el.canceledOpponentTeam
   ].filter(Boolean).forEach((input) => {
     if (type) {
       input.dataset.scheduleDayType = type;
@@ -312,7 +325,8 @@ function applySharedKiaSide(side) {
     selectedTeamInfo,
     updateResultPoster,
     updateLineupPoster,
-    updateRosterMovesPoster
+    updateRosterMovesPoster,
+    updateCanceledPoster
   });
 }
 
@@ -436,6 +450,7 @@ function scheduleMobilePreviewRender() {
     await renderMobilePreview('result');
     await renderMobilePreview('lineup');
     await renderMobilePreview('rosterMoves');
+    await renderMobilePreview('canceled');
   }, 80);
 }
 
@@ -505,6 +520,17 @@ function updateRosterMovesPoster() {
     scheduleMobilePreviewRender
   });
   updateSecondaryActionButtons();
+}
+
+function updateCanceledPoster() {
+  renderCanceledPoster({
+    el,
+    out,
+    selectedTeamInfo,
+    applyText,
+    applyTextAfterAnchor,
+    scheduleMobilePreviewRender
+  });
 }
 
 function setRosterImportStatus(message, tone = 'neutral') {
@@ -633,7 +659,7 @@ function buildRosterImportSummary(data) {
 }
 
 function setSharedDateValue(dateValue) {
-  [el.gameDate, el.lineupDate, el.videoDate, el.rosterMovesDate].forEach((input) => {
+  [el.gameDate, el.lineupDate, el.videoDate, el.rosterMovesDate, el.canceledDate].forEach((input) => {
     if (input) input.value = dateValue;
   });
 }
@@ -725,6 +751,7 @@ async function autoFillScheduleByDate(dateValue, options = {}) {
       updateLineupPoster();
       updateVideoPoster();
       updateRosterMovesPoster();
+      updateCanceledPoster();
       updateSecondaryActionButtons();
       return isTravelDay;
     }
@@ -741,6 +768,7 @@ async function autoFillScheduleByDate(dateValue, options = {}) {
     updateLineupPoster();
     updateVideoPoster();
     updateRosterMovesPoster();
+    updateCanceledPoster();
     updateSecondaryActionButtons();
     return true;
   } catch (error) {
@@ -968,6 +996,7 @@ function bindEvents() {
     updateLineupPoster,
     refreshRosterGroupEditors,
     updateRosterMovesPoster,
+    updateCanceledPoster,
     invalidateVideoOverlayCache,
     primeVideoOverlayCache,
     switchTab,
@@ -1015,6 +1044,7 @@ function init() {
     updateResultPoster,
     updateLineupPoster,
     updateVideoPoster,
+    updateCanceledPoster,
     updateVideoPreviewToggleVisibility,
     updateDownloadButtonLabel,
     updateSecondaryActionButtons

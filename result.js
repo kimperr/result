@@ -16,6 +16,14 @@ function teamLogoFile(code, side, result) {
   return `assets/logo/${code}2.png`;
 }
 
+function applyDefaultLogoLayout(node) {
+  node.classList.remove('is-tuned');
+  node.style.left = '';
+  node.style.top = '';
+  node.style.width = '';
+  node.style.height = '';
+}
+
 export function getAutoResultValue(el) {
   const side = selectedValue(el.kiaSide);
   const homeScore = parseScoreInput(el.homeScore.value);
@@ -103,6 +111,8 @@ export function updateResultPoster({
 
   out.kiaLogo.src = teamLogoFile('kia', side, result);
   out.oppLogo.src = teamLogoFile(team.code, side === 'home' ? 'away' : 'home', result);
+  applyDefaultLogoLayout(out.kiaLogo);
+  applyDefaultLogoLayout(out.oppLogo);
 
   applyText(out.dateText, RESULT_LAYOUT.dateText);
   applyTextAfterAnchor(out.opponentText, RESULT_LAYOUT.opponentText, out.dateText, RESULT_LAYOUT.dateText, RESULT_LAYOUT.opponentText.x);
@@ -123,5 +133,12 @@ export function updateResultPoster({
   applyBadge(out.badgeWin, RESULT_LAYOUT.badgeWin);
   applyBadge(out.badgeLose, RESULT_LAYOUT.badgeLose);
   applyBadge(out.badgeSave, RESULT_LAYOUT.badgeSave);
+  out.playerPhoto.classList.toggle('is-hidden', !playerPhotoPath);
+  out.badgeWin.style.display = hasWinner ? 'block' : 'none';
+  out.winnerText.style.display = hasWinner ? 'block' : 'none';
+  out.badgeLose.style.display = hasLoser ? 'block' : 'none';
+  out.loserText.style.display = hasLoser ? 'block' : 'none';
+  out.badgeSave.style.display = hasSave ? 'block' : 'none';
+  out.saveText.style.display = hasSave ? 'block' : 'none';
   scheduleMobilePreviewRender();
 }

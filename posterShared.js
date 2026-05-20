@@ -92,12 +92,16 @@ export async function renderMobilePreview({
     ? el.resultPoster
     : tabName === 'lineup'
       ? el.lineupPoster
-      : el.rosterMovesPoster;
+      : tabName === 'canceled'
+        ? el.canceledPoster
+        : el.rosterMovesPoster;
   const preview = tabName === 'result'
     ? out.resultMobilePreview
     : tabName === 'lineup'
       ? out.lineupMobilePreview
-      : out.rosterMovesMobilePreview;
+      : tabName === 'canceled'
+        ? out.canceledMobilePreview
+        : out.rosterMovesMobilePreview;
   const posterCanvas = poster.querySelector('.poster-canvas');
   const images = Array.from(poster.querySelectorAll('img, video'));
 

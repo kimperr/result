@@ -141,7 +141,7 @@ body { margin: 0; font-family: 'Pretendard', sans-serif; background: #e6e6e6; }
   font-family: var(--ui-body);
 }
 
-.tab-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 12px; }
+.tab-row { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin-bottom: 12px; }
 .tab-btn {
   border: 0;
   background: #3b3e45;
@@ -563,6 +563,9 @@ textarea {
   object-fit: contain;
   object-position: center;
 }
+.team-logo.is-tuned {
+  inset: auto;
+}
 .player.is-hidden { display: none; }
 
 .text { color: #fff; letter-spacing: var(--global-letter-spacing); }
@@ -584,6 +587,14 @@ textarea {
 .badge.win { background: #6ac700; }
 .badge.lose { background: #ca0000; }
 .badge.save { background: #e2b500; }
+.canceled-message-text {
+  color: #fff;
+  font-family: 'Pretendard', sans-serif;
+  font-weight: 700;
+  text-align: center;
+  white-space: pre-line;
+  transform: translateX(-50%);
+}
 
 .lineup-date { font: 400 29px/1.2 'Pretendard', sans-serif; }
 .lineup-opponent { font: 700 28px/1.2 'Pretendard', sans-serif; }

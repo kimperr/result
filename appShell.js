@@ -12,21 +12,26 @@ export function switchTab({
   const isLineup = target === 'lineup';
   const isVideo = target === 'video';
   const isRosterMoves = target === 'rosterMoves';
+  const isCanceled = target === 'canceled';
   el.tabResult.classList.toggle('active', isResult);
   el.tabLineup.classList.toggle('active', isLineup);
   el.tabVideo.classList.toggle('active', isVideo);
   el.tabRosterMoves.classList.toggle('active', isRosterMoves);
+  el.tabCanceled.classList.toggle('active', isCanceled);
   el.resultControls.classList.toggle('active', isResult);
   el.lineupControls.classList.toggle('active', isLineup);
   el.videoControls.classList.toggle('active', isVideo);
   el.rosterMovesControls.classList.toggle('active', isRosterMoves);
+  el.canceledControls.classList.toggle('active', isCanceled);
   el.resultPoster.classList.toggle('active', isResult);
   el.lineupPoster.classList.toggle('active', isLineup);
   el.videoPoster.classList.toggle('active', isVideo);
   el.rosterMovesPoster.classList.toggle('active', isRosterMoves);
+  el.canceledPoster.classList.toggle('active', isCanceled);
   out.resultMobilePreview.classList.toggle('active', isResult);
   out.lineupMobilePreview.classList.toggle('active', isLineup);
   out.rosterMovesMobilePreview.classList.toggle('active', isRosterMoves);
+  out.canceledMobilePreview.classList.toggle('active', isCanceled);
   el.previewScale.classList.toggle('video-mobile-plain', isVideo && isMobilePreviewMode());
   if (!isVideo) setVideoPreviewMode(false);
   updateVideoPreviewToggleVisibility();
@@ -82,7 +87,9 @@ export async function downloadImage({
     ? el.resultPoster
     : activeTab === 'lineup'
       ? el.lineupPoster
-      : el.rosterMovesPoster;
+      : activeTab === 'canceled'
+        ? el.canceledPoster
+        : el.rosterMovesPoster;
   const posterCanvas = poster.querySelector('.poster-canvas');
   const images = Array.from(poster.querySelectorAll('img, video'));
   await Promise.all(images.map(waitForImageElement));
@@ -177,6 +184,7 @@ export function bindEvents({
   updateLineupPoster,
   refreshRosterGroupEditors,
   updateRosterMovesPoster,
+  updateCanceledPoster,
   invalidateVideoOverlayCache,
   primeVideoOverlayCache,
   switchTab,
@@ -202,6 +210,11 @@ export function bindEvents({
   syncFineTunePair(el.videoMetaXInput, el.videoMetaXRange);
   syncFineTunePair(el.videoMetaYInput, el.videoMetaYRange);
   syncFineTunePair(el.videoMetaSizeInput, el.videoMetaSizeRange);
+  syncFineTunePair(el.canceledMessageXInput, el.canceledMessageXRange);
+  syncFineTunePair(el.canceledMessageYInput, el.canceledMessageYRange);
+  syncFineTunePair(el.canceledMessageSizeInput, el.canceledMessageSizeRange);
+  syncFineTunePair(el.canceledMessageSpacingInput, el.canceledMessageSpacingRange);
+  syncFineTunePair(el.canceledMessageLineHeightInput, el.canceledMessageLineHeightRange);
   syncFineTunePair(el.callUpBoxXInput, el.callUpBoxXRange);
   syncFineTunePair(el.callUpBoxYInput, el.callUpBoxYRange);
   syncFineTunePair(el.sendDownBoxXInput, el.sendDownBoxXRange);
@@ -331,9 +344,46 @@ export function bindEvents({
   el.rosterMovesOpponentTeam.addEventListener('change', () => {
     applySharedOpponent(el.rosterMovesOpponentTeam.value);
   });
+
+  [
+    el.canceledDate,
+    el.canceledOpponentTeam,
+    el.canceledStadiumName,
+    el.canceledReasonSelect,
+    el.canceledReasonCustom,
+    el.canceledScheduleSelect,
+    el.canceledScheduleCustom,
+    ...el.canceledKiaSide,
+    el.canceledMessageXInput,
+    el.canceledMessageYInput,
+    el.canceledMessageSizeInput,
+    el.canceledMessageSpacingInput,
+    el.canceledMessageLineHeightInput,
+    el.canceledMessageXRange,
+    el.canceledMessageYRange,
+    el.canceledMessageSizeRange,
+    el.canceledMessageSpacingRange,
+    el.canceledMessageLineHeightRange
+  ].filter(Boolean).forEach((input) => {
+    input.addEventListener('input', updateCanceledPoster);
+    input.addEventListener('change', updateCanceledPoster);
+    input.addEventListener('input', updateSecondaryActionButtons);
+    input.addEventListener('change', updateSecondaryActionButtons);
+  });
+  el.canceledOpponentTeam.addEventListener('change', () => {
+    applySharedOpponent(el.canceledOpponentTeam.value);
+  });
+  el.canceledKiaSide.forEach((input) => {
+    input.addEventListener('click', () => {
+      updateCanceledPoster();
+    });
+    input.addEventListener('change', () => {
+      applySharedKiaSide(selectedValue(el.canceledKiaSide));
+    });
+  });
   el.rosterMovesImportBtn?.addEventListener('click', importRosterMovesByDate);
   el.rosterMovesStatsBtn?.addEventListener('click', refreshRosterMoveStats);
-  [el.gameDate, el.lineupDate, el.videoDate, el.rosterMovesDate].filter(Boolean).forEach((input) => {
+  [el.gameDate, el.lineupDate, el.videoDate, el.rosterMovesDate, el.canceledDate].filter(Boolean).forEach((input) => {
     input.addEventListener('change', () => {
       if (input.value) autoFillScheduleByDate(input.value);
     });
@@ -493,6 +543,7 @@ export function bindEvents({
   el.tabLineup.addEventListener('click', () => switchTab('lineup'));
   el.tabVideo.addEventListener('click', () => switchTab('video'));
   el.tabRosterMoves.addEventListener('click', () => switchTab('rosterMoves'));
+  el.tabCanceled.addEventListener('click', () => switchTab('canceled'));
   el.downloadBtn.addEventListener('click', downloadImage);
   el.followDownloadBtn.addEventListener('click', downloadFollowImage);
   el.copyCaptionBtn?.addEventListener('click', copyGeneratedCaption);
@@ -540,6 +591,7 @@ export function init({
   updateResultPoster,
   updateLineupPoster,
   updateVideoPoster,
+  updateCanceledPoster,
   updateVideoPreviewToggleVisibility,
   updateDownloadButtonLabel,
   updateSecondaryActionButtons
@@ -550,6 +602,7 @@ export function init({
   populateTeamSelect(el.lineupOpponentTeam, teamDb);
   populateTeamSelect(el.videoOpponentTeam, teamDb);
   populateTeamSelect(el.rosterMovesOpponentTeam, teamDb);
+  populateTeamSelect(el.canceledOpponentTeam, teamDb);
   populatePlayerNameOptions(el, playerInfoList);
   initializeRosterMovesUi({
     el,
@@ -565,14 +618,17 @@ export function init({
   el.lineupOpponentTeam.value = 'LG 트윈스';
   el.videoOpponentTeam.value = 'LG 트윈스';
   el.rosterMovesOpponentTeam.value = 'LG 트윈스';
+  el.canceledOpponentTeam.value = 'LG 트윈스';
   el.stadiumName.value = kiaHomeStadium;
   el.lineupStadiumName.value = kiaHomeStadium;
   el.rosterMovesStadiumName.value = kiaHomeStadium;
+  el.canceledStadiumName.value = kiaHomeStadium;
 
   setToday(el.gameDate);
   setToday(el.lineupDate);
   setToday(el.videoDate);
   setToday(el.rosterMovesDate);
+  setToday(el.canceledDate);
 
   if (out.videoBgImage.complete) {
     out.videoBgImage.style.display = out.videoBgImage.naturalWidth > 0 ? 'block' : 'none';
@@ -590,6 +646,7 @@ export function init({
   updateLineupPoster();
   updateVideoPoster();
   updateRosterMovesPoster();
+  updateCanceledPoster();
   updateVideoPreviewToggleVisibility();
   updateDownloadButtonLabel();
   updateSecondaryActionButtons();

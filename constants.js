@@ -13,7 +13,8 @@ export const TEAM_DB = [
 export const BACKGROUND_BY_RESULT = {
   win: 'assets/background/bg-win.png',
   lose: 'assets/background/bg-lose.png',
-  draw: 'assets/background/bg-draw.png'
+  draw: 'assets/background/bg-draw.png',
+  canceled: 'assets/background/canceled.png'
 };
 
 export const PLAYER_NUMBER_BY_NAME = {
@@ -117,6 +118,20 @@ export const RESULT_LAYOUT = {
   badgeSave: { x: 68, y: 1059, size: 42, font: 31 },
   mvpNameText: { x: 252, y: 1120, size: 39 },
   mvpRecordText: { x: 12, y: 1135, size: 20 }
+};
+
+export const CANCELED_LOGO_LAYOUT = {
+  homeLogo: { x: 489, y: -189, scale: 109 },
+  awayLogo: { x: 256, y: 2, scale: 109 }
+};
+
+export const CANCELED_MESSAGE_LAYOUT = {
+  x: 540,
+  y: 877,
+  size: 43,
+  letterSpacing: -2,
+  lineHeight: 59,
+  width: 920,
 };
 
 export const LINEUP_LAYOUT = {

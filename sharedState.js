@@ -8,6 +8,7 @@ export function applySharedOpponent({
   updateLineupPoster,
   updateVideoPoster,
   updateRosterMovesPoster,
+  updateCanceledPoster,
   updateSecondaryActionButtons
 }) {
   const team = selectedTeamInfoByName(teamName);
@@ -17,17 +18,22 @@ export function applySharedOpponent({
   el.lineupOpponentTeam.value = sharedName;
   el.videoOpponentTeam.value = sharedName;
   if (el.rosterMovesOpponentTeam) el.rosterMovesOpponentTeam.value = sharedName;
+  if (el.canceledOpponentTeam) el.canceledOpponentTeam.value = sharedName;
 
   el.stadiumName.value = selectedValue(el.kiaSide) === 'home' ? kiaHomeStadium : team.stadium;
   el.lineupStadiumName.value = selectedValue(el.lineupKiaSide) === 'home' ? kiaHomeStadium : team.stadium;
   if (el.rosterMovesStadiumName) {
     el.rosterMovesStadiumName.value = selectedValue(el.lineupKiaSide) === 'home' ? kiaHomeStadium : team.stadium;
   }
+  if (el.canceledStadiumName) {
+    el.canceledStadiumName.value = selectedValue(el.canceledKiaSide) === 'home' ? kiaHomeStadium : team.stadium;
+  }
 
   updateResultPoster();
   updateLineupPoster();
   updateVideoPoster();
   updateRosterMovesPoster();
+  if (typeof updateCanceledPoster === 'function') updateCanceledPoster();
   updateSecondaryActionButtons();
 }
 
@@ -39,18 +45,24 @@ export function applySharedKiaSide({
   selectedTeamInfo,
   updateResultPoster,
   updateLineupPoster,
-  updateRosterMovesPoster
+  updateRosterMovesPoster,
+  updateCanceledPoster
 }) {
   setSelectedRadioValue(el.kiaSide, side);
   setSelectedRadioValue(el.lineupKiaSide, side);
+  if (el.canceledKiaSide) setSelectedRadioValue(el.canceledKiaSide, side);
   const team = selectedTeamInfo(el.opponentTeam);
+  const canceledTeam = el.canceledOpponentTeam ? selectedTeamInfo(el.canceledOpponentTeam) : team;
   const stadium = side === 'home' ? kiaHomeStadium : team.stadium;
+  const canceledStadium = side === 'home' ? kiaHomeStadium : canceledTeam.stadium;
   el.stadiumName.value = stadium;
   el.lineupStadiumName.value = stadium;
   if (el.rosterMovesStadiumName) el.rosterMovesStadiumName.value = stadium;
+  if (el.canceledStadiumName) el.canceledStadiumName.value = canceledStadium;
   updateResultPoster();
   updateLineupPoster();
   updateRosterMovesPoster();
+  if (typeof updateCanceledPoster === 'function') updateCanceledPoster();
 }
 
 export function applySharedOpponentFineTune({

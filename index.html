@@ -14,6 +14,7 @@
           <button id="tabResult" class="tab-btn" type="button">경기결과</button>
           <button id="tabVideo" class="tab-btn" type="button">영상편집</button>
           <button id="tabRosterMoves" class="tab-btn" type="button">등말소</button>
+          <button id="tabCanceled" class="tab-btn" type="button">경기취소</button>
         </div>
 
         <section id="lineupControls" class="tab-panel active">
@@ -61,6 +62,48 @@
           <label class="field">승리 투수 <input id="winnerName" type="text" /></label>
           <label class="field">패배 투수 <input id="loserName" type="text" /></label>
           <label class="field">세이브 <input id="saveName" type="text" /></label>
+
+        </section>
+
+        <section id="canceledControls" class="tab-panel">
+          <h1>경기취소 만들기</h1>
+          <div class="field-row compact">
+            <label><input type="radio" name="canceledKiaSide" value="home" checked /> 홈</label>
+            <label><input type="radio" name="canceledKiaSide" value="away" /> 원정</label>
+          </div>
+
+          <label class="field">날짜 <input id="canceledDate" type="date" /></label>
+          <label class="field">상대팀 <select id="canceledOpponentTeam"></select></label>
+          <label class="field">경기장 <input id="canceledStadiumName" type="text" /></label>
+
+          <label class="field">취소 사유
+            <select id="canceledReasonSelect">
+              <option value="우천">우천</option>
+              <option value="그라운드 사정">그라운드 사정</option>
+              <option value="custom">기타 (직접입력)</option>
+            </select>
+          </label>
+          <label class="field">직접입력 <input id="canceledReasonCustom" type="text" placeholder="예: 기타 사유" /></label>
+          <label class="field">편성 안내
+            <select id="canceledScheduleSelect">
+              <option value="추후 편성">추후 편성</option>
+              <option value="다음 날 더블헤더로 편성">다음 날 더블헤더로 편성</option>
+              <option value="custom">직접입력</option>
+            </select>
+          </label>
+          <label class="field">직접입력 <input id="canceledScheduleCustom" type="text" placeholder="예: 별도 공지" /></label>
+
+          <details class="tune-details" open>
+            <summary>문구 세부조정</summary>
+
+            <div class="fine-tune-group">
+              <label class="fine-tune-row">X <input id="canceledMessageXRange" type="range" min="0" max="1080" value="540" /><input id="canceledMessageXInput" type="number" value="540" /></label>
+              <label class="fine-tune-row">Y <input id="canceledMessageYRange" type="range" min="0" max="1200" value="877" /><input id="canceledMessageYInput" type="number" value="877" /></label>
+              <label class="fine-tune-row">크기 <input id="canceledMessageSizeRange" type="range" min="20" max="90" value="43" /><input id="canceledMessageSizeInput" type="number" value="43" /></label>
+              <label class="fine-tune-row">자간 <input id="canceledMessageSpacingRange" type="range" min="-10" max="10" value="-2" /><input id="canceledMessageSpacingInput" type="number" value="-2" /></label>
+              <label class="fine-tune-row">줄간격 <input id="canceledMessageLineHeightRange" type="range" min="30" max="120" value="59" /><input id="canceledMessageLineHeightInput" type="number" value="59" /></label>
+            </div>
+          </details>
 
         </section>
 
@@ -286,6 +329,19 @@
             </div>
           </div>
           <img id="rosterMovesMobilePreview" class="mobile-preview" alt="등말소 미리보기" />
+
+          <div id="canceledPoster" class="poster tab-preview">
+            <div class="poster-canvas">
+              <img id="canceledBgLayer" class="layer bg" src="assets/background/canceled.png" alt="경기취소 배경" />
+              <img id="canceledHomeLogo" class="layer team-logo is-tuned" src="assets/logo/kia2.png" alt="KIA 로고" />
+              <img id="canceledAwayLogo" class="layer team-logo is-tuned" src="assets/logo/lg1.png" alt="상대 로고" />
+              <div id="canceledDateText" class="layer text date"></div>
+              <div id="canceledOpponentText" class="layer text opponent"></div>
+              <div id="canceledStadiumText" class="layer text stadium"></div>
+              <div id="canceledMessageText" class="layer canceled-message-text"></div>
+            </div>
+          </div>
+          <img id="canceledMobilePreview" class="mobile-preview" alt="경기취소 미리보기" />
         </div>
       </section>
     </main>
@@ -293,6 +349,6 @@
     <datalist id="playerNameOptions"></datalist>
 
     <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
-    <script type="module" src="script.js?v=20260407e"></script>
+    <script type="module" src="script.js?v=20260520i"></script>
   </body>
 </html>
