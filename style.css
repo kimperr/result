@@ -600,7 +600,7 @@ textarea {
 .lineup-opponent { font: 700 28px/1.2 'Pretendard', sans-serif; }
 .lineup-stadium { font: 300 29px/1.2 'Pretendard', sans-serif; }
 .lineup-text-layer { inset: 0; }
-.lineup-name-text { position: absolute; color: #fff; font: 400 66px/1 'boldfont', 'Pretendard', sans-serif; letter-spacing: var(--global-letter-spacing); font-family: 'boldfont', 'Pretendard', sans-serif !important; white-space: pre; }
+.lineup-name-text { position: absolute; display: flex; justify-content: space-between; color: #fff; font: 400 66px/1 'boldfont', 'Pretendard', sans-serif; letter-spacing: 0; font-family: 'boldfont', 'Pretendard', sans-serif !important; white-space: nowrap; }
 .lineup-pos-text { position: absolute; color: #fff; font: 300 62px/1 'Pretendard', sans-serif; letter-spacing: var(--global-letter-spacing); }
 .lineup-pitcher { color: #000; font: 400 62px/1 'boldfont', 'Pretendard', sans-serif; white-space: pre; letter-spacing: var(--global-letter-spacing); font-family: 'boldfont', 'Pretendard', sans-serif !important; width: 360px; text-align: right; }
 #lineupPoster .text { letter-spacing: var(--global-letter-spacing); }

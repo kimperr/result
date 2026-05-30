@@ -44,6 +44,45 @@ export function getLineupCaptionText(el) {
   ].join('\n');
 }
 
+function measureLineupNameWidth(node, text) {
+  const style = window.getComputedStyle(node);
+  const canvas = measureLineupNameWidth.canvas || (measureLineupNameWidth.canvas = document.createElement('canvas'));
+  const context = canvas.getContext('2d');
+  if (!context) return 0;
+  context.font = [
+    style.fontStyle,
+    style.fontVariant,
+    style.fontWeight,
+    style.fontSize,
+    style.fontFamily
+  ].filter(Boolean).join(' ');
+  return context.measureText(text).width;
+}
+
+function renderLineupDisplayName(node, name) {
+  const chars = Array.from(formatDisplayName(name).replace(/\s+/g, ''));
+  node.replaceChildren();
+  chars.forEach((char) => {
+    const span = document.createElement('span');
+    span.textContent = char;
+    node.appendChild(span);
+  });
+}
+
+function fitLineupDisplayName(node) {
+  const text = node.textContent || '';
+  const chars = Array.from(text);
+  const applyWidth = () => {
+    const targetWidth = measureLineupNameWidth(node, '아데를린');
+    node.style.width = chars.length > 1 && targetWidth ? `${targetWidth}px` : '';
+  };
+
+  applyWidth();
+  document.fonts?.ready.then(() => {
+    if (node.textContent === text) applyWidth();
+  });
+}
+
 export function buildLineupInputs(el) {
   for (let i = 1; i <= 9; i += 1) {
     const row = document.createElement('div');
@@ -108,9 +147,10 @@ export function updateLineupPoster({
     LINEUP_LAYOUT.positions[i].x = LINEUP_FIXED.posX;
     LINEUP_LAYOUT.positions[i].size = LINEUP_FIXED.posSize;
 
-    lineupTextRefs.names[i].textContent = name;
+    renderLineupDisplayName(lineupTextRefs.names[i], name);
     lineupTextRefs.positions[i].textContent = pos;
     applyText(lineupTextRefs.names[i], LINEUP_LAYOUT.names[i]);
+    fitLineupDisplayName(lineupTextRefs.names[i]);
     applyText(lineupTextRefs.positions[i], LINEUP_LAYOUT.positions[i]);
   }
   scheduleMobilePreviewRender();
