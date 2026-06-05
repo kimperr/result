@@ -73,7 +73,7 @@ function fitLineupDisplayName(node) {
   const text = node.textContent || '';
   const chars = Array.from(text);
   const applyWidth = () => {
-    const targetWidth = measureLineupNameWidth(node, '아데를린');
+    const targetWidth = measureLineupNameWidth(node, '김도영');
     node.style.width = chars.length > 1 && targetWidth ? `${targetWidth}px` : '';
   };
 
