@@ -247,7 +247,7 @@ export function bindEvents({
   const resultInputs = [
     ...el.result, ...el.kiaSide, el.gameDate, el.opponentTeam,
     el.stadiumName, el.homeScore, el.awayScore, el.mvpName, el.mvpRecord,
-    el.winnerName, el.loserName, el.saveName
+    el.winnerName, el.loserName, el.saveName, el.resultCustomOpponentName
   ].filter(Boolean);
   resultInputs.forEach((input) => {
     input.addEventListener('input', updateResultPoster);
@@ -279,7 +279,8 @@ export function bindEvents({
     el.lineupGameTime,
     el.lineupGameTimeCustom,
     el.lineupBroadcaster,
-    el.lineupTerrestrial
+    el.lineupTerrestrial,
+    el.lineupCustomOpponentName
   ].filter(Boolean);
   const lineupSideInputs = [...el.lineupKiaSide];
   lineupInputs.forEach((input) => {

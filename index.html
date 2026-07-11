@@ -19,6 +19,11 @@
 
         <section id="lineupControls" class="tab-panel active">
           <h1>라인업 만들기</h1>
+          <button id="lineupBackgroundChangeBtn" class="background-change-btn" type="button">배경 변경</button>
+          <input id="lineupBackgroundFileInput" type="file" accept="image/*" hidden />
+          <label id="lineupCustomOpponentField" class="field" hidden>
+            상대팀 이름 <input id="lineupCustomOpponentName" type="text" />
+          </label>
           <div class="field-row compact">
             <label><input type="radio" name="lineupKiaSide" value="home" checked /> 홈</label>
             <label><input type="radio" name="lineupKiaSide" value="away" /> 원정</label>
@@ -38,6 +43,11 @@
 
         <section id="resultControls" class="tab-panel">
           <h1>경기결과 만들기</h1>
+          <button id="resultBackgroundChangeBtn" class="background-change-btn" type="button">배경 변경</button>
+          <input id="resultBackgroundFileInput" type="file" accept="image/*" hidden />
+          <label id="resultCustomOpponentField" class="field" hidden>
+            상대팀 이름 <input id="resultCustomOpponentName" type="text" />
+          </label>
           <div class="field-row compact">
             <label><input type="radio" name="result" value="win" checked /> 승리</label>
             <label><input type="radio" name="result" value="lose" /> 패배</label>
@@ -349,6 +359,6 @@
     <datalist id="playerNameOptions"></datalist>
 
     <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
-    <script type="module" src="script.js?v=20260520i"></script>
+    <script type="module" src="script.js?v=20260711b"></script>
   </body>
 </html>

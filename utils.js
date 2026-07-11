@@ -110,6 +110,9 @@ function findPlayerNumberByName(name) {
 export function getPlayerPhotoPath(name) {
   const playerRef = findPlayerNumberByName(name);
   if (!playerRef) return '';
+  const { baseName } = splitPlayerVariantSuffix(name);
+  const info = getPlayerInfo(baseName);
+  if (info?.hasPlayerPhoto === false) return '';
   const suffix = playerRef.variantSuffix ? `_${playerRef.variantSuffix}` : '';
   return `assets/player/${playerRef.playerNumber}${suffix}.png`;
 }
@@ -117,6 +120,9 @@ export function getPlayerPhotoPath(name) {
 export function getPlayerMiniPhotoPath(name) {
   const playerRef = findPlayerNumberByName(name);
   if (!playerRef) return '';
+  const { baseName } = splitPlayerVariantSuffix(name);
+  const info = getPlayerInfo(baseName);
+  if (info?.hasPlayerMiniPhoto === false) return '';
   return `assets/player_mini/${playerRef.playerNumber}.png`;
 }
 

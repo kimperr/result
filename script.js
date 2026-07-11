@@ -125,6 +125,10 @@ const copyToastState = { timer: null };
 const rosterImportState = { isLoading: false, isRefreshingStats: false };
 const rosterAutoFetchState = {};
 const scheduleAutoFillState = { requestId: 0, lastDateValue: '', lastAutoPitcherName: '' };
+const posterBackgroundState = {
+  result: { objectUrl: '', pendingUrl: '' },
+  lineup: { objectUrl: '', pendingUrl: '' }
+};
 const videoState = {
   objectUrl: '',
   loopHandler: null,
@@ -454,6 +458,55 @@ function scheduleMobilePreviewRender() {
   }, 80);
 }
 
+function bindPosterBackgroundUpload({
+  type,
+  button,
+  input,
+  layer,
+  customOpponentField,
+  customOpponentInput,
+  onBackgroundApplied
+}) {
+  if (!button || !input || !layer) return;
+
+  button.addEventListener('click', () => input.click());
+  input.addEventListener('change', () => {
+    const file = input.files?.[0];
+    input.value = '';
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      window.alert('이미지 파일을 선택해 주세요.');
+      return;
+    }
+
+    const state = posterBackgroundState[type];
+    if (state.pendingUrl) URL.revokeObjectURL(state.pendingUrl);
+
+    const nextUrl = URL.createObjectURL(file);
+    state.pendingUrl = nextUrl;
+    const image = new Image();
+    image.addEventListener('load', () => {
+      if (state.pendingUrl !== nextUrl) return;
+      state.pendingUrl = '';
+      const previousUrl = state.objectUrl;
+      state.objectUrl = nextUrl;
+      layer.src = nextUrl;
+      if (previousUrl) URL.revokeObjectURL(previousUrl);
+      if (customOpponentInput) {
+        customOpponentInput.dataset.customBackground = 'true';
+        customOpponentField?.removeAttribute('hidden');
+      }
+      onBackgroundApplied?.();
+    }, { once: true });
+    image.addEventListener('error', () => {
+      if (state.pendingUrl === nextUrl) state.pendingUrl = '';
+      URL.revokeObjectURL(nextUrl);
+      window.alert('선택한 이미지를 불러올 수 없습니다.');
+    }, { once: true });
+    image.src = nextUrl;
+  });
+}
+
 function updateResultPoster(markManualOverride = false) {
   if (markManualOverride === true) resultManualOverride = true;
   renderResultPoster({
@@ -464,6 +517,7 @@ function updateResultPoster(markManualOverride = false) {
     applyText,
     applyTextAfterAnchor,
     applyBadge,
+    customBackgroundUrl: posterBackgroundState.result.objectUrl,
     scheduleMobilePreviewRender
   });
 }
@@ -473,7 +527,6 @@ function updateLineupPoster() {
     el,
     out,
     lineupTextRefs,
-    selectedTeamInfo,
     applyText,
     applyTextAfterAnchor,
     scheduleMobilePreviewRender
@@ -723,13 +776,6 @@ function setLineupStartingPitcher(name, force = false) {
   scheduleAutoFillState.lastAutoPitcherName = nextName;
 }
 
-function isMondayDateValue(dateValue) {
-  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(dateValue || '').trim());
-  if (!match) return false;
-  const [, year, month, day] = match.map(Number);
-  return new Date(year, month - 1, day).getDay() === 1;
-}
-
 async function autoFillScheduleByDate(dateValue, options = {}) {
   const { syncDates = true, silent = false, force = false } = options;
   const normalizedDate = String(dateValue || '').trim();
@@ -743,9 +789,9 @@ async function autoFillScheduleByDate(dateValue, options = {}) {
     const schedule = await fetchKboScheduleByDate({ dateValue: normalizedDate });
     if (scheduleAutoFillState.requestId !== requestId) return false;
     if (!schedule?.found) {
-      const isTravelDay = isMondayDateValue(normalizedDate);
-      setScheduleDayType(isTravelDay ? 'travel' : '');
+      setScheduleDayType('travel');
       if (syncDates) setSharedDateValue(schedule?.date || normalizedDate);
+      setLineupStartingPitcher('', force);
       scheduleAutoFillState.lastDateValue = normalizedDate;
       updateResultPoster();
       updateLineupPoster();
@@ -753,7 +799,7 @@ async function autoFillScheduleByDate(dateValue, options = {}) {
       updateRosterMovesPoster();
       updateCanceledPoster();
       updateSecondaryActionButtons();
-      return isTravelDay;
+      return true;
     }
 
     setScheduleDayType('');
@@ -1010,6 +1056,30 @@ function bindEvents() {
     syncFineTunePair,
     bindNudgeButtons,
     updateLineupGameTimeCustomVisibility
+  });
+  bindPosterBackgroundUpload({
+    type: 'lineup',
+    button: el.lineupBackgroundChangeBtn,
+    input: el.lineupBackgroundFileInput,
+    layer: out.lineupBgLayer,
+    customOpponentField: el.lineupCustomOpponentField,
+    customOpponentInput: el.lineupCustomOpponentName,
+    onBackgroundApplied: () => {
+      updateLineupPoster();
+      updateSecondaryActionButtons();
+    }
+  });
+  bindPosterBackgroundUpload({
+    type: 'result',
+    button: el.resultBackgroundChangeBtn,
+    input: el.resultBackgroundFileInput,
+    layer: out.backgroundLayer,
+    customOpponentField: el.resultCustomOpponentField,
+    customOpponentInput: el.resultCustomOpponentName,
+    onBackgroundApplied: () => {
+      updateResultPoster();
+      updateSecondaryActionButtons();
+    }
   });
 }
 

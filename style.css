@@ -171,6 +171,26 @@ h2 {
   font-weight: 700;
   letter-spacing: -0.04em;
 }
+.background-change-btn {
+  width: 100%;
+  min-height: 44px;
+  margin-bottom: 12px;
+  border: 1px solid #5a5e67;
+  border-radius: 4px;
+  background: #3b3e45;
+  color: #fff;
+  font-family: var(--ui-title);
+  font-size: 18px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.background-change-btn:hover {
+  background: #4a4e57;
+}
+.background-change-btn:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 2px;
+}
 .field-row {
   display: flex;
   gap: 18px;
@@ -186,6 +206,9 @@ h2 {
   margin-bottom: 10px;
   font-size: 18px;
   font-weight: 500;
+}
+.field[hidden] {
+  display: none;
 }
 .field-stack {
   grid-template-columns: 1fr;

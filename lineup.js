@@ -33,13 +33,20 @@ export function updateLineupGameTimeCustomVisibility(el) {
   customField.style.display = el.lineupGameTime?.value === 'custom' ? '' : 'none';
 }
 
-export function getLineupCaptionText(el) {
+function getLineupOpponentLabel(el) {
+  if (el.lineupCustomOpponentName?.dataset.customBackground === 'true') {
+    return formatOpponentLabel(el.lineupCustomOpponentName.value.trim());
+  }
   const teamName = (el.lineupOpponentTeam.value || '').trim();
-  const opponentLabel = formatOpponentLabel(teamName, isTravelDayOpponent(el.lineupOpponentTeam));
+  return formatOpponentLabel(teamName, isTravelDayOpponent(el.lineupOpponentTeam));
+}
+
+export function getLineupCaptionText(el) {
+  const opponentLabel = getLineupOpponentLabel(el);
   const timeLabel = getLineupGameTimeLabel(el);
   const broadcasterLabel = getLineupBroadcastLabel(el);
   return [
-    `𝐖𝐈𝐍𝐍𝐈𝐍𝐆 𝐋𝐈𝐍𝐄𝐔𝐏 ${opponentLabel}`,
+    `𝐖𝐈𝐍𝐍𝐈𝐍𝐆 𝐋𝐈𝐍𝐄𝐔𝐏${opponentLabel ? ` ${opponentLabel}` : ''}`,
     `⏰️ ${timeLabel} / 📺 ${broadcasterLabel}`
   ].join('\n');
 }
@@ -116,16 +123,12 @@ export function updateLineupPoster({
   el,
   out,
   lineupTextRefs,
-  selectedTeamInfo,
   applyText,
   applyTextAfterAnchor,
   scheduleMobilePreviewRender
 }) {
-  const team = selectedTeamInfo(el.lineupOpponentTeam);
-  const isTravelDay = isTravelDayOpponent(el.lineupOpponentTeam);
-
   out.lineupDateText.textContent = formatDate(el.lineupDate.value);
-  out.lineupOpponentText.textContent = formatOpponentLabel(team.name, isTravelDay);
+  out.lineupOpponentText.textContent = getLineupOpponentLabel(el);
   out.lineupStadiumText.textContent = el.lineupStadiumName.value;
   out.lineupPitcherText.textContent = formatDisplayName(el.lineupPitcherName.value);
   const lineupPhotoPath = getPlayerPhotoPath(el.lineupPitcherName.value);

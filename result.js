@@ -43,15 +43,22 @@ export function syncAutoResultSelection(el, resultManualOverride) {
   return autoResult;
 }
 
-export function getResultCaptionText(el, resultManualOverride) {
+function getResultOpponentLabel(el) {
+  if (el.resultCustomOpponentName?.dataset.customBackground === 'true') {
+    return formatOpponentLabel(el.resultCustomOpponentName.value.trim());
+  }
   const teamName = (el.opponentTeam.value || '').trim();
-  const opponentLabel = formatOpponentLabel(teamName, isTravelDayOpponent(el.opponentTeam));
+  return formatOpponentLabel(teamName, isTravelDayOpponent(el.opponentTeam));
+}
+
+export function getResultCaptionText(el, resultManualOverride) {
+  const opponentLabel = getResultOpponentLabel(el);
   const resultMap = { win: '승리', draw: '무승부', lose: '패배' };
   const resultLabel = resultMap[syncAutoResultSelection(el, resultManualOverride)] || '승리';
   const homeScore = el.homeScore.value || '0';
   const awayScore = el.awayScore.value || '0';
   return [
-    `𝐅𝐈𝐍𝐀𝐋 ${opponentLabel}`,
+    `𝐅𝐈𝐍𝐀𝐋${opponentLabel ? ` ${opponentLabel}` : ''}`,
     `${awayScore} - ${homeScore} ${resultLabel}`
   ].join('\n');
 }
@@ -64,18 +71,20 @@ export function updateResultPoster({
   applyText,
   applyTextAfterAnchor,
   applyBadge,
+  customBackgroundUrl,
   scheduleMobilePreviewRender
 }) {
   const result = syncAutoResultSelection(el, resultManualOverride);
   const side = selectedValue(el.kiaSide);
   const team = selectedTeamInfo(el.opponentTeam);
-  const isTravelDay = isTravelDayOpponent(el.opponentTeam);
 
-  out.backgroundLayer.src = BACKGROUND_BY_RESULT[result];
+  if (!customBackgroundUrl) {
+    out.backgroundLayer.src = BACKGROUND_BY_RESULT[result];
+  }
   el.resultPoster.style.setProperty('--global-letter-spacing', '-1px');
 
   out.dateText.textContent = formatDate(el.gameDate.value);
-  out.opponentText.textContent = formatOpponentLabel(team.name, isTravelDay);
+  out.opponentText.textContent = getResultOpponentLabel(el);
   out.stadiumText.textContent = el.stadiumName.value;
   out.homeScoreText.textContent = el.awayScore.value || '0';
   out.awayScoreText.textContent = el.homeScore.value || '0';

@@ -36,7 +36,7 @@ function resolveRosterPlayerInfo(groupRefs) {
 
   return {
     ...(fallbackInfo || {}),
-    throwBat: storedMeta?.throwBat || '',
+    throwBat: storedMeta?.throwBat || fallbackInfo?.throwBat || '',
     positionGroup: storedMeta?.positionGroup || fallbackInfo?.positionGroup || ''
   };
 }
