@@ -18,7 +18,7 @@ export const BACKGROUND_BY_RESULT = {
 };
 
 export const PLAYER_NUMBER_BY_NAME = {
-  '곽도규': 0, '박정우': 1, '박민': 2, '김선빈': 3, '유지성': 4, '김도영': 5,
+  '곽도규': 0, '박정우': 1, '박민': 2, '김선빈': 3, '유지성': 4, '김도영': 5, '엄준현': 6,
   '이창진': 8, '정해원': 9, '김태형': 10, '조상우': 11, '정현창': 12, '윤영철': 13,
   '김규성': 14, '박재현': 15, '윤도현': 16, '김현수(17)': 17, '윤중현': 19, '이준영': 20,
   '김사윤': 21, '주효상': 22, '최정용': 23, '아데를린': 24, '권다결': 24, '한준수': 25, '카스트로': 26, '김호령': 27,
@@ -86,6 +86,7 @@ export const PLAYER_INFO_LIST = [
   { name: '박민', positionGroup: '내야수' },
   { name: '김선빈', positionGroup: '내야수' },
   { name: '김도영', positionGroup: '내야수' },
+  { name: '엄준현', positionGroup: '내야수', playerId: '55631', throwBat: '우투우타', hasPlayerPhoto: false },
   { name: '정해원', positionGroup: '내야수' },
   { name: '정현창', positionGroup: '내야수' },
   { name: '윤도현', positionGroup: '내야수' },
