@@ -67,17 +67,49 @@ export function waitForImageElement(img) {
   });
 }
 
+const MAX_IMAGE_EXPORT_BYTES = 4.75 * 1024 * 1024;
+const IMAGE_EXPORT_SCALE_STEPS = [1, 0.9, 0.8, 0.7, 0.6, 0.5, 0.4, 0.3, 0.2];
+
+function canvasToBlob(canvas, type) {
+  return new Promise((resolve, reject) => {
+    canvas.toBlob((blob) => {
+      if (blob) resolve(blob);
+      else reject(new Error('이미지를 저장할 수 없습니다.'));
+    }, type);
+  });
+}
+
+function resizeCanvas(canvas, ratio) {
+  if (ratio === 1) return canvas;
+  const resized = document.createElement('canvas');
+  resized.width = Math.max(1, Math.round(canvas.width * ratio));
+  resized.height = Math.max(1, Math.round(canvas.height * ratio));
+  const context = resized.getContext('2d');
+  context.drawImage(canvas, 0, 0, resized.width, resized.height);
+  return resized;
+}
+
+async function createPngImageBlob(canvas) {
+  let smallestBlob = null;
+
+  for (const scale of IMAGE_EXPORT_SCALE_STEPS) {
+    const exportCanvas = resizeCanvas(canvas, scale);
+    const blob = await canvasToBlob(exportCanvas, 'image/png');
+    if (!smallestBlob || blob.size < smallestBlob.size) smallestBlob = blob;
+    if (blob.size <= MAX_IMAGE_EXPORT_BYTES) return blob;
+  }
+
+  return smallestBlob;
+}
+
 export async function downloadImage({
   activeTab,
   el,
   exportVideo,
   waitForImageElement
 }) {
-  const isMobileExport = window.matchMedia('(max-width: 768px)').matches;
-  const exportImageScale = isMobileExport ? 2 : 4;
-  const exportMimeType = isMobileExport ? 'image/jpeg' : 'image/png';
-  const exportQuality = isMobileExport ? 0.9 : 1;
-  const exportExtension = isMobileExport ? 'jpg' : 'png';
+  const exportImageScale = 2;
+  const exportExtension = 'png';
   if (activeTab === 'video') {
     await exportVideo();
     return;
@@ -119,10 +151,12 @@ export async function downloadImage({
 
   try {
     const canvas = await html2canvas(poster, { useCORS: true, scale: exportImageScale, backgroundColor: null });
+    const blob = await createPngImageBlob(canvas);
     const link = document.createElement('a');
     link.download = `${activeTab}-${Date.now()}.${exportExtension}`;
-    link.href = canvas.toDataURL(exportMimeType, exportQuality);
+    link.href = URL.createObjectURL(blob);
     link.click();
+    window.setTimeout(() => URL.revokeObjectURL(link.href), 1000);
   } finally {
     poster.style.width = prevPosterWidth;
     poster.style.height = prevPosterHeight;
